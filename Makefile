@@ -3,6 +3,8 @@ include .make/python.mk
 
 PYTHON_RUNNER=poetry run
 
+DOCS_SPHINXOPTS=-n -W --keep-going
+
 python-post-format:
 	$(PYTHON_RUNNER) docformatter -r -i --pre-summary-newline src/ tests/
 
