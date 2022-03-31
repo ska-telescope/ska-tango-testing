@@ -1,0 +1,4 @@
+docutils<0.17
+sphinx
+sphinx-autodoc-typehints
+sphinx-rtd-theme

@@ -1,5 +1,3 @@
-image: $SKA_K8S_TOOLS_DOCKER_BUILDER_IMAGE
-
 variables:
   GIT_SUBMODULE_STRATEGY: recursive
 
