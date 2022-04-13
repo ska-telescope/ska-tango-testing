@@ -1,8 +1,8 @@
 """This module provides a :py:class:`QueueGroup` class."""
 from __future__ import annotations
 
+import queue
 from collections import defaultdict
-from queue import Empty
 from threading import Condition
 from typing import Any, DefaultDict, Hashable, List, Optional, Tuple
 
@@ -25,9 +25,10 @@ class QueueGroup:
         self._subqueues: DefaultDict[Hashable, List[Any]] = defaultdict(list)
         self._content_condition = Condition()
 
+    # TODO: Why are DAR401 and DAR402 raised here?
     def get(
         self: QueueGroup, timeout: Optional[float] = None
-    ) -> Tuple[Hashable, Any]:
+    ) -> Tuple[Hashable, Any]:  # noqa: DAR401
         """
         Get the next item to be put onto any of the queues in this group.
 
@@ -39,17 +40,18 @@ class QueueGroup:
             the timeout period.
 
         :return: a (queue_name, item) tuple.
-        """
+        """  # noqa: DAR402
         with self._content_condition:
             while len(self._main_queue) == 0:
                 if not self._content_condition.wait(timeout=timeout):
-                    raise Empty()
+                    raise queue.Empty()
             queue_name = self._main_queue.pop(0)
             return (queue_name, self._subqueues[queue_name].pop(0))
 
+    # TODO: Why are DAR401 and DAR402 raised here?
     def get_from(
         self: QueueGroup, queue_name: Hashable, timeout: Optional[float] = None
-    ) -> Any:
+    ) -> Any:  # noqa: DAR401
         """
         Get the next item to be put onto a specific queue in this group.
 
@@ -63,11 +65,11 @@ class QueueGroup:
             the timeout period.
 
         :return: a (queue_name, item) tuple.
-        """
+        """  # noqa: DAR402
         with self._content_condition:
             while len(self._subqueues[queue_name]) == 0:
                 if not self._content_condition.wait(timeout=timeout):
-                    raise Empty()
+                    raise queue.Empty()
             self._main_queue.remove(queue_name)
             return self._subqueues[queue_name].pop(0)
 
