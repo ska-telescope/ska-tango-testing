@@ -19,8 +19,8 @@ class MockCallbackQueueProtocol(Protocol):
         """
         Put a called mock onto the queue.
 
-        :param called_mock: a :py:class:`Mock` that has already been
-            called.
+        :param called_mock: a :py:class:`unittest.mock.Mock` that has
+            already been called.
         """
         ...
 
@@ -33,8 +33,8 @@ class MockCallbackQueueProtocol(Protocol):
         :param timeout: how long to block for the queue have have
             something for us to get. If None, we block forever.
 
+        :return: a :py:class:`unittest.mock.Mock` that has already been
+            called.
+        """  # noqa: DAR202
         # https://github.com/terrencepreilly/darglint/issues/178
-        # noqa: DAR202
-        :returns: a :py:class:`Mock` that has already been called.
-        """
         ...

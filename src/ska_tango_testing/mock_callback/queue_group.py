@@ -35,10 +35,10 @@ class QueueGroup:
             item to become available. If omitted, or explicitly set to
             None, then we wait forever.
 
-        :return: a (queue_name, item) tuple.
+        :raises queue.Empty: if the queue is still empty at the end of
+            the timeout period.
 
-        :raises Empty: if the queue is still empty at the end of the
-            timeout period.
+        :return: a (queue_name, item) tuple.
         """
         with self._content_condition:
             while len(self._main_queue) == 0:
@@ -59,10 +59,10 @@ class QueueGroup:
             item to become available. If omitted, or explicitly set to
             None, then we wait forever.
 
-        :return: a (queue_name, item) tuple.
+        :raises queue.Empty: if the queue is still empty at the end of
+            the timeout period.
 
-        :raises Empty: if the queue is still empty at the end of the
-            timeout period.
+        :return: a (queue_name, item) tuple.
         """
         with self._content_condition:
             while len(self._subqueues[queue_name]) == 0:
