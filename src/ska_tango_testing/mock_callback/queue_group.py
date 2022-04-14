@@ -2,9 +2,9 @@
 from __future__ import annotations
 
 import queue
-from collections import defaultdict
+from collections import defaultdict, deque
 from threading import Condition
-from typing import Any, DefaultDict, Hashable, List, Optional, Tuple
+from typing import Any, DefaultDict, Hashable, Optional, Tuple
 
 
 class QueueGroup:
@@ -21,8 +21,8 @@ class QueueGroup:
 
     def __init__(self: QueueGroup) -> None:
         """Initialise a new instance."""
-        self._main_queue: List[Hashable] = []
-        self._subqueues: DefaultDict[Hashable, List[Any]] = defaultdict(list)
+        self._main_queue: deque[Hashable] = deque()
+        self._subqueues: DefaultDict[Hashable, deque[Any]] = defaultdict(deque)
         self._content_condition = Condition()
 
     # TODO: Why are DAR401 and DAR402 raised here?
@@ -45,8 +45,8 @@ class QueueGroup:
             while len(self._main_queue) == 0:
                 if not self._content_condition.wait(timeout=timeout):
                     raise queue.Empty()
-            queue_name = self._main_queue.pop(0)
-            return (queue_name, self._subqueues[queue_name].pop(0))
+            queue_name = self._main_queue.popleft()
+            return (queue_name, self._subqueues[queue_name].popleft())
 
     # TODO: Why are DAR401 and DAR402 raised here?
     def get_from(
@@ -71,7 +71,7 @@ class QueueGroup:
                 if not self._content_condition.wait(timeout=timeout):
                     raise queue.Empty()
             self._main_queue.remove(queue_name)
-            return self._subqueues[queue_name].pop(0)
+            return self._subqueues[queue_name].popleft()
 
     def put(self: QueueGroup, queue_name: Hashable, item: Any) -> None:
         """
