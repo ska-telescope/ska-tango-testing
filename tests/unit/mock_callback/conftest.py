@@ -1,4 +1,4 @@
-"""This module implements test harness."""
+"""This module implements test harness for testing mock callbacks."""
 import threading
 from typing import Any, Callable
 
