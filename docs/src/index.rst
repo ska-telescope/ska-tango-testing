@@ -1,16 +1,17 @@
-.. ska-tango-testing documentation master file, created by
-   sphinx-quickstart on Wed Mar 23 10:18:51 2022.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
+ska-tango-testing
+=================
 
-Welcome to ska-tango-testing's documentation!
-=============================================
+This project provides test harness elements for testing of Tango devices
+within the `Square Kilometre Array`_.
+
+.. _Square Kilometre Array: https://skatelescope.org/
 
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
 
-
+   guide/index
+   api/index
 
 Indices and tables
 ==================

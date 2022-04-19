@@ -1,0 +1,146 @@
+"""This module contains tests of the :py:class:`MockCallback` class."""
+from typing import Any, Callable, Dict, List, Tuple
+
+import pytest
+
+from ska_tango_testing.mock_callback import MockCallback
+
+
+def test_assert_next_call_when_called(
+    callback: MockCallback, schedule_call: Callable
+) -> None:
+    """
+    Test that we can `assert_next_call` when the callback has been called.
+
+    :param callback: the callback under test
+    :param schedule_call: a callable used to schedule a callback call.
+    """
+    args = ["arg1", "arg2"]
+    kwargs = {"kwarg1": "kwarg1", "kwarg2": "kwarg2"}
+
+    schedule_call(0.5, callback, *args, **kwargs)
+    callback.assert_next_call(*args, **kwargs)
+
+
+def test_assert_next_call_when_not_called(
+    callback: MockCallback, schedule_call: Callable
+) -> None:
+    """
+    Test that the assert_next_call fails when the callback is called too late.
+
+    :param callback: the callback under test
+    :param schedule_call: a callable used to schedule a callback call.
+    """
+    args = ["arg1", "arg2"]
+    kwargs = {"kwarg1": "kwarg1", "kwarg2": "kwarg2"}
+
+    schedule_call(1.5, callback, *args, **kwargs)
+
+    with pytest.raises(
+        AssertionError, match="MockCallback has not been called."
+    ):
+        callback.assert_next_call(*args, **kwargs)
+
+
+def test_assert_not_called_when_called(
+    callback: MockCallback, schedule_call: Callable
+) -> None:
+    """
+    Test that assert_not_called fails when the callback is called.
+
+    :param callback: the callback under test
+    :param schedule_call: a callable used to schedule a callback call.
+    """
+    args = ["arg1", "arg2"]
+    kwargs = {"kwarg1": "kwarg1", "kwarg2": "kwarg2"}
+
+    schedule_call(0.5, callback, *args, **kwargs)
+
+    with pytest.raises(
+        AssertionError,
+        match="Expected 'mock' to not have been called. Called 1 times.",
+    ):
+        callback.assert_not_called()
+
+
+def test_assert_not_called_when_not_called(
+    callback: MockCallback, schedule_call: Callable
+) -> None:
+    """
+    Test that assert_not_called succeeds when the callback is called too late.
+
+    :param callback: the callback under test
+    :param schedule_call: a callable used to schedule a callback call.
+    """
+    args = ["arg1", "arg2"]
+    kwargs = {"kwarg1": "kwarg1", "kwarg2": "kwarg2"}
+
+    schedule_call(1.5, callback, *args, **kwargs)
+    callback.assert_not_called()
+
+
+def test_initialisation_configuration() -> None:
+    """
+    Test that `__init__` configuration data configures the callback.
+
+    Here we only test that the callback returns the configured return
+    value when called.
+    """
+    callback = MockCallback(timeout=1.0, return_value="return_value")
+
+    assert callback("arg", kwarg="kwarg") == "return_value"
+    callback.assert_next_call("arg", kwarg="kwarg")
+
+
+def test_configure_mock(callback: MockCallback) -> None:
+    """
+    Test that `configure_mock` configuration data configures the callback.
+
+    Here we only test that the callback returns a configured return
+    value when called.
+
+    :param callback: the callback under test
+    """
+    callback.configure_mock(return_value="return_value")
+
+    assert callback("arg", kwarg="kwarg") == "return_value"
+    callback.assert_next_call("arg", kwarg="kwarg")
+
+
+def test_mock_configuration_exception() -> None:
+    """Test that configuration of exceptions is also correct."""
+    callback = MockCallback(
+        timeout=1.0, side_effect=ValueError("side effect exception")
+    )
+
+    with pytest.raises(ValueError, match="side effect exception"):
+        callback("arg", kwarg="kwarg")
+    callback.assert_next_call("arg", kwarg="kwarg")
+
+
+def test_transform() -> None:
+    """Test that transform functionality works correctly."""
+
+    def _swap_args_and_kwargs(
+        args: List[Any], kwargs: Dict[str, Any]
+    ) -> Tuple[List[Any], Dict[str, Any]]:
+        new_args = [kwargs["input_first_kwarg"], kwargs["input_second_kwarg"]]
+        new_kwargs = {
+            "output_first_kwarg": args[0],
+            "output_second_kwarg": args[1],
+        }
+        return (new_args, new_kwargs)
+
+    callback = MockCallback(transform=_swap_args_and_kwargs)
+    callback(
+        "input_first_arg",
+        "input_second_arg",
+        input_first_kwarg="output_first_arg",
+        input_second_kwarg="output_second_arg",
+    )
+    callback.assert_next_call(
+        "output_first_arg",
+        "output_second_arg",
+        output_first_kwarg="input_first_arg",
+        output_second_kwarg="input_second_arg",
+    )
