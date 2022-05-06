@@ -127,8 +127,8 @@ class MockCallback:
         """
         try:
             called_mock = self._queue.get(timeout=self._timeout)
-        except queue.Empty:
-            raise AssertionError(  # pylint: disable=raise-missing-from
+        except queue.Empty as empty:
+            raise AssertionError(
                 "MockCallback has not been called."
-            )
+            ) from empty
         called_mock.assert_called_once_with(*args, **kwargs)
