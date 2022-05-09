@@ -188,7 +188,7 @@ class ItemGroup:
         """
         try:
             raw_item = self._producer(self._timeout)
-        except Empty:  # pylint: disable=try-except-raise
+        except Empty:
             # TODO: Log this.
             raise
 
@@ -339,9 +339,9 @@ class MockConsumerGroup:
         self._item_group = ItemGroup(
             producer, categorizer, timeout, **characterizers
         )
-        self._group_view = self._ConsumerView(self._item_group)
+        self._group_view = ConsumerAsserter(self._item_group)
         self._views = {
-            category: self._ConsumerView(self._item_group[category])
+            category: ConsumerAsserter(self._item_group[category])
             for category in characterizers
         }
 
@@ -373,7 +373,7 @@ class MockConsumerGroup:
     def __getitem__(
         self: MockConsumerGroup,
         category: str,
-    ) -> _ConsumerView:
+    ) -> ConsumerAsserter:
         """
         Return a view on a particular category.
 
@@ -383,74 +383,83 @@ class MockConsumerGroup:
         """
         return self._views[category]
 
-    class _ConsumerView:
-        def __init__(
-            self: MockConsumerGroup._ConsumerView,
-            iterable: Iterable,
-        ):
-            self._iterable = iterable
 
-        def assert_no_item(self: MockConsumerGroup._ConsumerView) -> None:
-            """
-            Assert that no item is available in this view of the group.
+class ConsumerAsserter:
+    """A class that asserts against, and consume, available items."""
 
-            :raises AssertionError: if an item is available
-            """
-            try:
-                _ = next(iter(self._iterable))
-            except StopIteration:
+    def __init__(
+        self: ConsumerAsserter,
+        iterable: Iterable,
+    ) -> None:
+        """
+        Initialise a new instance.
+
+        :param iterable: an iterable from which can be obtained an
+            iterator of available items.
+        """
+        self._iterable = iterable
+
+    def assert_no_item(self: ConsumerAsserter) -> None:
+        """
+        Assert that no item is available in this view of the group.
+
+        :raises AssertionError: if an item is available
+        """
+        try:
+            _ = next(iter(self._iterable))
+        except StopIteration:
+            return
+
+        raise AssertionError("Expected no item, but an item is available.")
+
+    def assert_item(
+        self: ConsumerAsserter,
+        *args: Any,
+        category: Optional[str] = None,
+        lookahead: int = 1,
+        **kwargs: Any,
+    ) -> None:
+        """
+        Assert that an item is available in this view of the group.
+
+        :param args: a single optional positional argument is allowed.
+            If provided, it is asserted that there is an item available
+            that is equal to the argument.
+        :param category: optional category that we expect the
+            item to belong to.
+        :param lookahead: how many items to look through for the item
+            that we are asserting. The default is 1, in which case we
+            are asserting what the very next item will be. This will be
+            the usual case in deterministic situations where we know
+            the exact order in which items will arrive. In
+            non-deterministic situations, we can provide a higher value.
+            For example, a lookahead of 2 means that we are asserting
+            the item will be one of the first two items.
+        :param kwargs: characteristics that the item is expected to have
+
+        :raises AssertionError: if the asserted item does not arrive
+            in time
+        """
+        assert (
+            len(args) <= 1
+        ), "Only one positional argument to assert_item is permitted"
+
+        for node in itertools.islice(iter(self._iterable), 0, lookahead):
+            (item_category, raw_item, characteristics) = node.payload
+            if category is not None and item_category != category:
+                continue
+            if len(args) == 1 and raw_item != args[0]:
+                continue
+
+            for key, value in kwargs.items():
+                if key not in characteristics:
+                    break
+                if characteristics[key] != value:
+                    break
+            else:
+                node.drop()
                 return
 
-            raise AssertionError("Expected no item, but an item is available.")
-
-        def assert_item(
-            self: MockConsumerGroup._ConsumerView,
-            *args: Any,
-            category: Optional[str] = None,
-            lookahead: int = 1,
-            **kwargs: Any,
-        ) -> None:
-            """
-            Assert that an item is available in this view of the group.
-
-            :param args: a single optional positional argument is allowed.
-                If provided, it is asserted that there is an item available
-                that is equal to the argument.
-            :param category: optional category that we expect the
-                item to belong to.
-            :param lookahead: how many items to look through for the item
-                that we are asserting. The default is 1, in which case we
-                are asserting what the very next item will be. This will be
-                the usual case in deterministic situations where we know
-                the exact order in which items will arrive. In
-                non-deterministic situations, we can provide a higher value.
-                For example, a lookahead of 2 means that we are asserting
-                the item will be one of the first two items.
-            :param kwargs: characteristics that the item is expected to have
-
-            :raises AssertionError: if the asserted item does not arrive
-                in time
-            """
-            assert (
-                len(args) <= 1
-            ), "Only one positional argument to assert_item is permitted"
-
-            for node in itertools.islice(iter(self._iterable), 0, lookahead):
-                (item_category, raw_item, characteristics) = node.payload
-                if category is not None and item_category != category:
-                    continue
-                if len(args) == 1 and raw_item != args[0]:
-                    continue
-
-                for key, value in kwargs.items():
-                    if key not in characteristics:
-                        break
-                    if characteristics[key] != value:
-                        break
-                else:
-                    node.drop()
-                    return
-
-            raise AssertionError(
-                f"Expected matching item within the first {lookahead} items."
-            )
+        raise AssertionError(
+            f"Expected matching item within the first {lookahead} items."
+        )
