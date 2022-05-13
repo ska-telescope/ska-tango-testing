@@ -23,7 +23,7 @@ def setup(app):
 # -- Project information -----------------------------------------------------
 
 project = 'ska-tango-testing'
-copyright = '2022, Drew Devereux <drew.devereux@csiro.au>'
+copyright = '2022, CSIRO'
 author = 'Drew Devereux <drew.devereux@csiro.au>'
 
 # The full version, including alpha/beta/rc tags

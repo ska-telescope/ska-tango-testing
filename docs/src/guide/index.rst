@@ -4,13 +4,13 @@ User guide
 The ``ska-tango-testing`` package provides test harness elements for SKA
 Tango devices.
 
-To date, the only element available is mock callbacks for testing
-asynchronous callbacks
+To date, the only element available is mock callables for testing
+asynchronous callbacks.
 
-Mock Callbacks
+Mock Callables
 --------------
 This subpackage addresses the problem of testing production code that
-makes asynchronous calls to callbacks.
+makes asynchronous calls to callables.
 
 An example
 ^^^^^^^^^^
@@ -132,16 +132,16 @@ caution by sleeping for longer than necessary.
 In short, tests like this one are extremely brittle, and often very
 slow.
 
-Testing with ``ska_tango_testing.mock_callback``
+Testing with ``ska_tango_testing.callable``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-The ``MockCallback`` and ``MockCallbackGroup`` classes simplify testing
+The ``MockCallable`` and ``MockCallableGroup`` classes simplify testing
 behaviour like this, removing the need for tuned sleeps, and ensuring
 that the test takes no longer than necessary to run:
 
 .. code-block:: python
 
     def test_do_asynchronous_work_using_mock_callback_group() -> None:
-        callback_group = MockCallbackGroup()
+        callback_group = MockCallableGroup()
 
         do_asynchronous_work(
             callback_group["status"],
@@ -149,15 +149,15 @@ that the test takes no longer than necessary to run:
             callback_group["numbers"],
         )
 
-        callback_group.assert_next_call("status", "IN_PROGRESS")
+        callback_group.assert_call("status", "IN_PROGRESS")
 
         for letter in ["a", "b", "c", "d"]:
-            callback_group["letters"].assert_next_call(letter)
+            callback_group["letters"].assert_call(letter)
 
         for number in [1, 2, 3, 4]:
-            callback_group["numbers"].assert_next_call(number)
+            callback_group["numbers"].assert_call(number)
 
-        callback_group.assert_next_call("status", "COMPLETED")
+        callback_group.assert_call("status", "COMPLETED")
 
 We now have a clean, readable test, with no sleeps.
 

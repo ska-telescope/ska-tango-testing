@@ -1,2 +1,6 @@
 [MESSAGES CONTROL]
-disable=fixme
+disable=
+    fixme,
+    # try-except-raise is a great way to write self-documenting code!
+    try-except-raise,
+    
