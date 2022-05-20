@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Optional
 
 import pytest
 
-from ska_tango_testing.consumer import CharacterizerType, MockConsumerGroup
+from ska_tango_testing import CharacterizerType, MockConsumerGroup
 
 from .conftest import FakeItem, TestingProducerProtocol
 

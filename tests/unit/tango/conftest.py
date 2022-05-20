@@ -6,7 +6,7 @@ from typing import Any, Callable, Optional
 import pytest
 import tango
 
-from ska_tango_testing.tango import MockTangoEventCallbackGroup
+from ska_tango_testing import MockTangoEventCallbackGroup
 
 
 @pytest.fixture()
