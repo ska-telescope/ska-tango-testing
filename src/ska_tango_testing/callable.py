@@ -3,40 +3,63 @@ from __future__ import annotations
 
 import queue
 import unittest.mock
-from typing import Any, Dict, NamedTuple, Optional, Tuple
+from typing import Any, Dict, Optional
 
-from .consumer import ConsumerAsserter, MockConsumerGroup
+from .consumer import CharacterizerType, ConsumerAsserter, MockConsumerGroup
+
+
+def _characterizer_factory(
+    special_characterizer: Optional[CharacterizerType],
+) -> CharacterizerType:
+    def _characterize_call(characteristics: Dict[str, Any]) -> Dict[str, Any]:
+        (_, args, kwargs) = characteristics["item"]
+        characteristics["call_args"] = args
+        characteristics["call_kwargs"] = kwargs
+
+        del characteristics["item"]
+
+        if special_characterizer is not None:
+            characteristics = special_characterizer(characteristics)
+
+        return characteristics
+
+    return _characterize_call
 
 
 class MockCallableGroup:
     """This class implements a group of callables."""
 
-    class _CallableInfo(NamedTuple):
-        name: str
-        args: Tuple
-        kwargs: Dict[str, Any]
-
     def __init__(
         self: MockCallableGroup,
         *callables: str,
         timeout: Optional[float] = 1.0,
+        **special_callables: CharacterizerType,
     ) -> None:
         """
         Initialise a new instance.
 
+        :param callables: names of simple callables in this group; that
+            is, callables that do not need a special characterizer.
         :param timeout: number of seconds to wait for the callable to be
             called, or None to wait forever. The default is 1.0 seconds.
-        :param callables: names of callables in this group.
+        :param special_callables: keyword argument for special callables
+            that need a special characterizer. Each argument is of the
+            form `callable_name=characterizer`.
         """
-        self._queue: queue.SimpleQueue[
-            MockCallableGroup._CallableInfo
-        ] = queue.SimpleQueue()
-
-        characterizers = {category: None for category in callables}
+        self._queue: queue.SimpleQueue[Dict[str, Any]] = queue.SimpleQueue()
+        characterizers = {
+            category: _characterizer_factory(None) for category in callables
+        }
+        characterizers.update(
+            {
+                category: _characterizer_factory(special_callable)
+                for category, special_callable in special_callables.items()
+            }
+        )
 
         self._mock_consumer_group = MockConsumerGroup(
             lambda timeout: self._queue.get(timeout=timeout),
-            lambda callable_info: callable_info.name,
+            lambda payload: payload[0],
             timeout,
             **characterizers,
         )
@@ -45,7 +68,7 @@ class MockCallableGroup:
             name: self._Callable(
                 self._queue, name, self._mock_consumer_group[name]
             )
-            for name in callables
+            for name in characterizers
         }
 
     def __getitem__(
@@ -73,26 +96,127 @@ class MockCallableGroup:
         """
         Assert that the specified callable has been called as specified.
 
+        For example, `assert_call("a", "b", c=1, lookahead=2)` will
+        assert that one of the next 2 calls to callable "a" will
+        have call signature `("b", c=1)`.
+
+        This is syntactic sugar, which simplifies the expression of
+        assertions, but also muddles up the arguments to `assert_call`
+        with the arguments that we are asserting the call to have. It is
+        equivalent to the more principled and flexible, but long-winded:
+
+        .. code-block:: py
+
+            assert_against_call(
+                "a",
+                call_args=("b",),
+                call_kwargs={"c": 1},
+                lookahead=2,
+            )
+
         :param callable_name: name of the callable that we are asserting
             to have been called
-        :param args: positional arguments asserted to be in the call
-        :param kwargs: keyword arguments. An optional "lookahead"
-            keyword argument may be used to specify the number of calls
-            to examing in search of a matching call. The default is 1,
-            which means we are asserting on the *next* call, All other
-            keyword arguments are part of the asserted call.
+        :param args: positional arguments asserted to be in the call.
+        :param kwargs: If a "lookahead" keyword argument is provided,
+            this specifies the number of calls to examine in search of a
+            matching call. The default is 1, in which case we are
+            asserting against the *next* call.
+
+            All other keyword arguments are keyword arguments
+            asserted to be in the call.
 
         :raises AssertionError: if the asserted call has not occurred
             within the timeout period
         """
         lookahead = kwargs.pop("lookahead", 1)
         try:
+            self.assert_against_call(
+                callable_name,
+                call_args=args,
+                call_kwargs=kwargs,
+                lookahead=lookahead,
+            )
+        except AssertionError:
+            raise  # pylint: disable=try-except-raise
+
+    def assert_against_call(
+        self: MockCallableGroup,
+        callable_name: str,
+        lookahead: Optional[int] = None,
+        **kwargs: Any,
+    ) -> None:
+        """
+        Assert that the specified callable has been called as characterised.
+
+        :param callable_name: name of the callable that we are asserting
+            to have been called
+        :param lookahead:  The number of calls to examine in search of a
+            matching call. The default is 1, which means we are
+            asserting against the *next* call.
+        :param kwargs: the characteristics that we are asserting the
+            call to have. All call have `call_args` and `call_kwargs`
+            characteristics. For example,
+
+            .. code-block:: py
+
+                assert_against_call(
+                    "a",
+                    lookahead=2,
+                    call_args=("b",),
+                    call_kwargs={"c": 1},
+                )
+
+            asserts that one of the next two calls to callback "a" will
+            have the signature ("b", c=1). If a characterizer was
+            provided for the callback in this group's constructor, then
+            there may be other characteristics that this method can
+            assert against. For example, suppose we expect callable "a"
+            to have been called with signature
+
+            .. code-block:: py
+
+                callable_a(name="a", value=2, timestamp=1234567890)
+
+            but the timestamp is unknown. If we don't know the timestamp
+            then we can't
+
+            .. code-block:: py
+
+                assert_against_call(
+                    "a",
+                    lookahead=2,
+                    call_args=(,),
+                    call_kwargs={
+                        "name": "a",
+                        "value": 2,
+                        "timestamp": 1234567890,
+                    },
+                )
+
+            Instead we can provide a characterizer that unpacks the
+            "name" and "value" arguments for us, and then
+
+            .. code-block:: py
+
+                assert_against_call(
+                    "a",
+                    lookahead=2,
+                    name="a",
+                    value=2,
+                )
+
+        :raises AssertionError: if the asserted call has not occurred
+            within the timeout period
+        """
+        try:
             self._mock_consumer_group.assert_item(
-                (callable_name, args, kwargs), lookahead=lookahead
+                category=callable_name,
+                lookahead=lookahead or 1,
+                **kwargs,
             )
         except AssertionError as assertion_error:
             raise AssertionError(
-                f"Callable has not been called with args {args}, kwargs "
+                f"Callable has not been called with characteristics "
                 f"{kwargs}."
             ) from assertion_error
 
@@ -151,9 +275,7 @@ class MockCallableGroup:
 
             :return: whatever this callable is configured to return
             """
-            self._call_queue.put(
-                MockCallableGroup._CallableInfo(self._name, args, kwargs)
-            )
+            self._call_queue.put((self._name, args, kwargs))
 
             mock = unittest.mock.Mock(self._mock_configuration)
             return mock(*args, **kwargs)
@@ -166,25 +288,121 @@ class MockCallableGroup:
             """
             Assert that this callable has been called as specified.
 
-            :param args: positional arguments asserted to be in the call
-            :param kwargs: keyword arguments. An optional "lookahead"
-                keyword argument may be used to specify the number of
-                calls to examine in search of a matching call. The
-                default is 1, which means we are asserting on the *next*
-                call, All other keyword arguments are part of the
-                asserted call.
+            For example, `assert_call("b", c=1, lookahead=2)` asserts
+            that one of the next 2 calls to this callable will have call
+            signature `("b", c=1)`.
+
+            This is syntactic sugar, which simplifies the expression of
+            assertions, but also muddles up the arguments to
+            `assert_call` with the arguments that we are asserting the
+            call to have. It is equivalent to the more principled and
+            flexible, but long-winded:
+
+            .. code-block:: py
+
+                assert_against_call(
+                    call_args=("b",),
+                    call_kwargs={"c": 1},
+                    lookahead=2,
+                )
+
+            :param args: positional arguments asserted to be in the call.
+            :param kwargs: If a "lookahead" keyword argument is
+                provided, this specifies the number of calls to examine
+                in search of a matching call. The default is 1, in which
+                case we are asserting against the *next* call.
+
+                All other keyword arguments are keyword arguments
+                asserted to be in the call.
+
+            :raises AssertionError: if the asserted call has not occurred
+                within the timeout period
+            """
+            lookahead = kwargs.pop("lookahead", 1)
+            try:
+                self.assert_against_call(
+                    call_args=args,
+                    call_kwargs=kwargs,
+                    lookahead=lookahead,
+                )
+            except AssertionError:
+                raise  # pylint: disable=try-except-raise
+
+        def assert_against_call(
+            self: MockCallableGroup._Callable,
+            lookahead: Optional[int] = None,
+            **kwargs: Any,
+        ) -> None:
+            """
+            Assert that this callable has been called as characterised.
+
+            :param lookahead:  The number of calls to examine in search
+                of a matching call. The default is 1, which means we are
+                asserting against the *next* call.
+            :param kwargs: the characteristics that we are asserting the
+                call to have. All calls have `call_args` and
+                `call_kwargs` characteristics. For example,
+
+                .. code-block:: py
+
+                    assert_against_call(
+                        lookahead=2,
+                        call_args=("b",),
+                        call_kwargs={"c": 1},
+                    )
+
+                asserts that one of the next two calls to this callback
+                will have the signature ("b", c=1). If a characterizer
+                was provided for the callback in this group's
+                constructor, then there may be other characteristics
+                that this method can assert against. For example,
+                suppose we expect this callable to have been called with
+                signature
+
+                .. code-block:: py
+
+                    this_callable(name="a", value=2, timestamp=1234567890)
+
+                but the timestamp is unknown. If we don't know the
+                timestamp then we can't
+
+                .. code-block:: py
+
+                    assert_against_call(
+                        lookahead=2,
+                        call_args=(,),
+                        call_kwargs={
+                            "name": "a",
+                            "value": 2,
+                            "timestamp": 1234567890,
+                        },
+                    )
+
+                Instead we can provide a characterizer that unpacks the
+                "name" and "value" arguments for us, and then
+
+                .. code-block:: py
+
+                    assert_against_call(
+                        lookahead=2,
+                        name="a",
+                        value=2,
+                    )
 
             :raises AssertionError: if the asserted call has not
                 occurred within the timeout period
             """
-            lookahead = kwargs.pop("lookahead", 1)
             try:
                 self._consumer_view.assert_item(
-                    (self._name, args, kwargs), lookahead=lookahead
+                    category=self._name,
+                    # args=args,
+                    # kwargs=kwargs,
+                    lookahead=lookahead or 1,
+                    **kwargs,
                 )
             except AssertionError as assertion_error:
                 raise AssertionError(
-                    f"Callable has not been called with args {args}, kwargs "
+                    f"Callable has not been called with characteristics "
                     f"{kwargs}."
                 ) from assertion_error
 
@@ -232,18 +450,114 @@ class MockCallable:
         """
         Assert that this callable has been called as specified.
 
-        :param args: positional arguments asserted to be in the call
-        :param kwargs: keyword arguments. An optional "lookahead"
-            keyword argument may be used to specify the number of calls
-            to examing in search of a matching call. The default is 1,
-            which means we are asserting on the *next* call, All other
-            keyword arguments are part of the asserted call.
+        For example, `assert_call("b", c=1, lookahead=2)` asserts that
+        one of the next 2 calls to this callable will have call
+        signature `("b", c=1)`.
 
-        :raises AssertionError: if the asserted call has not
-            occurred within the timeout period
+        This is syntactic sugar, which simplifies the expression of
+        assertions, but also muddles up the arguments to `assert_call`
+        with the arguments that we are asserting the call to have. It is
+        equivalent to the more principled and flexible, but long-winded:
+
+        .. code-block:: py
+
+            assert_against_call(
+                call_args=("b",),
+                call_kwargs={"c": 1},
+                lookahead=2,
+            )
+
+        :param args: positional arguments asserted to be in the call.
+        :param kwargs: If a "lookahead" keyword argument is provided,
+            this specifies the number of calls to examine in search of a
+            matching call. The default is 1, in which case we are
+            asserting against the *next* call.
+
+            All other keyword arguments are keyword arguments
+            asserted to be in the call.
+
+        :raises AssertionError: if the asserted call has not occurred
+            within the timeout period
+        """
+        lookahead = kwargs.pop("lookahead", 1)
+        try:
+            self.assert_against_call(
+                call_args=args,
+                call_kwargs=kwargs,
+                lookahead=lookahead,
+            )
+        except AssertionError:
+            raise  # pylint: disable=try-except-raise
+
+    def assert_against_call(
+        self: MockCallable,
+        lookahead: Optional[int] = None,
+        **kwargs: Any,
+    ) -> None:
+        """
+        Assert that this callable has been called as characterised.
+
+        :param lookahead:  The number of calls to examine in search of a
+            matching call. The default is 1, which means we are
+            asserting against the *next* call.
+        :param kwargs: the characteristics that we are asserting the
+            call to have. All calls have `call_args` and `call_kwargs`
+            characteristics. For example,
+
+            .. code-block:: py
+
+                assert_against_call(
+                    lookahead=2,
+                    call_args=("b",),
+                    call_kwargs={"c": 1},
+                )
+
+            asserts that one of the next two calls to this callback will
+            have the signature ("b", c=1). If a characterizer was
+            provided for the callback in this group's constructor, then
+            there may be other characteristics that this method can
+            assert against. For example, suppose we expect this callable
+            to have been called with signature
+
+            .. code-block:: py
+
+                this_callable(name="a", value=2, timestamp=1234567890)
+
+            but the timestamp is unknown. If we don't know the timestamp
+            then we can't
+
+            .. code-block:: py
+
+                assert_against_call(
+                    lookahead=2,
+                    call_args=(,),
+                    call_kwargs={
+                        "name": "a",
+                        "value": 2,
+                        "timestamp": 1234567890,
+                    },
+                )
+
+            Instead we can provide a characterizer that unpacks the
+            "name" and "value" arguments for us, and then
+
+            .. code-block:: py
+
+                assert_against_call(
+                    lookahead=2,
+                    name="a",
+                    value=2,
+                )
+
+        :raises AssertionError: if the asserted call has not occurred
+            within the timeout period
         """
         try:
-            self._view.assert_call(*args, **kwargs)
+            self._view.assert_against_call(
+                # args=args, kwargs=kwargs,
+                lookahead=lookahead or 1,
+                **kwargs,
+            )
         except AssertionError:
             raise
 

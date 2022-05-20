@@ -16,6 +16,8 @@ from typing import (
     TypeVar,
 )
 
+CharacterizerType = Callable[[Dict[str, Any]], Dict[str, Any]]
+
 ItemType = TypeVar("ItemType")
 
 
@@ -137,7 +139,7 @@ class ItemGroup:
         producer: Callable[[Optional[float]], ItemType],
         categorizer: Callable[[ItemType], str],
         timeout: Optional[float],
-        **characterizers: Optional[Callable[[ItemType], Dict]],
+        **characterizers: Optional[CharacterizerType],
     ) -> None:
         """
         Initialise a new instance.
@@ -193,13 +195,15 @@ class ItemGroup:
             raise
 
         category = self._categorizer(raw_item)
+        characteristics = {
+            "item": raw_item,
+            "category": category,
+        }
         characterizer = self._characterizers[category]
-        if characterizer is None:
-            characteristics = {}
-        else:
-            characteristics = characterizer(raw_item)
+        if characterizer is not None:
+            characteristics = characterizer(characteristics)
 
-        node = Node((category, raw_item, characteristics))
+        node = Node(characteristics)
         self._multi_deque.append(node, self.GROUP_HOOK, category)
         assert "__ItemGroup_group" in self.first.next
 
@@ -323,7 +327,8 @@ class MockConsumerGroup:
         producer: Callable[[Optional[float]], ItemType],
         categorizer: Callable[[Any], str],
         timeout: Optional[float],
-        **characterizers: Optional[Callable[[Any], Dict]],
+        *consumers: str,
+        **special_consumers: Optional[Callable[[Any], Dict]],
     ) -> None:
         """
         Initialise a new instance.
@@ -334,12 +339,22 @@ class MockConsumerGroup:
         :param timeout: optional number of seconds to wait for an item.
             If omitted, the default is 1 second. If explicitly set to
             None, the wait is forever.
-        :param characterizers: dictionary of characterizer callables
+        :param consumers: list of simple consumers in this group
+        :param special_consumers: keyword arguments specifying special
+            consumers in this group. Consumers are special if they have
+            their own characterizer. Here, each key-value pair is the
+            name of the consumer and the characterizer that it uses.
         """
+        characterizers = {
+            **special_consumers,
+            **{consumer: None for consumer in consumers},
+        }
+
         self._item_group = ItemGroup(
             producer, categorizer, timeout, **characterizers
         )
         self._group_view = ConsumerAsserter(self._item_group)
+
         self._views = {
             category: ConsumerAsserter(self._item_group[category])
             for category in characterizers
@@ -415,7 +430,6 @@ class ConsumerAsserter:
     def assert_item(
         self: ConsumerAsserter,
         *args: Any,
-        category: Optional[str] = None,
         lookahead: int = 1,
         **kwargs: Any,
     ) -> None:
@@ -425,8 +439,6 @@ class ConsumerAsserter:
         :param args: a single optional positional argument is allowed.
             If provided, it is asserted that there is an item available
             that is equal to the argument.
-        :param category: optional category that we expect the
-            item to belong to.
         :param lookahead: how many items to look through for the item
             that we are asserting. The default is 1, in which case we
             are asserting what the very next item will be. This will be
@@ -445,16 +457,13 @@ class ConsumerAsserter:
         ), "Only one positional argument to assert_item is permitted"
 
         for node in itertools.islice(iter(self._iterable), 0, lookahead):
-            (item_category, raw_item, characteristics) = node.payload
-            if category is not None and item_category != category:
-                continue
-            if len(args) == 1 and raw_item != args[0]:
+            if len(args) == 1 and node.payload["item"] != args[0]:
                 continue
 
             for key, value in kwargs.items():
-                if key not in characteristics:
+                if key not in node.payload:
                     break
-                if characteristics[key] != value:
+                if node.payload[key] != value:
                     break
             else:
                 node.drop()
