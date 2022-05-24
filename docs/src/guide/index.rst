@@ -42,7 +42,7 @@ to set up. It requires
   an equivalent `item` that would let us `assert_item(item)`.
 
   A `characterizer` addresses this by modifying the dictionary that
-  assertions are made against. In our example, we might provde a
+  assertions are made against. In our example, we might provide a
   characterizer that inserts "name" and "value" items into the
   dictionary, thus allowing us to `assert_item(name="foo", value="bah")`
   and hence asserting against the bits that matter, while ignoring the
@@ -234,15 +234,15 @@ that the test takes no longer than necessary to run:
             callback_group["numbers"],
         )
 
-        callback_group.assert_against_call("status", "IN_PROGRESS")
+        callback_group.assert_call("status", "IN_PROGRESS")
 
         for letter in ["a", "b", "c", "d"]:
-            callback_group["letters"].assert_against_call(letter)
+            callback_group["letters"].assert_call(letter)
 
         for number in [1, 2, 3, 4]:
-            callback_group["numbers"].assert_against_call(number)
+            callback_group["numbers"].assert_call(number)
 
-        callback_group.assert_against_call("status", "COMPLETED")
+        callback_group.assert_call("status", "COMPLETED")
 
 We now have a clean, readable test, with no sleeps.
 
