@@ -65,3 +65,90 @@ class MockTangoEventCallbackGroup(MockCallableGroup):
             for callable in callables
         }
         super().__init__(timeout=timeout, **callbacks)
+
+    def assert_change_event(
+        self,
+        callback_name: str,
+        attribute_value: Any,
+        lookahead: Optional[int] = None,
+    ) -> None:
+        """
+        Assert that the callback received a change event with the given value.
+
+        :param callback_name: name of the callback that we are asserting
+            to have been called
+        :param attribute_value: new value of the attribute for which the
+            change event has been sent
+        :param lookahead:  The number of calls to examine in search of a
+            matching call. The default is 1, which means we are
+            asserting against the *next* call.
+
+        :raises AssertionError: if the asserted call has not occurred
+            within the timeout period
+        """
+        try:
+            self.assert_against_call(
+                callback_name,
+                attribute_value=attribute_value,
+                lookahead=lookahead or 1,
+            )
+        except AssertionError:
+            raise  # pylint: disable=try-except-raise
+
+    class _EventCallback:
+        def __init__(
+            self, underlying_callable: MockCallableGroup._Callable
+        ) -> None:
+            """
+            Initialise a new instance.
+
+            :param underlying_callable: the callable object that this
+                callback will use.
+            """
+            self._callable = underlying_callable
+
+        def __call__(self, *args: Any, **kwargs: Any) -> Any:
+            return self._callable(*args, **kwargs)
+
+        def __getattr__(self, attr: str) -> Any:
+            return getattr(self._callable, attr)
+
+        def assert_change_event(
+            self,
+            attribute_value: Any,
+            lookahead: Optional[int] = None,
+        ) -> None:
+            """
+            Assert a change event with the given value.
+
+            :param attribute_value: new value of the attribute for which
+                the change event has been sent
+            :param lookahead:  The number of calls to examine in search
+                of a matching call. The default is 1, which means we are
+                asserting against the *next* call.
+
+            :raises AssertionError: if the asserted call has not
+                occurred within the timeout period
+            """
+            try:
+                self._callable.assert_against_call(
+                    attribute_value=attribute_value,
+                    lookahead=lookahead or 1,
+                )
+            except AssertionError:
+                raise  # pylint: disable=try-except-raise
+
+    def __getitem__(  # type: ignore[override]
+        self, callback_name: str
+    ) -> MockTangoEventCallbackGroup._EventCallback:
+        """
+        Return a standalone Tango event callback for the specified name.
+
+        This can be passed to the caller to be actually called, and it
+        can also be used to assert calls.
+
+        :param callback_name: name of the callback sought.
+
+        :return: a standalone mock Tango event callback
+        """
+        return self._EventCallback(super().__getitem__(callback_name))

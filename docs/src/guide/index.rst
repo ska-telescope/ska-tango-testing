@@ -273,21 +273,18 @@ respectively.
 .. code-block:: python
 
     device_under_test.On()
-    callbacks.assert_against_call("command_status", attribute_value="QUEUED")
+    callbacks.assert_change_event("command_status", "QUEUED")
 
     # We can't be completely sure which of these two will arrive first,
     # so lets give the first one a lookahead of 2.
-    callbacks.assert_against_call(
-        "command_status", attribute_value="IN_PROGRESS", lookahead=2
-    )
-    callbacks.assert_against_call("command_progress", attribute_value="33")
+    callbacks.assert_change_event("command_status", "IN_PROGRESS", lookahead=2)
+    callbacks.assert_change_event("command_progress", "33")
+    callbacks.assert_change_event("command_progress", "66")
 
-    callbacks.assert_against_call("command_progress", attribute_value="66")
-
-    callbacks.assert_against_call("device_state", attribute_value=DevState.ON)
-    callbacks.assert_against_call(
-        "device_status", attribute_value="The device is in ON state."
+    callbacks.assert_change_event("device_state", DevState.ON)
+    callbacks.assert_change_event(
+        "device_status", "The device is in ON state."
     )
 
-    callbacks.assert_against_call("command_status", attribute_value="COMPLETED")
+    callbacks.assert_change_event("command_status", "COMPLETED")
     callbacks.assert_not_called()

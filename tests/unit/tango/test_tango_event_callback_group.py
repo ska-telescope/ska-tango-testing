@@ -44,7 +44,7 @@ def test_assert_call_when_no_event(
     schedule_event: Callable,
 ) -> None:
     """
-    Test that `assert_against_call` fails when the item is produced too late.
+    Test that `assert_change_event` fails when the item is produced too late.
 
     :param callback_group: the Tango event callback group under test.
     :param schedule_event: a callable used to schedule a callback call.
@@ -55,19 +55,19 @@ def test_assert_call_when_no_event(
         AssertionError,
         match="Callable has not been called",
     ):
-        callback_group.assert_against_call("status", attribute_value="QUEUED")
+        callback_group.assert_change_event("status", "QUEUED")
 
 
 @pytest.mark.parametrize("lookahead", [1, 2])
 @pytest.mark.parametrize("position", [1, 2, 3])
-def test_assert_against_call_when_event(
+def test_assert_change_event_when_event(
     callback_group: MockTangoEventCallbackGroup,
     schedule_event: Callable,
     position: int,
     lookahead: int,
 ) -> None:
     """
-    Test `assert_against_call` when the callback has been called.
+    Test `assert_change_event` when the callback has been called.
 
     Specifically, we make a sequence of calls, then we select a call
     that we have made, and we assert that the call has been made.
@@ -85,16 +85,16 @@ def test_assert_against_call_when_event(
     schedule_event(0.4, callback_group["progress"], "progress", 3)
 
     if lookahead >= position:
-        callback_group.assert_against_call(
-            "progress", attribute_value=position, lookahead=lookahead
+        callback_group.assert_change_event(
+            "progress", position, lookahead=lookahead
         )
     else:
         with pytest.raises(
             AssertionError,
             match="Callable has not been called with",
         ):
-            callback_group.assert_against_call(
-                "progress", attribute_value=position, lookahead=lookahead
+            callback_group.assert_change_event(
+                "progress", position, lookahead=lookahead
             )
 
 
@@ -142,12 +142,12 @@ def test_assert_no_call_when_event(
         callback_group["status"].assert_not_called()
 
 
-def test_assert_against_call_when_no_event(
+def test_assert_change_event_when_no_event(
     callback_group: MockTangoEventCallbackGroup,
     schedule_event: Callable,
 ) -> None:
     """
-    Test that `assert_against_call` fails when the item is produced too late.
+    Test that `assert_change_event` fails when the item is produced too late.
 
     :param callback_group: the Tango event callback group under test.
     :param schedule_event: a callable used to schedule a callback call.
@@ -159,7 +159,7 @@ def test_assert_against_call_when_no_event(
         AssertionError,
         match="Callable has not been called",
     ):
-        callback_group["progress"].assert_against_call(attribute_value=50)
+        callback_group["progress"].assert_change_event(50)
 
 
 @pytest.mark.parametrize("lookahead", [1, 2])
@@ -171,7 +171,7 @@ def test_assert_specific_call_when_events(
     lookahead: int,
 ) -> None:
     """
-    Test `assert_against_call` when a matching item arrives.
+    Test `assert_change_event` when a matching item arrives.
 
     Specifically, we drop items onto the queue in sequence, then we
     select an item that we have dropped onto the queue, and we assert
@@ -192,20 +192,20 @@ def test_assert_specific_call_when_events(
     schedule_event(0.8, callback_group["progress"], "progress", 4)
 
     if lookahead >= position:
-        callback_group["progress"].assert_against_call(
-            attribute_value=position, lookahead=lookahead
+        callback_group["progress"].assert_change_event(
+            position, lookahead=lookahead
         )
     else:
         with pytest.raises(
             AssertionError,
             match="Callable has not been called with",
         ):
-            callback_group["progress"].assert_against_call(
-                attribute_value=position, lookahead=lookahead
+            callback_group["progress"].assert_change_event(
+                position, lookahead=lookahead
             )
 
 
-def test_assert_against_call_consumes_events(
+def test_assert_change_event_consumes_events(
     callback_group: MockTangoEventCallbackGroup, schedule_event: Callable
 ) -> None:
     """
@@ -226,19 +226,19 @@ def test_assert_against_call_consumes_events(
 
     schedule_event(1.0, callback_group["status"], "status", "COMPLETED")
 
-    callback_group.assert_against_call("status", attribute_value="IN_PROGRESS")
+    callback_group.assert_change_event("status", "IN_PROGRESS")
 
-    callback_group["a"].assert_against_call(attribute_value=1)
-    callback_group["a"].assert_against_call(attribute_value=2)
-    callback_group["a"].assert_against_call(attribute_value=3)
+    callback_group["a"].assert_change_event(1)
+    callback_group["a"].assert_change_event(2)
+    callback_group["a"].assert_change_event(3)
     callback_group["a"].assert_not_called()
 
-    callback_group["b"].assert_against_call(attribute_value=4, lookahead=3)
-    callback_group["b"].assert_against_call(attribute_value=5, lookahead=2)
-    callback_group["b"].assert_against_call(attribute_value=6)
+    callback_group["b"].assert_change_event(4, lookahead=3)
+    callback_group["b"].assert_change_event(5, lookahead=2)
+    callback_group["b"].assert_change_event(6)
     callback_group["b"].assert_not_called()
 
-    callback_group.assert_against_call("status", attribute_value="COMPLETED")
+    callback_group.assert_change_event("status", "COMPLETED")
     callback_group["status"].assert_not_called()
 
     callback_group.assert_not_called()
