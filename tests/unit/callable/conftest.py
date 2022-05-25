@@ -4,7 +4,7 @@ from typing import Any, Callable
 
 import pytest
 
-from ska_tango_testing.callable import MockCallable, MockCallableGroup
+from ska_tango_testing.mock import MockCallable, MockCallableGroup
 
 
 @pytest.fixture()

@@ -3,14 +3,14 @@ from typing import Callable
 
 import pytest
 
-from ska_tango_testing.callable import MockCallable
+from ska_tango_testing.mock import MockCallable
 
 
-def test_assert_next_call_when_called(
+def test_assert_call_when_called(
     mock_callable: MockCallable, schedule_call: Callable
 ) -> None:
     """
-    Test that we can `assert_next_call` when the mock callable has been called.
+    Test that we can `assert_call` when the mock callable has been called.
 
     :param mock_callable: the mock callable under test
     :param schedule_call: a callable used to schedule a call.
@@ -22,11 +22,11 @@ def test_assert_next_call_when_called(
     mock_callable.assert_call(*args, **kwargs)
 
 
-def test_assert_next_call_when_not_called(
+def test_assert_call_when_not_called(
     mock_callable: MockCallable, schedule_call: Callable
 ) -> None:
     """
-    Test that assert_next_call fails when the mock callable is called too late.
+    Test that assert_call fails when the mock callable is called too late.
 
     :param mock_callable: the mock callable under test
     :param schedule_call: a callable used to schedule a call.
@@ -87,7 +87,7 @@ def test_assert_not_called_when_not_called(
 #     callable = MockCallable(timeout=1.0, return_value="return_value")
 
 #     assert callable("arg", kwarg="kwarg") == "return_value"
-#     callable.assert_next_call("arg", kwarg="kwarg")
+#     callable.assert_call("arg", kwarg="kwarg")
 
 
 # def test_configure_mock(callable: MockCallable) -> None:
@@ -102,7 +102,7 @@ def test_assert_not_called_when_not_called(
 #     callable.configure_mock(return_value="return_value")
 
 #     assert callable("arg", kwarg="kwarg") == "return_value"
-#     callable.assert_next_call("arg", kwarg="kwarg")
+#     callable.assert_call("arg", kwarg="kwarg")
 
 
 # def test_mock_configuration_exception() -> None:
@@ -113,7 +113,7 @@ def test_assert_not_called_when_not_called(
 
 #     with pytest.raises(ValueError, match="side effect exception"):
 #         callable("arg", kwarg="kwarg")
-#     callable.assert_next_call("arg", kwarg="kwarg")
+#     callable.assert_call("arg", kwarg="kwarg")
 
 
 # def test_transform() -> None:
@@ -138,7 +138,7 @@ def test_assert_not_called_when_not_called(
 #         input_first_kwarg="output_first_arg",
 #         input_second_kwarg="output_second_arg",
 #     )
-#     callable.assert_next_call(
+#     callable.assert_call(
 #         "output_first_arg",
 #         "output_second_arg",
 #         output_first_kwarg="input_first_arg",

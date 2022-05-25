@@ -1,11 +1,11 @@
 """This module contains tests of the :py:class:`MockConsumer` class."""
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 import pytest
 
-from ska_tango_testing.consumer import MockConsumerGroup
+from ska_tango_testing.mock import CharacterizerType, MockConsumerGroup
 
-from .conftest import TestingProducerProtocol, TestItem
+from .conftest import FakeItem, TestingProducerProtocol
 
 
 def test_assert_no_item_when_no_item(
@@ -52,7 +52,7 @@ def test_assert_item_when_no_item(  # pylint: disable=too-many-arguments
     consumer_group: MockConsumerGroup,
     producer: TestingProducerProtocol,
     voltage: Any,
-    characterizer: Callable[[TestItem], Dict],
+    characterizer: CharacterizerType,
     category_check: bool,
     equality_check: bool,
     characteristic_check: bool,
@@ -71,7 +71,7 @@ def test_assert_item_when_no_item(  # pylint: disable=too-many-arguments
     producer.schedule_put(1.2, voltage)
 
     args = [voltage] if equality_check else []
-    kwargs = characterizer(voltage) if characteristic_check else {}
+    kwargs = characterizer({"item": voltage}) if characteristic_check else {}
     if category_check:
         kwargs["category"] = "voltage"
 
@@ -91,8 +91,8 @@ def test_assert_item_when_no_item(  # pylint: disable=too-many-arguments
 def test_assert_item_when_items_are_available(
     consumer_group: MockConsumerGroup,
     producer: TestingProducerProtocol,
-    item_library: Dict[str, TestItem],
-    characterizer: Callable[[TestItem], Dict],
+    item_library: Dict[str, FakeItem],
+    characterizer: CharacterizerType,
     category_check: Optional[bool],
     equality_check: Optional[bool],
     characteristic_check: Optional[bool],
@@ -135,11 +135,12 @@ def test_assert_item_when_items_are_available(
         True: [good_voltage],
     }
     args = args_dict[equality_check]
-    kwargs = {
-        None: {},
-        False: characterizer(bad_voltage),
-        True: characterizer(good_voltage),
-    }[characteristic_check]
+
+    kwargs: Dict[str, Any] = {}
+    if characteristic_check is False:
+        kwargs.update(characterizer({"item": bad_voltage}))
+    elif characteristic_check is True:
+        kwargs.update(characterizer({"item": good_voltage}))
 
     if category_check is False:
         kwargs["category"] = "wrong category"
@@ -185,7 +186,7 @@ def test_assert_no_specific_item_when_no_item(
 def test_assert_no_specific_item_when_item_in_different_queue(
     consumer_group: MockConsumerGroup,
     producer: TestingProducerProtocol,
-    voltage: TestItem,
+    voltage: FakeItem,
 ) -> None:
     """
     Test that assert_no_item succeeds when the item is produced too late.
@@ -201,7 +202,7 @@ def test_assert_no_specific_item_when_item_in_different_queue(
 def test_assert_no_specific_item_when_item_is_available(
     consumer_group: MockConsumerGroup,
     producer: TestingProducerProtocol,
-    voltage: TestItem,
+    voltage: FakeItem,
 ) -> None:
     """
     Test that `assert_no_item` fails when an item is produced in time.
@@ -225,8 +226,8 @@ def test_assert_no_specific_item_when_item_is_available(
 def test_assert_specific_item_when_no_item(
     consumer_group: MockConsumerGroup,
     producer: TestingProducerProtocol,
-    item_library: Dict[str, TestItem],
-    characterizer: Callable[[TestItem], Dict],
+    item_library: Dict[str, FakeItem],
+    characterizer: CharacterizerType,
     equality_check: bool,
     characteristic_check: bool,
 ) -> None:
@@ -247,7 +248,7 @@ def test_assert_specific_item_when_no_item(
     producer.schedule_put(1.5, voltage)
 
     args = [voltage] if equality_check else []
-    kwargs = characterizer(voltage) if characteristic_check else {}
+    kwargs = characterizer({"item": voltage}) if characteristic_check else {}
 
     with pytest.raises(
         AssertionError,
@@ -264,8 +265,8 @@ def test_assert_specific_item_when_no_item(
 def test_assert_specific_item_when_items_are_available(
     consumer_group: MockConsumerGroup,
     producer: TestingProducerProtocol,
-    item_library: Dict[str, TestItem],
-    characterizer: Callable[[TestItem], Dict],
+    item_library: Dict[str, FakeItem],
+    characterizer: CharacterizerType,
     equality_check: Optional[bool],
     characteristic_check: Optional[bool],
     position: int,
@@ -305,11 +306,11 @@ def test_assert_specific_item_when_items_are_available(
     }
     args: List[Any] = args_dict[equality_check]
 
-    kwargs = {
-        None: {},
-        False: characterizer(bad_voltage),
-        True: characterizer(good_voltage),
-    }[characteristic_check]
+    kwargs: Dict[str, Any] = {}
+    if characteristic_check is False:
+        kwargs.update(characterizer({"item": bad_voltage}))
+    elif characteristic_check is True:
+        kwargs.update(characterizer({"item": good_voltage}))
 
     expect_to_pass = True
     if equality_check is False:
@@ -336,7 +337,7 @@ def test_assert_specific_item_when_items_are_available(
 def test_assert_consumes_items(
     consumer_group: MockConsumerGroup,
     producer: TestingProducerProtocol,
-    item_library: Dict[str, TestItem],
+    item_library: Dict[str, FakeItem],
 ) -> None:
     """
     Test that our assertions consume items as appropriate.

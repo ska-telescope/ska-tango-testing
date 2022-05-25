@@ -2,5 +2,7 @@
 
 ## unreleased
 
+* [LOW-235] Mock consumers
+* [LOW-233] Mock callback groups
 * [LOW-229] Bootstrap repo and set up RTD integration
 * [LOW-233] Mock callbacks and callback groups

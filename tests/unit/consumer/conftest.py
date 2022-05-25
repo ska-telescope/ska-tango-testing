@@ -21,10 +21,10 @@ import pytest
 from _pytest.fixtures import SubRequest
 from typing_extensions import Protocol
 
-from ska_tango_testing.consumer import ItemType, MockConsumerGroup
+from ska_tango_testing.mock import ItemType, MockConsumerGroup
 
 
-class TestItem(NamedTuple):
+class FakeItem(NamedTuple):
     """A item class for use in testing."""
 
     name: str
@@ -229,23 +229,6 @@ def producer_fixture(request: SubRequest) -> TestingProducerProtocol:
     return factory()
 
 
-# @pytest.fixture()
-# def consumer(producer: ProducerProtocol) -> MockConsumer:
-#     """
-#     Return a consumer that is ready to consume items from its producer.
-
-#     :param producer: the producer that the consumer will consume from.
-
-#     :return: a consumer.
-#     """
-
-#     def name_value_splitter(item: str) -> dict:
-#         (name, value_str) = item.split("=", maxsplit=1)
-#         return {"name": name, "value": int(value_str)}
-
-#     return MockConsumer(producer, characterizer=name_value_splitter)
-
-
 @pytest.fixture(name="categories")
 def categories_fixture() -> List[Hashable]:
     """
@@ -257,27 +240,27 @@ def categories_fixture() -> List[Hashable]:
 
 
 @pytest.fixture(name="item_library")
-def item_library_fixture() -> Dict[str, TestItem]:
+def item_library_fixture() -> Dict[str, FakeItem]:
     """
     Return a library of items for use in testing.
 
     :return: a library of items for use in testing.
     """
     return {
-        "voltage_1": TestItem("voltage", pytest.approx(11.1), "OK"),
-        "voltage_2": TestItem("voltage", pytest.approx(22.2), "OK"),
-        "voltage_3": TestItem("voltage", pytest.approx(33.3), "OK"),
-        "bad_voltage": TestItem("voltage", pytest.approx(99999.9), "PHOOEY"),
-        "current_1": TestItem("current", pytest.approx(10.0), "OK"),
-        "current_2": TestItem("current", pytest.approx(11.1), "OK"),
-        "current_3": TestItem("current", pytest.approx(12.2), "OK"),
-        "status_connected": TestItem("status", "CONNECTED", "OK"),
-        "status_disconnected": TestItem("status", "DISCONNECTED", "OK"),
+        "voltage_1": FakeItem("voltage", pytest.approx(11.1), "OK"),
+        "voltage_2": FakeItem("voltage", pytest.approx(22.2), "OK"),
+        "voltage_3": FakeItem("voltage", pytest.approx(33.3), "OK"),
+        "bad_voltage": FakeItem("voltage", pytest.approx(99999.9), "PHOOEY"),
+        "current_1": FakeItem("current", pytest.approx(10.0), "OK"),
+        "current_2": FakeItem("current", pytest.approx(11.1), "OK"),
+        "current_3": FakeItem("current", pytest.approx(12.2), "OK"),
+        "status_connected": FakeItem("status", "CONNECTED", "OK"),
+        "status_disconnected": FakeItem("status", "DISCONNECTED", "OK"),
     }
 
 
 @pytest.fixture()
-def voltage(item_library: Dict[str, TestItem]) -> TestItem:
+def voltage(item_library: Dict[str, FakeItem]) -> FakeItem:
     """
     Return an item from the item library for a voltage.
 
@@ -292,7 +275,7 @@ def voltage(item_library: Dict[str, TestItem]) -> TestItem:
 
 
 @pytest.fixture(name="categorizer")
-def categorizer_fixture() -> Callable[[TestItem], Hashable]:
+def categorizer_fixture() -> Callable[[FakeItem], Hashable]:
     """
     Return a callable that returns an item's category.
 
@@ -303,19 +286,23 @@ def categorizer_fixture() -> Callable[[TestItem], Hashable]:
 
 
 @pytest.fixture(name="characterizer")
-def characterizer_fixture() -> Callable[[TestItem], Dict]:
+def characterizer_fixture() -> Callable[[Dict], Dict]:
     """
     Return a callable that extracts an item's characteristics.
 
     :return: a callable that extracts an item's characteristics.
     """
 
-    def _characteristics(item: TestItem) -> Dict:
-        return {
-            "name": item.name,
-            "value": item.value,
-            "quality": item.quality,
-        }
+    def _characteristics(characteristics: Dict) -> Dict:
+        item = characteristics["item"]
+        characteristics.update(
+            {
+                "name": item.name,
+                "value": item.value,
+                "quality": item.quality,
+            }
+        )
+        return characteristics
 
     return _characteristics
 
@@ -323,8 +310,8 @@ def characterizer_fixture() -> Callable[[TestItem], Dict]:
 @pytest.fixture()
 def consumer_group(
     producer: TestingProducerProtocol,
-    categorizer: Callable[[TestItem], str],
-    characterizer: Callable[[TestItem], Dict],
+    categorizer: Callable[[FakeItem], str],
+    characterizer: Callable[[FakeItem], Dict],
     categories: List[str],
 ) -> MockConsumerGroup:
     """
