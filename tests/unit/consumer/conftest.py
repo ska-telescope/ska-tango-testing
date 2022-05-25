@@ -21,7 +21,7 @@ import pytest
 from _pytest.fixtures import SubRequest
 from typing_extensions import Protocol
 
-from ska_tango_testing import ItemType, MockConsumerGroup
+from ska_tango_testing.mock import ItemType, MockConsumerGroup
 
 
 class FakeItem(NamedTuple):

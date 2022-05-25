@@ -4,12 +4,12 @@ User guide
 The ``ska-tango-testing`` package provides test harness elements for SKA
 Tango devices.
 
-There are three levels of functionality: mock consumers, mock callables,
-and mock Tango event callbacks
+So far, the only functionality provided is mock consumers for callables
+such as Tango event callbacks.
 
 Mock Consumers
 --------------
-The `ska_tango_testing.consumer` module provides `MockConsumer` and
+The `ska_tango_testing.mock.consumer` module provides `MockConsumer` and
 `MockConsumerGroup` classes that address the problem of testing
 production code that produces items asynchronously.
 
@@ -217,8 +217,8 @@ caution by sleeping for longer than necessary.
 In short, tests like this one are extremely brittle, and often very
 slow.
 
-Testing with ``ska_tango_testing.callable``
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Testing with ``ska_tango_testing.mock.callable``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 The ``MockCallable`` and ``MockCallableGroup`` classes simplify testing
 behaviour like this, removing the need for tuned sleeps, and ensuring
 that the test takes no longer than necessary to run:

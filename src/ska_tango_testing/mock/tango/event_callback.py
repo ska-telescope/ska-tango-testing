@@ -3,8 +3,8 @@ from __future__ import annotations
 
 from typing import Any, Dict, Optional
 
-from ska_tango_testing.callable import MockCallableGroup
-from ska_tango_testing.consumer import CharacterizerType
+from ska_tango_testing.mock.callable import MockCallableGroup
+from ska_tango_testing.mock.consumer import CharacterizerType
 
 
 def _event_characterizer_factory(

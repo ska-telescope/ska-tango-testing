@@ -3,7 +3,7 @@ from typing import Callable
 
 import pytest
 
-from ska_tango_testing import MockCallable
+from ska_tango_testing.mock import MockCallable
 
 
 def test_assert_call_when_called(
