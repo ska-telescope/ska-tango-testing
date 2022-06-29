@@ -50,7 +50,8 @@ class Node:  # pylint: disable=too-few-public-methods
             if next_node is not None:
                 next_node.prev[category] = prev_node
 
-        # jettison the payload in case it is big enough to matter
+        self.prev.clear()
+        self.next.clear()
         self.payload = None
 
 
@@ -76,6 +77,23 @@ class MultiDeque:  # pylint: disable=too-few-public-methods
             self.first.next[category] = self.last
             self.last.prev[category] = self.first
             self.last.next[category] = None
+
+    def __del__(self: MultiDeque) -> None:
+        """Prepare to delete this object."""
+        # This data structure is full of cyclic references that prevent python
+        # from doing ref-count-based garbage collection. Let's make it easier
+        # for the garbage collector by manually cleaning these references up.
+        # That way, if the ref-count for *this class* drops to zero, that
+        # should be enough to ensure the entire data structure gets collected.
+        for category in list(self.first.next.keys()):
+            node = self.first
+            while True:
+                node.payload = None
+                next_node = node.next.pop(category)
+                if next_node is None:
+                    break
+                del next_node.prev[category]
+                node = next_node
 
     def append(self: MultiDeque, node: Node, *categories: Hashable) -> None:
         """
