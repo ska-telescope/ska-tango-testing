@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import itertools
-import weakref
 from collections import defaultdict
 from queue import Empty
 from typing import (
@@ -21,7 +20,7 @@ CharacterizerType = Callable[[Dict[str, Any]], Dict[str, Any]]
 ItemType = TypeVar("ItemType")
 
 
-class Node:
+class Node:  # pylint: disable=too-few-public-methods
     """A single node in a multiply-linked double-linked deque structure."""
 
     def __init__(self: Node, payload: Any) -> None:
@@ -33,48 +32,14 @@ class Node:
         self.prev: DefaultDict[Hashable, Optional[Node]] = defaultdict(None)
         self.next: DefaultDict[Hashable, Optional[Node]] = defaultdict(None)
         self.payload = payload
-        self._dropped = False
-
-    @property
-    def dropped(self: Node) -> bool:
-        """
-        Return whether this node has been dropped.
-
-        :return: whether this node has been dropped.
-        """
-        return self._dropped
 
     def drop(self: Node) -> None:
         """Drop this node."""
-        # We don't want this node any more, but we can't just dike it out of
-        # the data structure and let it be garbage-collected, because there
-        # might be external references to it, e.g. from an iterator. But we can
-        # weaken its internal references, thus allowing it to be
-        # garbage-collected once the external references to it are all gone.
-        # Diking it out of the data structure still has to happen, but we defer
-        # that to the __del__ method.
-        for category in self.next:
-            # for the type checker
-            prev_node = self.prev[category]
-            assert prev_node is not None
-            next_node = self.next[category]
-            assert next_node is not None
-
-            prev_node.next[category] = weakref.proxy(self)
-            next_node.prev[category] = weakref.proxy(self)
-
-        self._dropped = True
-
-        # jettison the payload in case it is big enough to matter
-        self.payload = None
-
-    def __del__(self: Node) -> None:
-        """Clean up before this node is deleted."""
-        # Dike this node out of the data structure before it gets deleted
-        # TODO: Not thread-safe -- this could be called from the GC thread
-        # when a neighbouring node is updating this node's links. Fix might
-        # be to make "next" and "prev" into properties, and then mediate all
-        # modifications through a lock.
+        # It's safe to dike this out of the data structure, because our use
+        # case only uses one iterator at a time, and this method won't be
+        # called until that one iterator has found the item it is looking for,
+        # so won't be used again. We therefore know that there are no external
+        # references to this node that will be left dangling by us dropping it.
         for category in self.next:
             # for the type checker
             prev_node = self.prev[category]
@@ -84,6 +49,10 @@ class Node:
                 prev_node.next[category] = next_node
             if next_node is not None:
                 next_node.prev[category] = prev_node
+
+        self.prev.clear()
+        self.next.clear()
+        self.payload = None
 
 
 class MultiDeque:  # pylint: disable=too-few-public-methods
@@ -108,6 +77,23 @@ class MultiDeque:  # pylint: disable=too-few-public-methods
             self.first.next[category] = self.last
             self.last.prev[category] = self.first
             self.last.next[category] = None
+
+    def __del__(self: MultiDeque) -> None:
+        """Prepare to delete this object."""
+        # This data structure is full of cyclic references that prevent python
+        # from doing ref-count-based garbage collection. Let's make it easier
+        # for the garbage collector by manually cleaning these references up.
+        # That way, if the ref-count for *this class* drops to zero, that
+        # should be enough to ensure the entire data structure gets collected.
+        for category in list(self.first.next.keys()):
+            node = self.first
+            while True:
+                node.payload = None
+                next_node = node.next.pop(category)
+                if next_node is None:
+                    break
+                del next_node.prev[category]
+                node = next_node
 
     def append(self: MultiDeque, node: Node, *categories: Hashable) -> None:
         """
@@ -297,24 +283,21 @@ class ItemGroup:
             if self._node is self._item_group.last:
                 raise StopIteration
 
-            while True:
-                while self._node.next[self._category] is self._item_group.last:
-                    try:
-                        self._item_group.poll_producer()
-                    except Empty:
-                        # for the type checker
-                        assert self._item_group.last is not None
-                        self._node = self._item_group.last
+            while self._node.next[self._category] is self._item_group.last:
+                try:
+                    self._item_group.poll_producer()
+                except Empty:
+                    # for the type checker
+                    assert self._item_group.last is not None
+                    self._node = self._item_group.last
 
-                        raise StopIteration from Empty
+                    raise StopIteration from Empty
 
-                # for the type checker
-                next_node = self._node.next[self._category]
-                assert next_node is not None
+            # for the type checker
+            next_node = self._node.next[self._category]
+            assert next_node is not None
 
-                self._node = next_node
-                if not self._node.dropped:
-                    break
+            self._node = next_node
 
             return self._node
 
