@@ -29,6 +29,8 @@ def _characterizer_factory(
 class MockCallableGroup:
     """This class implements a group of callables."""
 
+    _tracebackhide_ = True
+
     def __init__(
         self: MockCallableGroup,
         *callables: str,
@@ -241,6 +243,8 @@ class MockCallableGroup:
     class _Callable:
         """A view on a single callable."""
 
+        _tracebackhide_ = True
+
         def __init__(
             self: MockCallableGroup._Callable,
             call_queue: queue.SimpleQueue,
@@ -430,6 +434,8 @@ class MockCallableGroup:
 
 class MockCallable:
     """A class for a single mock callable."""
+
+    _tracebackhide_ = True
 
     def __init__(self: MockCallable, timeout: Optional[float] = 1.0) -> None:
         """

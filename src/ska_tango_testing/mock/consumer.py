@@ -305,6 +305,8 @@ class ItemGroup:
 class MockConsumerGroup:
     """A group of consumers of items from a single producer."""
 
+    _tracebackhide_ = True
+
     def __init__(
         self: MockConsumerGroup,
         producer: Callable[[Optional[float]], ItemType],
@@ -388,6 +390,8 @@ class MockConsumerGroup:
 
 class ConsumerAsserter:
     """A class that asserts against, and consume, available items."""
+
+    _tracebackhide_ = True
 
     def __init__(
         self: ConsumerAsserter,

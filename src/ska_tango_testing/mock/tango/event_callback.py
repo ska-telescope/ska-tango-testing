@@ -39,6 +39,8 @@ def _event_characterizer_factory(
 class MockTangoEventCallbackGroup(MockCallableGroup):
     """This class implements a group of Tango change event callbacks."""
 
+    _tracebackhide_ = True
+
     def __init__(
         self: MockTangoEventCallbackGroup,
         *callables: str,
@@ -98,6 +100,9 @@ class MockTangoEventCallbackGroup(MockCallableGroup):
             raise  # pylint: disable=try-except-raise
 
     class _EventCallback:
+
+        _tracebackhide_ = True
+
         def __init__(
             self, underlying_callable: MockCallableGroup._Callable
         ) -> None:
