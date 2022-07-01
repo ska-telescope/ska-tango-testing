@@ -126,7 +126,13 @@ def test_assert_item_when_items_are_available(
     producer.schedule_put(0.4, item_library["voltage_2"])
     producer.schedule_put(0.5, item_library["voltage_3"])
 
-    good_voltage = item_library[f"voltage_{position}"]
+    if equality_check is None and characteristic_check is None:
+        # At most we are checking the category, so the first item will match,
+        # regardless of the position in which we have placed the nominally
+        # matching item.
+        good_voltage = item_library["voltage_1"]
+    else:
+        good_voltage = item_library[f"voltage_{position}"]
     bad_voltage = item_library["bad_voltage"]
 
     args_dict: Dict[Optional[bool], List[Any]] = {
@@ -134,7 +140,6 @@ def test_assert_item_when_items_are_available(
         False: [bad_voltage],
         True: [good_voltage],
     }
-    args = args_dict[equality_check]
 
     kwargs: Dict[str, Any] = {}
     if characteristic_check is False:
@@ -148,23 +153,34 @@ def test_assert_item_when_items_are_available(
         kwargs["category"] = "voltage"
 
     expect_to_pass = True
-    if category_check is False:
-        expect_to_pass = False
-    elif equality_check is False:
-        expect_to_pass = False
-    elif characteristic_check is False:
+    if (
+        category_check is False
+        or equality_check is False
+        or characteristic_check is False
+    ):
         expect_to_pass = False
     elif position > lookahead and (equality_check or characteristic_check):
         expect_to_pass = False
 
     if expect_to_pass:
-        consumer_group.assert_item(*args, lookahead=lookahead, **kwargs)
+        item = consumer_group.assert_item(
+            *args_dict[equality_check], lookahead=lookahead, **kwargs
+        )
+        assert item == {
+            "category": "voltage",
+            "item": good_voltage,
+            "name": good_voltage.name,
+            "quality": good_voltage.quality,
+            "value": good_voltage.value,
+        }
     else:
         with pytest.raises(
             AssertionError,
             match=f"Expected matching item within the first {lookahead} items",
         ):
-            consumer_group.assert_item(*args, lookahead=lookahead, **kwargs)
+            consumer_group.assert_item(
+                *args_dict[equality_check], lookahead=lookahead, **kwargs
+            )
 
 
 def test_assert_no_specific_item_when_no_item(
@@ -296,7 +312,13 @@ def test_assert_specific_item_when_items_are_available(
     for i in range(1, 4):
         producer.schedule_put(0.2 * i, item_library[f"voltage_{i}"])
 
-    good_voltage = item_library[f"voltage_{position}"]
+    if equality_check is None and characteristic_check is None:
+        # At most we are checking the category, so the first item will match,
+        # regardless of the position in which we have placed the nominally
+        # matching item.
+        good_voltage = item_library["voltage_1"]
+    else:
+        good_voltage = item_library[f"voltage_{position}"]
     bad_voltage = item_library["bad_voltage"]
 
     args_dict: Dict[Optional[bool], List[Any]] = {
@@ -304,7 +326,6 @@ def test_assert_specific_item_when_items_are_available(
         False: [bad_voltage],
         True: [good_voltage],
     }
-    args: List[Any] = args_dict[equality_check]
 
     kwargs: Dict[str, Any] = {}
     if characteristic_check is False:
@@ -321,16 +342,23 @@ def test_assert_specific_item_when_items_are_available(
         expect_to_pass = False
 
     if expect_to_pass:
-        consumer_group["voltage"].assert_item(
-            *args, lookahead=lookahead, **kwargs
+        item = consumer_group["voltage"].assert_item(
+            *args_dict[equality_check], lookahead=lookahead, **kwargs
         )
+        assert item == {
+            "category": "voltage",
+            "item": good_voltage,
+            "name": good_voltage.name,
+            "quality": good_voltage.quality,
+            "value": good_voltage.value,
+        }
     else:
         with pytest.raises(
             AssertionError,
             match=f"Expected matching item within the first {lookahead} items",
         ):
             consumer_group["voltage"].assert_item(
-                *args, lookahead=lookahead, **kwargs
+                *args_dict[equality_check], lookahead=lookahead, **kwargs
             )
 
 

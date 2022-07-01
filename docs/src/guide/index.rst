@@ -288,3 +288,48 @@ respectively.
 
     callbacks.assert_change_event("command_status", "COMPLETED")
     callbacks.assert_not_called()
+
+Return values
+-------------
+All methods that assert the presence of an item, such as `assert_item`,
+`assert_call`, `assert_against_call` and `assert_change_event`, return
+the matched item. This is useful as a diagnostic tool when developing
+tests. Suppose, for example, that you are writing a test, and the
+assertion
+
+.. code-block:: python
+
+    callback.assert_call(power=PowerState.ON)
+
+fails unexpectedly. *Why* has it failed? Did the call not arrive? Is the
+value wrong? Was the value provided as a position argument rather than
+a keyword argument? Are there additional arguments?
+
+The assertion made by `assert_call` is quite strict; in our example, it
+asserts that the call arguments are *exactly* `(power=PowerState.ON)`.
+We can relax this assertion to make it pass. For example,
+
+.. code-block:: python
+
+    callback.assert_against_call(power=PowerState.ON)
+
+asserts only that the call *contains* the keyword argument
+`power=PowerState.ON`. Assuming that this more relaxed assertion passes,
+we can review the details of the match:
+
+.. code-block:: python
+
+    call_details = callback.assert_against_call(power=PowerState.ON)
+    print(call_details)
+    # {
+    #     'call_args': (,),
+    #     'call_kwargs': {'power': PowerState.ON, 'fault': False}
+    # }
+
+Thus we see why our original assertion failed: the call also had a
+`fault` keyword argument. If this is not an bug in the production
+code, then we can now tighten up our test assertion again:
+
+.. code-block:: python
+
+    callback.assert_call(power=PowerState.ON, fault=False)

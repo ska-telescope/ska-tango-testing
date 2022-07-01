@@ -349,7 +349,7 @@ class MockConsumerGroup:
 
     def assert_item(
         self: MockConsumerGroup, *args: Any, lookahead: int = 1, **kwargs: Any
-    ) -> None:
+    ) -> Dict[str, Any]:
         """
         Assert that an item is available in any category.
 
@@ -365,8 +365,12 @@ class MockConsumerGroup:
             For example, a lookahead of 2 means that we are asserting
             the item will be one of the first two items.
         :param kwargs: characteristics that the item is expected to have
+
+        :return: the matched item
         """
-        self._group_view.assert_item(*args, lookahead=lookahead, **kwargs)
+        return self._group_view.assert_item(
+            *args, lookahead=lookahead, **kwargs
+        )
 
     def __getitem__(
         self: MockConsumerGroup,
@@ -415,7 +419,7 @@ class ConsumerAsserter:
         *args: Any,
         lookahead: int = 1,
         **kwargs: Any,
-    ) -> None:
+    ) -> Dict[str, Any]:
         """
         Assert that an item is available in this view of the group.
 
@@ -431,6 +435,8 @@ class ConsumerAsserter:
             For example, a lookahead of 2 means that we are asserting
             the item will be one of the first two items.
         :param kwargs: characteristics that the item is expected to have
+
+        :returns: the matched item
 
         :raises AssertionError: if the asserted item does not arrive
             in time
@@ -449,8 +455,9 @@ class ConsumerAsserter:
                 if node.payload[key] != value:
                     break
             else:
+                payload = node.payload
                 node.drop()
-                return
+                return payload
 
         raise AssertionError(
             f"Expected matching item within the first {lookahead} items."

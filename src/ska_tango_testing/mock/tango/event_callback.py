@@ -71,7 +71,7 @@ class MockTangoEventCallbackGroup(MockCallableGroup):
         callback_name: str,
         attribute_value: Any,
         lookahead: Optional[int] = None,
-    ) -> None:
+    ) -> Dict[str, Any]:
         """
         Assert that the callback received a change event with the given value.
 
@@ -83,11 +83,13 @@ class MockTangoEventCallbackGroup(MockCallableGroup):
             matching call. The default is 1, which means we are
             asserting against the *next* call.
 
+        :return: details of the change event
+
         :raises AssertionError: if the asserted call has not occurred
             within the timeout period
         """
         try:
-            self.assert_against_call(
+            return self.assert_against_call(
                 callback_name,
                 attribute_value=attribute_value,
                 lookahead=lookahead or 1,
@@ -117,7 +119,7 @@ class MockTangoEventCallbackGroup(MockCallableGroup):
             self,
             attribute_value: Any,
             lookahead: Optional[int] = None,
-        ) -> None:
+        ) -> Dict[str, Any]:
             """
             Assert a change event with the given value.
 
@@ -127,11 +129,13 @@ class MockTangoEventCallbackGroup(MockCallableGroup):
                 of a matching call. The default is 1, which means we are
                 asserting against the *next* call.
 
+            :return: details of the change event
+
             :raises AssertionError: if the asserted call has not
                 occurred within the timeout period
             """
             try:
-                self._callable.assert_against_call(
+                return self._callable.assert_against_call(
                     attribute_value=attribute_value,
                     lookahead=lookahead or 1,
                 )
