@@ -1,14 +1,17 @@
 API
 ===
 
-.. autoclass:: ska_tango_testing.mock.consumer.MockConsumerGroup
-    :members:
+ska_tango_testing
+-----------------
 
-.. autoclass:: ska_tango_testing.mock.callable.MockCallable
+.. automodule:: ska_tango_testing
     :members:
+    :special-members: __init__, __call__
 
-.. autoclass:: ska_tango_testing.mock.callable.MockCallableGroup
-    :members:
 
-.. autoclass:: ska_tango_testing.mock.tango.event_callback.MockTangoEventCallbackGroup
+ska_tango_testing.mock
+----------------------
+
+.. automodule:: ska_tango_testing.mock
     :members:
+    :special-members: __init__, __call__

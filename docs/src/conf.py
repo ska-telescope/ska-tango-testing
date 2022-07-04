@@ -71,4 +71,5 @@ html_static_path = ['_static']
 
 intersphinx_mapping = {
     "https://docs.python.org/3.7/": None,
+    "https://docs.pytest.org/en/7.1.x/": None,
 }

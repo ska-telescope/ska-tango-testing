@@ -317,18 +317,55 @@ asserts only that the call *contains* the keyword argument
 `power=PowerState.ON`. Assuming that this more relaxed assertion passes,
 we can review the details of the match:
 
-.. code-block:: python
+.. code-block:: pycon
 
-    call_details = callback.assert_against_call(power=PowerState.ON)
-    print(call_details)
-    # {
-    #     'call_args': (,),
-    #     'call_kwargs': {'power': PowerState.ON, 'fault': False}
-    # }
+    >>> call_details = callback.assert_against_call(power=PowerState.ON)
+    >>> print(call_details)
+    {'call_args': (,), 'call_kwargs': {'power': PowerState.ON, 'fault': False}}
 
 Thus we see why our original assertion failed: the call also had a
 `fault` keyword argument. If this is not an bug in the production
 code, then we can now tighten up our test assertion again:
+
+.. code-block:: python
+
+    callback.assert_call(power=PowerState.ON, fault=False)
+
+Logging
+-------
+The :py:mod:`ska_tango_testing.mock` subpackage logs to the
+"ska_tango_testing.mock" logger. These logs exist to allow diagnosis of
+issues within :py:class:`ska_tango_testing` itself, but may also assist with
+diagnosis of test failures.
+
+Consider again the example above, of a test that fails on the line
+
+.. code-block:: python
+
+    callback.assert_call(power=PowerState.ON)
+
+where ``callback`` is a
+:py:class:`~ska_tango_testing.mock.callable.MockCallable`. To diagnose
+this failure, we can inspect the logs of the "ska_tango_testing.mock"
+logger. In pytest, this is done via the
+:py:obj:`~_pytest.logging.caplog` fixture:
+
+.. code-block:: python
+
+    caplog.set_level(logging.DEBUG, logger="ska_tango_testing.mock")
+    callback.assert_call(power=PowerState.ON)
+
+Running this test will now produce the following logs:
+
+.. code-block:: text
+
+    DEBUG    ska_tango_testing.mock:consumer.py:470 assert_item: Asserting item within next 1 item(s), with characteristics {'category': 'component_state', 'call_args': (), 'call_kwargs': {'power': <PowerState.ON: 4>}}.
+    DEBUG    ska_tango_testing.mock:consumer.py:496 assert_item: 'call_kwargs' characteristic is not '{'power': <PowerState.ON: 4>}' in item '{'category': 'component_state', 'call_args': (), 'call_kwargs': {'power': <PowerState.ON: 4>, 'fault': False}}'.
+    DEBUG    ska_tango_testing.mock:consumer.py:510 assert_item failed: no matching item within the first 1 items
+
+Thus we see why our assertion failed: the call also had a `fault`
+keyword argument. If this is not an bug in the production code, then we
+can now tighten up our test assertion again:
 
 .. code-block:: python
 
