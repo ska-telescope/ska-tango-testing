@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import itertools
+import logging
 from collections import defaultdict
 from queue import Empty
 from typing import (
@@ -18,6 +19,9 @@ from typing import (
 CharacterizerType = Callable[[Dict[str, Any]], Dict[str, Any]]
 
 ItemType = TypeVar("ItemType")
+
+
+logger = logging.getLogger("ska_tango_testing.mock")
 
 
 class Node:  # pylint: disable=too-few-public-methods
@@ -411,11 +415,17 @@ class ConsumerAsserter:
 
         :raises AssertionError: if an item is available
         """
+        logger.debug("assert_no_item: Asserting no item available.")
         try:
-            _ = next(iter(self._iterable))
+            node = next(iter(self._iterable))
         except StopIteration:
+            logger.debug("assert_no_item passed.")
             return
 
+        logger.info(
+            "assert_no_item failed; item retrieved is '%s'.",
+            repr(node.payload),
+        )
         raise AssertionError("Expected no item, but an item is available.")
 
     def assert_item(
@@ -449,19 +459,56 @@ class ConsumerAsserter:
             len(args) <= 1
         ), "Only one positional argument to assert_item is permitted"
 
+        log_clauses = []
+        if args:
+            log_clauses.append(f"exactly equal to {repr(args[0])}")
+        if kwargs:
+            log_clauses.append(f"with characteristics {kwargs}")
+        logger.debug(
+            "assert_item: Asserting item within next %d item(s), %s.",
+            lookahead,
+            ", and ".join(log_clauses),
+        )
+
         for node in itertools.islice(iter(self._iterable), 0, lookahead):
             if len(args) == 1 and node.payload["item"] != args[0]:
+                logger.debug(
+                    "assert_item: Positional argument does not exactly equal "
+                    "item '%s'.",
+                    repr(node.payload["item"]),
+                )
                 continue
 
             for key, value in kwargs.items():
                 if key not in node.payload:
+                    logger.debug(
+                        "assert_item: No '%s' characteristic in item '%s'.",
+                        key,
+                        repr(node.payload),
+                    )
                     break
                 if node.payload[key] != value:
+                    logger.debug(
+                        "assert_item: '%s' characteristic is not '%s' in item "
+                        "'%s'.",
+                        key,
+                        value,
+                        repr(node.payload),
+                    )
                     break
             else:
                 payload = node.payload
                 node.drop()
+                logger.debug(
+                    "assert_item passed: found matching item '%s'.",
+                    repr(payload),
+                )
                 return payload
+
+        logger.debug(
+            "assert_item failed: no matching item within the first %d items",
+            lookahead,
+        )
 
         raise AssertionError(
             f"Expected matching item within the first {lookahead} items."
