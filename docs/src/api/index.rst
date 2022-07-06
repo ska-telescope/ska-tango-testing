@@ -15,3 +15,10 @@ ska_tango_testing.mock
 .. automodule:: ska_tango_testing.mock
     :members:
     :special-members: __init__, __call__
+
+ska_tango_testing.mock.tango
+----------------------------
+
+.. automodule:: ska_tango_testing.mock.tango
+    :members:
+    :special-members: __init__, __call__

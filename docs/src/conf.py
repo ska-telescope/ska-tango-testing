@@ -72,4 +72,5 @@ html_static_path = ['_static']
 intersphinx_mapping = {
     "https://docs.python.org/3.7/": None,
     "https://docs.pytest.org/en/7.1.x/": None,
+    "tango": ("https://pytango.readthedocs.io/en/v9.3.3/", None),
 }

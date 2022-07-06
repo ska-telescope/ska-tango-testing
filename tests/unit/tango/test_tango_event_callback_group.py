@@ -4,7 +4,7 @@ from typing import Callable
 import pytest
 import tango
 
-from ska_tango_testing.mock import MockTangoEventCallbackGroup
+from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
 
 
 def test_assert_not_called_when_not_called(

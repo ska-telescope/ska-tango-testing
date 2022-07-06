@@ -7,10 +7,8 @@ __all__ = [
     "MockCallable",
     "MockCallableGroup",
     "MockConsumerGroup",
-    "MockTangoEventCallbackGroup",
 ]
 
 
 from .callable import MockCallable, MockCallableGroup
 from .consumer import CharacterizerType, ItemType, MockConsumerGroup
-from .tango import MockTangoEventCallbackGroup
