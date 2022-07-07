@@ -15,11 +15,15 @@ def test_assert_call_when_called(
     :param mock_callable: the mock callable under test
     :param schedule_call: a callable used to schedule a call.
     """
-    args = ["arg1", "arg2"]
+    args = ("arg1", "arg2")
     kwargs = {"kwarg1": "kwarg1", "kwarg2": "kwarg2"}
 
     schedule_call(0.5, mock_callable, *args, **kwargs)
-    mock_callable.assert_call(*args, **kwargs)
+    call_details = mock_callable.assert_call(*args, **kwargs)
+    assert call_details == {
+        "call_args": args,
+        "call_kwargs": kwargs,
+    }
 
 
 def test_assert_call_when_not_called(

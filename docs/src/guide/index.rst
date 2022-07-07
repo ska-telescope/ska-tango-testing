@@ -1,30 +1,28 @@
 User guide
 ==========
 
-The ``ska-tango-testing`` package provides test harness elements for SKA
-Tango devices.
+The :py:mod:`ska_tango_testing` package provides test harness elements
+for SKA Tango devices.
 
 So far, the only functionality provided is mock consumers for callables
 such as Tango event callbacks.
 
 Mock Consumers
 --------------
-The `ska_tango_testing.mock.consumer` module provides `MockConsumer` and
-`MockConsumerGroup` classes that address the problem of testing
-production code that produces items asynchronously.
-
-This module is low-level. It is powerful and flexible, but takes a bit
+The :py:class:`~ska_tango_testing.mock.MockConsumerGroup` class
+addresses the problem of testing production code that produces items
+asynchronously. It is low-level, powerful and flexible, but takes a bit
 to set up. It requires
 
 * a `producer`.  This is a callable that is called with a timeout, and
-  either returns an item once it becomes available, or raises `Empty` if
-  no item has been produced at the end of the timeout period. The
-  producer is the interface to the production code. The production code
-  under test might actually contain something that can serve as a
-  producer (for example, if the production code drops items onto a
-  queue, then that queue's `get` method will serve). Alternatively, your
-  test harness might have to wrap the production code with something
-  that provides this `producer` interface.
+  either returns an item once it becomes available, or raises
+  :py:exc:`queue.Empty` if no item has been produced at the end of the
+  timeout period. The producer is the interface to the production code.
+  The production code under test might actually contain something that
+  can serve as a producer (for example, if the production code drops
+  items onto a queue, then that queue's `get` method will serve).
+  Alternatively, your test harness might have to wrap the production
+  code with something that provides this `producer` interface.
 
 * a `categorizer`. This is a callable that sorts items into categories
   that can be asserted on individually.
@@ -39,57 +37,58 @@ to set up. It requires
   be able to construct an item to assert with. For example, suppose the
   item is an `Event`, with fields `name`, `value` and `timestamp`. We
   generally cannot predict the timestamp values, so we cannot construct
-  an equivalent `item` that would let us `assert_item(item)`.
+  an equivalent `item` that would let us ``assert_item(item)``.
 
   A `characterizer` addresses this by modifying the dictionary that
   assertions are made against. In our example, we might provide a
   characterizer that inserts "name" and "value" items into the
-  dictionary, thus allowing us to `assert_item(name="foo", value="bah")`
-  and hence asserting against the bits that matter, while ignoring the
-  timestamp.
+  dictionary, thus allowing us to
+  ``assert_item(name="foo", value="bah")`` and hence asserting against
+  the bits that matter, while ignoring the timestamp.
 
 With these things in place, here are some of the things that you can do
 in your tests:
 
-* `group.assert_no_item()` -- assert that no item at all is produced
-   within the timeout period.
+* ``group.assert_no_item()`` -- assert that no item at all is produced
+  within the timeout period.
 
-* `group.assert_item()` -- assert that an item is produced. (This call
-   would consume an item without really asserting anything about it, so
-   wouldn't be used much.)
+* ``group.assert_item()`` -- assert that an item is produced. (This call
+  would consume an item without really asserting anything about it, so
+  wouldn't be used much.)
 
-* `group.assert_item(item)` -- assert that the next item produced
-  (across the whole group) is equal to `item`.
+* ``group.assert_item(item)`` -- assert that the next item produced
+  (across the whole group) is equal to ``item``.
 
-* `group.assert_item(category="voltage")` -- assert that the next item
-   produced belongs to category "voltage".
+* ``group.assert_item(category="voltage")`` -- assert that the next item
+  produced belongs to category "voltage".
 
-* `group.assert_item(item, category="voltage")` -- assert that the next
-   item produced (across the whole group) is equal to item and belongs
-   to category "voltage"
+* ``group.assert_item(item, category="voltage")`` -- assert that the
+  next item produced (across the whole group) is equal to item and
+  belongs to category "voltage".
 
-* `group.assert_item(name="voltage", value=pytest.approx(15.0))` --
-   assert that the next item has a "name" characteristic equal to
-   "voltage", and a "value" characteristic approximately equal to 15.0.
-   (This assertion would require a characterizer to extract the "name"
-   and "value" attributes from the item.)
+* ``group.assert_item(name="voltage", value=pytest.approx(15.0))`` --
+  assert that the next item has a "name" characteristic equal to
+  "voltage", and a "value" characteristic approximately equal to 15.0.
+  (This assertion would require a characterizer to extract the "name"
+  and "value" attributes from the item.)
 
-* `group.assert_item(item, lookahead=2)` -- assert that one of the next
-   two items produced is equal to item.
+* ``group.assert_item(item, lookahead=2)`` -- assert that one of the
+  next two items produced is equal to ``item``.
 
-* `group["voltage"].assert_item()` -- assert that an item has been
-   produced in the "voltage" category
+* ``group["voltage"].assert_item()`` -- assert that an item has been
+  produced in the "voltage" category.
 
-* `group["voltage"].assert_item(item)` -- assert that the next item in
-   category "voltage" is equal to item
+* ``group["voltage"].assert_item(item)`` -- assert that the next item in
+  category "voltage" is equal to ``item``.
 
-* `group["voltage"].assert_item(value=pytest.approx(15.0))` -- assert
-   that the next item in category "voltage" has a "value" characteristic
-   approximately equal to 15.0. (This assertion would require a
-   characterizer to extract the "value" attribute from the item.)
+* ``group["voltage"].assert_item(value=pytest.approx(15.0))`` -- assert
+  that the next item in category "voltage" has a "value" characteristic
+  approximately equal to 15.0. (This assertion would require a
+  characterizer to extract the "value" attribute from the item.)
 
-* `group["voltage"].assert_item(item, lookahead=2)` -- assert that one
-   of the next two items in the "voltage" category are equal to `item`.
+* ``group["voltage"].assert_item(item, lookahead=2)`` -- assert that one
+  of the next two items in the "voltage" category are equal to
+  ``item``.
 
 
 Mock Callables
@@ -148,15 +147,16 @@ order expected. What we expect is that:
   and "d".
 
 * The global order in which the number and letter callbacks are called
-  is nondeterministic. One possible ordering is "1", "a",
-  "2", "b", "3", "c", "d", "4"; but there are many other possibilities.
+  is nondeterministic. One possible ordering is "1", "a", "2", "b", "3",
+  "c", "d", "4"; but there are many other possibilities.
 
 * The final call will be a call of "COMPLETED" to the status callback.
 
 Testing with a ``unittest.mock``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 It is extremely hard to test asynchronous code like this using a
-standard ``unittest.mock.Mock``. A test might look something like this:
+standard :py:class:`unittest.mock.Mock`. A test might look something
+like this:
 
 .. code-block:: python
 
@@ -217,11 +217,12 @@ caution by sleeping for longer than necessary.
 In short, tests like this one are extremely brittle, and often very
 slow.
 
-Testing with ``ska_tango_testing.mock.callable``
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-The ``MockCallable`` and ``MockCallableGroup`` classes simplify testing
-behaviour like this, removing the need for tuned sleeps, and ensuring
-that the test takes no longer than necessary to run:
+Testing with mock callables
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+The :py:class:`~ska_tango_testing.mock.MockCallable` and
+:py:class:`~ska_tango_testing.mock.MockCallableGroup` classes simplify
+testing behaviour like this, removing the need for tuned sleeps, and
+ensuring that the test takes no longer than necessary to run:
 
 .. code-block:: python
 
@@ -263,10 +264,13 @@ that are called when Tango events are received. We can effectively test
 Tango device simply by using these callbacks to monitor changes in
 device state.
 
-The `MockTangoEventCallbackGroup` class is a subclass of
-`MockCallableGroup` with built-in characterizers that extract the key
-information from `tango.EventData` instances. Specifically, it extracts
-the attribute name, value and quality, and stores them under keys
+The
+:py:class:`~ska_tango_testing.mock.tango.MockTangoEventCallbackGroup`
+class is a subclass of
+:py:class:`~ska_tango_testing.mock.MockConsumerGroup` with
+built-in characterizers that extract the key information from
+:py:class:`tango.EventData` instances. Specifically, it extracts the
+attribute name, value and quality, and stores them under keys
 "attribute_name", "attribute_value" and "attribute_quality"
 respectively.
 
@@ -288,3 +292,90 @@ respectively.
 
     callbacks.assert_change_event("command_status", "COMPLETED")
     callbacks.assert_not_called()
+
+Return values
+-------------
+All methods that assert the presence of an item, such as
+:py:meth:`~ska_tango_testing.mock.MockConsumerGroup.assert_item`,
+:py:meth:`~ska_tango_testing.mock.MockCallableGroup.assert_call`,
+:py:meth:`~ska_tango_testing.mock.MockCallableGroup.assert_against_call`
+and
+:py:meth:`~ska_tango_testing.mock.tango.MockTangoEventCallbackGroup.assert_change_event`,
+return the matched item. This is useful as a diagnostic tool when
+developing tests. Suppose, for example, that you are writing a test, and
+the assertion
+
+.. code-block:: python
+
+    callback.assert_call(power=PowerState.ON)
+
+fails unexpectedly. *Why* has it failed? Did the call not arrive? Is the
+value wrong? Was the value provided as a position argument rather than
+a keyword argument? Are there additional arguments?
+
+The assertion made by ``assert_call`` is quite strict; in our example,
+it asserts that the call arguments are *exactly*
+`(power=PowerState.ON)`. We can relax this assertion to make it pass.
+For example,
+
+.. code-block:: python
+
+    callback.assert_against_call(power=PowerState.ON)
+
+asserts only that the call *contains* the keyword argument
+`power=PowerState.ON`. Assuming that this more relaxed assertion passes,
+we can review the details of the match:
+
+.. code-block:: pycon
+
+    >>> call_details = callback.assert_against_call(power=PowerState.ON)
+    >>> print(call_details)
+    {'call_args': (,), 'call_kwargs': {'power': PowerState.ON, 'fault': False}}
+
+Thus we see why our original assertion failed: the call also had a
+```fault``` keyword argument. If this is not an bug in the production
+code, then we can now tighten up our test assertion again:
+
+.. code-block:: python
+
+    callback.assert_call(power=PowerState.ON, fault=False)
+
+Logging
+-------
+The :py:mod:`ska_tango_testing.mock` subpackage logs to the
+"ska_tango_testing.mock" logger. These logs exist to allow diagnosis of
+issues within :py:class:`ska_tango_testing` itself, but may also assist with
+diagnosis of test failures.
+
+Consider again the example above, of a test that fails on the line
+
+.. code-block:: python
+
+    callback.assert_call(power=PowerState.ON)
+
+where ``callback`` is a
+:py:class:`~ska_tango_testing.mock.callable.MockCallable`. To diagnose
+this failure, we can inspect the logs of the "ska_tango_testing.mock"
+logger. In pytest, this is done via the
+:py:obj:`~_pytest.logging.caplog` fixture:
+
+.. code-block:: python
+
+    caplog.set_level(logging.DEBUG, logger="ska_tango_testing.mock")
+    callback.assert_call(power=PowerState.ON)
+
+Running this test will now produce the following logs:
+
+.. code-block:: text
+
+    DEBUG    ska_tango_testing.mock:consumer.py:470 assert_item: Asserting item within next 1 item(s), with characteristics {'category': 'component_state', 'call_args': (), 'call_kwargs': {'power': <PowerState.ON: 4>}}.
+    DEBUG    ska_tango_testing.mock:consumer.py:496 assert_item: 'call_kwargs' characteristic is not '{'power': <PowerState.ON: 4>}' in item '{'category': 'component_state', 'call_args': (), 'call_kwargs': {'power': <PowerState.ON: 4>, 'fault': False}}'.
+    DEBUG    ska_tango_testing.mock:consumer.py:510 assert_item failed: no matching item within the first 1 items
+
+Thus we see why our assertion failed: the call also had a `fault`
+keyword argument. If this is not an bug in the production code, then we
+can now tighten up our test assertion again:
+
+.. code-block:: python
+
+    callback.assert_call(power=PowerState.ON, fault=False)

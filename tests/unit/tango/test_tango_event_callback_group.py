@@ -2,8 +2,9 @@
 from typing import Callable
 
 import pytest
+import tango
 
-from ska_tango_testing.mock import MockTangoEventCallbackGroup
+from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
 
 
 def test_assert_not_called_when_not_called(
@@ -85,9 +86,15 @@ def test_assert_change_event_when_event(
     schedule_event(0.4, callback_group["progress"], "progress", 3)
 
     if lookahead >= position:
-        callback_group.assert_change_event(
+        details = callback_group.assert_change_event(
             "progress", position, lookahead=lookahead
         )
+        # Let's not bother checking the call_args: it just contains the mock
+        # that we used as a fake tango change event.
+        assert details["call_kwargs"] == {}
+        assert details["attribute_name"] == "progress"
+        assert details["attribute_value"] == position
+        assert details["attribute_quality"] == tango.AttrQuality.ATTR_VALID
     else:
         with pytest.raises(
             AssertionError,
@@ -192,9 +199,16 @@ def test_assert_specific_call_when_events(
     schedule_event(0.8, callback_group["progress"], "progress", 4)
 
     if lookahead >= position:
-        callback_group["progress"].assert_change_event(
+        details = callback_group["progress"].assert_change_event(
             position, lookahead=lookahead
         )
+        # Let's not bother checking the call_args: it just contains the mock
+        # that we used as a fake tango change event.
+        assert details["call_kwargs"] == {}
+        assert details["attribute_name"] == "progress"
+        assert details["attribute_value"] == position
+        assert details["attribute_quality"] == tango.AttrQuality.ATTR_VALID
+
     else:
         with pytest.raises(
             AssertionError,

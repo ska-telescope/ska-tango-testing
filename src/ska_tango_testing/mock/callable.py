@@ -29,6 +29,8 @@ def _characterizer_factory(
 class MockCallableGroup:
     """This class implements a group of callables."""
 
+    _tracebackhide_ = True
+
     def __init__(
         self: MockCallableGroup,
         *callables: str,
@@ -92,7 +94,7 @@ class MockCallableGroup:
         callable_name: str,
         *args: Any,
         **kwargs: Any,
-    ) -> None:
+    ) -> Dict[str, Any]:
         """
         Assert that the specified callable has been called as specified.
 
@@ -125,12 +127,14 @@ class MockCallableGroup:
             All other keyword arguments are keyword arguments
             asserted to be in the call.
 
+        :return: details of the call
+
         :raises AssertionError: if the asserted call has not occurred
             within the timeout period
         """
         lookahead = kwargs.pop("lookahead", 1)
         try:
-            self.assert_against_call(
+            return self.assert_against_call(
                 callable_name,
                 call_args=args,
                 call_kwargs=kwargs,
@@ -144,7 +148,7 @@ class MockCallableGroup:
         callable_name: str,
         lookahead: Optional[int] = None,
         **kwargs: Any,
-    ) -> None:
+    ) -> Dict[str, Any]:
         """
         Assert that the specified callable has been called as characterised.
 
@@ -205,11 +209,13 @@ class MockCallableGroup:
                     value=2,
                 )
 
+        :return: details of the call
+
         :raises AssertionError: if the asserted call has not occurred
             within the timeout period
         """
         try:
-            self._mock_consumer_group.assert_item(
+            return self._mock_consumer_group.assert_item(
                 category=callable_name,
                 lookahead=lookahead or 1,
                 **kwargs,
@@ -236,6 +242,8 @@ class MockCallableGroup:
 
     class _Callable:
         """A view on a single callable."""
+
+        _tracebackhide_ = True
 
         def __init__(
             self: MockCallableGroup._Callable,
@@ -284,7 +292,7 @@ class MockCallableGroup:
             self: MockCallableGroup._Callable,
             *args: Any,
             **kwargs: Any,
-        ) -> None:
+        ) -> Dict[str, Any]:
             """
             Assert that this callable has been called as specified.
 
@@ -315,12 +323,14 @@ class MockCallableGroup:
                 All other keyword arguments are keyword arguments
                 asserted to be in the call.
 
+            :return: details of the call
+
             :raises AssertionError: if the asserted call has not occurred
                 within the timeout period
             """
             lookahead = kwargs.pop("lookahead", 1)
             try:
-                self.assert_against_call(
+                return self.assert_against_call(
                     call_args=args,
                     call_kwargs=kwargs,
                     lookahead=lookahead,
@@ -332,7 +342,7 @@ class MockCallableGroup:
             self: MockCallableGroup._Callable,
             lookahead: Optional[int] = None,
             **kwargs: Any,
-        ) -> None:
+        ) -> Dict[str, Any]:
             """
             Assert that this callable has been called as characterised.
 
@@ -389,11 +399,13 @@ class MockCallableGroup:
                         value=2,
                     )
 
+            :return: details of the call
+
             :raises AssertionError: if the asserted call has not
                 occurred within the timeout period
             """
             try:
-                self._consumer_view.assert_item(
+                return self._consumer_view.assert_item(
                     category=self._name,
                     # args=args,
                     # kwargs=kwargs,
@@ -423,6 +435,8 @@ class MockCallableGroup:
 class MockCallable:
     """A class for a single mock callable."""
 
+    _tracebackhide_ = True
+
     def __init__(self: MockCallable, timeout: Optional[float] = 1.0) -> None:
         """
         Initialise a new instance.
@@ -446,7 +460,7 @@ class MockCallable:
         self: MockCallable,
         *args: Any,
         **kwargs: Any,
-    ) -> None:
+    ) -> Dict[str, Any]:
         """
         Assert that this callable has been called as specified.
 
@@ -476,12 +490,14 @@ class MockCallable:
             All other keyword arguments are keyword arguments
             asserted to be in the call.
 
+        :return: details of the call
+
         :raises AssertionError: if the asserted call has not occurred
             within the timeout period
         """
         lookahead = kwargs.pop("lookahead", 1)
         try:
-            self.assert_against_call(
+            return self.assert_against_call(
                 call_args=args,
                 call_kwargs=kwargs,
                 lookahead=lookahead,
@@ -493,7 +509,7 @@ class MockCallable:
         self: MockCallable,
         lookahead: Optional[int] = None,
         **kwargs: Any,
-    ) -> None:
+    ) -> Dict[str, Any]:
         """
         Assert that this callable has been called as characterised.
 
@@ -549,15 +565,19 @@ class MockCallable:
                     value=2,
                 )
 
+        :return: details of the call
+
         :raises AssertionError: if the asserted call has not occurred
             within the timeout period
         """
         try:
-            self._view.assert_against_call(
+            call_details = self._view.assert_against_call(
                 # args=args, kwargs=kwargs,
                 lookahead=lookahead or 1,
                 **kwargs,
             )
+            del call_details["category"]
+            return call_details
         except AssertionError:
             raise
 

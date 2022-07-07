@@ -39,6 +39,8 @@ def _event_characterizer_factory(
 class MockTangoEventCallbackGroup(MockCallableGroup):
     """This class implements a group of Tango change event callbacks."""
 
+    _tracebackhide_ = True
+
     def __init__(
         self: MockTangoEventCallbackGroup,
         *callables: str,
@@ -71,7 +73,7 @@ class MockTangoEventCallbackGroup(MockCallableGroup):
         callback_name: str,
         attribute_value: Any,
         lookahead: Optional[int] = None,
-    ) -> None:
+    ) -> Dict[str, Any]:
         """
         Assert that the callback received a change event with the given value.
 
@@ -83,11 +85,13 @@ class MockTangoEventCallbackGroup(MockCallableGroup):
             matching call. The default is 1, which means we are
             asserting against the *next* call.
 
+        :return: details of the change event
+
         :raises AssertionError: if the asserted call has not occurred
             within the timeout period
         """
         try:
-            self.assert_against_call(
+            return self.assert_against_call(
                 callback_name,
                 attribute_value=attribute_value,
                 lookahead=lookahead or 1,
@@ -96,6 +100,9 @@ class MockTangoEventCallbackGroup(MockCallableGroup):
             raise  # pylint: disable=try-except-raise
 
     class _EventCallback:
+
+        _tracebackhide_ = True
+
         def __init__(
             self, underlying_callable: MockCallableGroup._Callable
         ) -> None:
@@ -117,7 +124,7 @@ class MockTangoEventCallbackGroup(MockCallableGroup):
             self,
             attribute_value: Any,
             lookahead: Optional[int] = None,
-        ) -> None:
+        ) -> Dict[str, Any]:
             """
             Assert a change event with the given value.
 
@@ -127,11 +134,13 @@ class MockTangoEventCallbackGroup(MockCallableGroup):
                 of a matching call. The default is 1, which means we are
                 asserting against the *next* call.
 
+            :return: details of the change event
+
             :raises AssertionError: if the asserted call has not
                 occurred within the timeout period
             """
             try:
-                self._callable.assert_against_call(
+                return self._callable.assert_against_call(
                     attribute_value=attribute_value,
                     lookahead=lookahead or 1,
                 )

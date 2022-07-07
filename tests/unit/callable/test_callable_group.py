@@ -85,7 +85,14 @@ def test_assert_call_when_called(
     schedule_call(0.4, callable_group["a"], 3)
 
     if lookahead >= position:
-        callable_group.assert_call("a", position, lookahead=lookahead)
+        call_details = callable_group.assert_call(
+            "a", position, lookahead=lookahead
+        )
+        assert call_details == {
+            "category": "a",
+            "call_args": (position,),
+            "call_kwargs": {},
+        }
     else:
         with pytest.raises(
             AssertionError,
@@ -188,7 +195,15 @@ def test_assert_specific_item_when_items_are_available(
     schedule_call(0.8, callable_group["b"], 4)
 
     if lookahead >= position:
-        callable_group["b"].assert_call(position, lookahead=lookahead)
+        call_details = callable_group["b"].assert_call(
+            position, lookahead=lookahead
+        )
+        assert call_details == {
+            "category": "b",
+            "call_args": (position,),
+            "call_kwargs": {},
+        }
+
     else:
         with pytest.raises(
             AssertionError,
