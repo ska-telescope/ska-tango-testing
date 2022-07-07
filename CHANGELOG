@@ -2,6 +2,20 @@
 
 ## unreleased
 
+## 0.2.0
+* [LOW-262] Improvements to diagnostics
+
+## 0.1.3
+* [LOW-270] garbage collection bugfix
+
+## 0.1.2
+* [LOW-245] poetry bugfix
+
+## 0.1.1
+* [REL-101] Metadata bugfix
+
+## 0.1.0
+* [LOW-234] Mock Tango event callbacks
 * [LOW-235] Mock consumers
 * [LOW-233] Mock callback groups
 * [LOW-229] Bootstrap repo and set up RTD integration
