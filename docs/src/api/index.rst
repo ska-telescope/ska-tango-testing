@@ -9,6 +9,14 @@ ska_tango_testing
     :special-members: __init__, __call__
 
 
+ska_tango_testing.context
+-------------------------
+
+.. automodule:: ska_tango_testing.context
+    :members:
+    :special-members: __init__, __call__
+
+
 ska_tango_testing.mock
 ----------------------
 

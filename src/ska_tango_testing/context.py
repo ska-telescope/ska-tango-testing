@@ -20,6 +20,17 @@ class _DeviceProxyFactory:  # pylint: disable=too-few-public-methods
 
 
 DeviceProxy = _DeviceProxyFactory()
+"""
+A drop-in replacement for :py:class:`tango.DeviceProxy`.
+
+There is a known bug in :py:class:`tango.test_context.MultiDeviceTestContext`
+for which the workaround is a patch to :py:class:`tango.DeviceProxy`.
+This drop-in replacement makes it possible for
+:py:class:`~ska_tango_testing.context.ThreadedTestTangoContextManager`
+to apply this patch. Until the bug is fixed, all production code that
+will be tested in that context must use this class instead of
+:py:class:`tango.DeviceProxy`.
+"""
 
 
 # pylint: disable-next=too-few-public-methods

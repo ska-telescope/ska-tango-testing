@@ -69,6 +69,9 @@ html_context = {
 html_static_path = ['_static']
 
 
+autodoc_mock_imports = ["tango"]
+
+
 intersphinx_mapping = {
     "https://docs.python.org/3.7/": None,
     "https://docs.pytest.org/en/7.1.x/": None,
