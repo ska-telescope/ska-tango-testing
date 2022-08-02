@@ -9,6 +9,8 @@ import tango.test_context
 from typing_extensions import Literal, Protocol
 
 
+# TODO: Remove _DeviceProxyFactory and DeviceProxy once short-form FQDN
+# bug in tango.test_context.MultiDeviceTestContext is fixed.
 class _DeviceProxyFactory:  # pylint: disable=too-few-public-methods
     def __init__(self) -> None:
         self.factory = tango.DeviceProxy
