@@ -9,16 +9,16 @@ import tango.test_context
 from typing_extensions import Literal, Protocol
 
 
-# TODO: Remove _DeviceProxyFactory and DeviceProxy once short-form FQDN
-# bug in tango.test_context.MultiDeviceTestContext is fixed.
+# TODO: Remove _DeviceProxyFactory and DeviceProxy once pytango issue
+# https://gitlab.com/tango-controls/pytango/-/issues/459 has been fixed.
 class _DeviceProxyFactory:  # pylint: disable=too-few-public-methods
     def __init__(self) -> None:
         self.factory = tango.DeviceProxy
 
     def __call__(
-        self, fqdn: str, *args: Any, **kwargs: Any
+        self, device_name: str, *args: Any, **kwargs: Any
     ) -> tango.DeviceProxy:
-        return self.factory(fqdn, *args, **kwargs)
+        return self.factory(device_name, *args, **kwargs)
 
 
 DeviceProxy = _DeviceProxyFactory()
@@ -32,6 +32,9 @@ This drop-in replacement makes it possible for
 to apply this patch. Until the bug is fixed, all production code that
 will be tested in that context must use this class instead of
 :py:class:`tango.DeviceProxy`.
+
+(For more information, see
+https://gitlab.com/tango-controls/pytango/-/issues/459.)
 """
 
 
@@ -39,11 +42,11 @@ will be tested in that context must use this class instead of
 class TangoContextProtocol(Protocol):
     """Protocol for a tango context."""
 
-    def get_device(self, fqdn: str) -> tango.DeviceProxy:
+    def get_device(self, device_name: str) -> tango.DeviceProxy:
         """
         Return a proxy to a specified device.
 
-        :param fqdn: FQDN of the device
+        :param device_name: name of the device
 
         :return: a proxy to the device
         """  # noqa: DAR202
@@ -84,15 +87,15 @@ class TrueTangoContextManager:
         return False
 
     # pylint: disable-next=no-self-use
-    def get_device(self, fqdn: str) -> tango.DeviceProxy:
+    def get_device(self, device_name: str) -> tango.DeviceProxy:
         """
         Return a proxy to a specified device.
 
-        :param fqdn: FQDN of the device
+        :param device_name: name of the device
 
         :return: a proxy to the device
         """
-        return tango.DeviceProxy(fqdn)
+        return tango.DeviceProxy(device_name)
 
 
 class ThreadedTestTangoContextManager:
@@ -107,21 +110,21 @@ class ThreadedTestTangoContextManager:
 
     def add_device(
         self,
-        fqdn: str,
+        device_name: str,
         device_class: Union[str, Type[tango.server.Device]],
         **properties: Any,
     ) -> None:
         """
         Add a device to the context managed by this manager.
 
-        :param fqdn: the FQDN of the device to be added
+        :param device_name: name of the device to be added
         :param device_class: the class of the device to be added. This
             can be the class itself, or its name.
         :param properties: a dictionary of device properties
         """
         self._device_info_by_class.setdefault(device_class, [])
         self._device_info_by_class[device_class].append(
-            {"name": fqdn, "properties": properties}
+            {"name": device_name, "properties": properties}
         )
 
     def __enter__(self) -> TangoContextProtocol:
@@ -145,8 +148,8 @@ class ThreadedTestTangoContextManager:
         )
         assert self._context is not None  # for the type checker
 
-        DeviceProxy.factory = lambda fqdn, *args, **kwargs: tango.DeviceProxy(
-            self._context.get_device_access(fqdn), *args, **kwargs
+        DeviceProxy.factory = lambda name, *args, **kwargs: tango.DeviceProxy(
+            self._context.get_device_access(name), *args, **kwargs
         )
 
         self._context.__enter__()

@@ -44,7 +44,7 @@ Two context managers are provided:
   Because this context manager has to launch the devices under test in a
   lightweight Tango test context before the tests can be run, we need to
   tell it about the devices that it should deploy. For each device, we
-  must provide the device FQDN, the device class, and any device
+  must provide the device name, the device class, and any device
   properties. This is done with the
   :py:meth:`~ska_tango_testing.context.ThreadedTestTangoContextManager.add_device`
   method. This method must be called *before* the `with` syntax is used
@@ -73,12 +73,16 @@ Two context managers are provided:
 
   Unfortunately, there is a known bug in the underlying
   :py:class:`tango.test_context.MultiDeviceTestContext` that this class
-  uses: it only works with long-form FQDNs. This renders it necessary to
-  patch :py:class:`tango.DeviceProxy`, to make it convert FQDNs from
-  short to long form. To achieve this, a drop-in replacement
-  :py:class:`ska_tango_testing.context.DeviceProxy` is provided. Until
-  that bug is fixed, production code should use this class instead of
-  :py:class:`tango.DeviceProxy`.
+  uses:  it cannot service :py:class:`tango.DeviceProxy` requests that
+  are specified with a device name; such requests must been specified
+  with a Tango resource locator. (For more information see pytango issue
+  https://gitlab.com/tango-controls/pytango/-/issues/459.)
+  
+  This bug makes it necessary to patch :py:class:`tango.DeviceProxy`, to
+  convert device names into resource locators. To achieve this, a
+  drop-in replacement :py:class:`ska_tango_testing.context.DeviceProxy`
+  is provided. Until the bug is fixed, production code should use this
+  class instead of :py:class:`tango.DeviceProxy`.
 
 Mock consumers
 --------------
