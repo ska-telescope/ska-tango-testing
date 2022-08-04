@@ -23,6 +23,10 @@ def test_assert_call_when_called(
     assert call_details == {
         "call_args": args,
         "call_kwargs": kwargs,
+        "arg0": args[0],
+        "arg1": args[1],
+        "kwarg1": "kwarg1",
+        "kwarg2": "kwarg2",
     }
 
 
@@ -79,6 +83,28 @@ def test_assert_not_called_when_not_called(
 
     schedule_call(1.5, mock_callable, *args, **kwargs)
     mock_callable.assert_not_called()
+
+
+def test_assert_against_call(
+    mock_callable: MockCallable, schedule_call: Callable
+) -> None:
+    """
+    Test that assertions on a callback call consume the call on the group.
+
+    :param mock_callable: the mock callable under test
+    :param schedule_call: a callable used to schedule a callback call.
+    """
+    schedule_call(
+        0.2,
+        mock_callable,
+        "first_arg",
+        "second_arg",
+        first_kwarg=1,
+        second_kwarg=2,
+        third_kwarg=3,
+    )
+
+    mock_callable.assert_against_call(arg1="second_arg", second_kwarg=2)
 
 
 # def test_initialisation_configuration() -> None:
