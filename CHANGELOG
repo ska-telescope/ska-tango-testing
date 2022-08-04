@@ -2,6 +2,9 @@
 
 ## unreleased
 
+## 0.3.0
+* [LOW-282] Tango context managers
+
 ## 0.2.0
 * [LOW-262] Improvements to diagnostics
 
