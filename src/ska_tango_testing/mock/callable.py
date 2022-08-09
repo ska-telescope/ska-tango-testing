@@ -16,6 +16,11 @@ def _characterizer_factory(
         characteristics["call_args"] = args
         characteristics["call_kwargs"] = kwargs
 
+        for position, arg in enumerate(args):
+            characteristics[f"arg{position}"] = arg
+        for keyword, value in kwargs.items():
+            characteristics[keyword] = value
+
         del characteristics["item"]
 
         if special_characterizer is not None:
@@ -158,43 +163,72 @@ class MockCallableGroup:
             matching call. The default is 1, which means we are
             asserting against the *next* call.
         :param kwargs: the characteristics that we are asserting the
-            call to have. All call have `call_args` and `call_kwargs`
-            characteristics. For example,
+            call to have. All call have
+
+            * `call_args` and `call_kwargs` characteristics. For
+              example,
+
+              .. code-block:: py
+
+                  example_callback("a", b=1)
+                  example_callback("c", d=1)
+
+                  assert_against_call(
+                      "example",
+                      lookahead=2,
+                      call_args=("c",),
+                      call_kwargs={"d": 1},
+                  )
+
+              asserts that one of the next two calls to callback "a"
+              will have the signature ("b", c=1).
+
+            * `argN` characteristics for `N` up to the number of
+              positional arguments. For example, if a callable was
+              called with three positional arguments, the captured call
+              will have characteristics `arg0`, `arg1` and `arg2`:
+
+              .. code-block:: py
+
+                  assert_against_call(
+                      "example",
+                      lookahead=2,
+                      arg0="c",
+                  )
+
+            * a characteristic for each keyword argument. For example,
+              if a callable was called with keyword argument
+              `power=PowerState.ON`, then the captured call will have
+              characteristic `power` with value `PowerState.ON`:
+
+              .. code-block:: py
+
+                  assert_against_call(
+                      "a",
+                      lookahead=2,
+                      d=1,
+                  )
+
+            If a characterizer was provided for the callback in this
+            group's constructor, then there may be other characteristics
+            that this method can assert against. For example, suppose we
+            expect callable "a" to have been called with signature
 
             .. code-block:: py
 
-                assert_against_call(
-                    "a",
-                    lookahead=2,
-                    call_args=("b",),
-                    call_kwargs={"c": 1},
+
+                callable_a(
+                    named_tuple(name="a", value=2, timestamp=1234567890)
                 )
 
-            asserts that one of the next two calls to callback "a" will
-            have the signature ("b", c=1). If a characterizer was
-            provided for the callback in this group's constructor, then
-            there may be other characteristics that this method can
-            assert against. For example, suppose we expect callable "a"
-            to have been called with signature
-
-            .. code-block:: py
-
-                callable_a(name="a", value=2, timestamp=1234567890)
-
             but the timestamp is unknown. If we don't know the timestamp
-            then we can't
+            then we can't construct an equal object to assert:
 
             .. code-block:: py
 
                 assert_against_call(
                     "a",
-                    lookahead=2,
-                    call_args=(,),
-                    call_kwargs={
-                        "name": "a",
-                        "value": 2,
-                        "timestamp": 1234567890,
-                    },
+                    arg0=named_tuple(name="a", value=2, timestamp=UNKNOWN)
                 )
 
             Instead we can provide a characterizer that unpacks the
@@ -350,54 +384,8 @@ class MockCallableGroup:
                 of a matching call. The default is 1, which means we are
                 asserting against the *next* call.
             :param kwargs: the characteristics that we are asserting the
-                call to have. All calls have `call_args` and
-                `call_kwargs` characteristics. For example,
-
-                .. code-block:: py
-
-                    assert_against_call(
-                        lookahead=2,
-                        call_args=("b",),
-                        call_kwargs={"c": 1},
-                    )
-
-                asserts that one of the next two calls to this callback
-                will have the signature ("b", c=1). If a characterizer
-                was provided for the callback in this group's
-                constructor, then there may be other characteristics
-                that this method can assert against. For example,
-                suppose we expect this callable to have been called with
-                signature
-
-                .. code-block:: py
-
-                    this_callable(name="a", value=2, timestamp=1234567890)
-
-                but the timestamp is unknown. If we don't know the
-                timestamp then we can't
-
-                .. code-block:: py
-
-                    assert_against_call(
-                        lookahead=2,
-                        call_args=(,),
-                        call_kwargs={
-                            "name": "a",
-                            "value": 2,
-                            "timestamp": 1234567890,
-                        },
-                    )
-
-                Instead we can provide a characterizer that unpacks the
-                "name" and "value" arguments for us, and then
-
-                .. code-block:: py
-
-                    assert_against_call(
-                        lookahead=2,
-                        name="a",
-                        value=2,
-                    )
+                call to have. For details see
+                :py:meth:`MockCallableGroup.assert_against_call`.
 
             :return: details of the call
 
@@ -517,53 +505,8 @@ class MockCallable:
             matching call. The default is 1, which means we are
             asserting against the *next* call.
         :param kwargs: the characteristics that we are asserting the
-            call to have. All calls have `call_args` and `call_kwargs`
-            characteristics. For example,
-
-            .. code-block:: py
-
-                assert_against_call(
-                    lookahead=2,
-                    call_args=("b",),
-                    call_kwargs={"c": 1},
-                )
-
-            asserts that one of the next two calls to this callback will
-            have the signature ("b", c=1). If a characterizer was
-            provided for the callback in this group's constructor, then
-            there may be other characteristics that this method can
-            assert against. For example, suppose we expect this callable
-            to have been called with signature
-
-            .. code-block:: py
-
-                this_callable(name="a", value=2, timestamp=1234567890)
-
-            but the timestamp is unknown. If we don't know the timestamp
-            then we can't
-
-            .. code-block:: py
-
-                assert_against_call(
-                    lookahead=2,
-                    call_args=(,),
-                    call_kwargs={
-                        "name": "a",
-                        "value": 2,
-                        "timestamp": 1234567890,
-                    },
-                )
-
-            Instead we can provide a characterizer that unpacks the
-            "name" and "value" arguments for us, and then
-
-            .. code-block:: py
-
-                assert_against_call(
-                    lookahead=2,
-                    name="a",
-                    value=2,
-                )
+            call to have. For details see
+            :py:meth:`MockCallableGroup.assert_against_call`.
 
         :return: details of the call
 

@@ -92,6 +92,7 @@ def test_assert_call_when_called(
             "category": "a",
             "call_args": (position,),
             "call_kwargs": {},
+            "arg0": position,
         }
     else:
         with pytest.raises(
@@ -202,6 +203,7 @@ def test_assert_specific_item_when_items_are_available(
             "category": "b",
             "call_args": (position,),
             "call_kwargs": {},
+            "arg0": position,
         }
 
     else:
@@ -249,3 +251,25 @@ def test_assert_call_consumes_calls(
     callable_group["a"].assert_not_called()
 
     callable_group.assert_not_called()
+
+
+def test_assert_against_call(
+    callable_group: MockCallableGroup, schedule_call: Callable
+) -> None:
+    """
+    Test that assertions on a callback call consume the call on the group.
+
+    :param callable_group: the callback group under test
+    :param schedule_call: a callable used to schedule a callback call.
+    """
+    schedule_call(
+        0.2,
+        callable_group["a"],
+        "first_arg",
+        "second_arg",
+        first_kwarg=1,
+        second_kwarg=2,
+        third_kwarg=3,
+    )
+
+    callable_group.assert_against_call("a", arg1="second_arg", second_kwarg=2)
