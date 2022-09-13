@@ -319,7 +319,7 @@ class MockCallableGroup:
             """
             self._call_queue.put((self._name, args, kwargs))
 
-            mock = unittest.mock.Mock(self._mock_configuration)
+            mock = unittest.mock.Mock(**self._mock_configuration)
             return mock(*args, **kwargs)
 
         def assert_call(
