@@ -1,6 +1,7 @@
 # Version History
 
 ## unreleased
+* [LOW-341] Fix bug in MockCallable.configure_mock()
 
 ## 0.4.0
 * [LOW-313] assert_against_call support for args and kwargs
