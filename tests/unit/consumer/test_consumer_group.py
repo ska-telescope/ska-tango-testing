@@ -4,6 +4,7 @@ from typing import Any, Dict, List, Optional
 import pytest
 
 from ska_tango_testing.mock import CharacterizerType, MockConsumerGroup
+from ska_tango_testing.mock.placeholders import Anything
 
 from .conftest import FakeItem, TestingProducerProtocol
 
@@ -374,8 +375,8 @@ def test_assert_consumes_items(
     presence one by one. At the end, we assert that there are no items
     left.
 
-    :param producer: a producer to test against
     :param consumer_group: the consumer under test
+    :param producer: a producer to test against
     :param item_library: a library of items for use in testing
     """
     producer.schedule_put(0.2, item_library["status_connected"])
@@ -413,3 +414,56 @@ def test_assert_consumes_items(
     )
 
     consumer_group.assert_no_item()
+
+
+def test_assert_any_item_when_item_is_available(
+    consumer_group: MockConsumerGroup,
+    producer: TestingProducerProtocol,
+    item_library: Dict[str, FakeItem],
+) -> None:
+    """
+    Test that Anythingh can be used to assert an item against the group.
+
+    :param consumer_group: the consumer under test
+    :param producer: a producer to test against
+    :param item_library: a library of items for use in testing
+    """
+    producer.schedule_put(0.2, item_library["voltage_1"])
+    consumer_group.assert_item(Anything)
+
+
+def test_assert_any_specific_item_when_item_is_available(
+    consumer_group: MockConsumerGroup,
+    producer: TestingProducerProtocol,
+    item_library: Dict[str, FakeItem],
+) -> None:
+    """
+    Test that Anything can be used to assert a specific item.
+
+    :param consumer_group: the consumer under test
+    :param producer: a producer to test against
+    :param item_library: a library of items for use in testing
+    """
+    producer.schedule_put(0.2, item_library["voltage_1"])
+    consumer_group["voltage"].assert_item(Anything)
+
+
+def test_assert_any_characteristic_when_item_has_characteristic(
+    consumer_group: MockConsumerGroup,
+    producer: TestingProducerProtocol,
+    item_library: Dict[str, FakeItem],
+) -> None:
+    """
+    Test that Anything can be used to assert against a characteristic.
+
+    :param consumer_group: the consumer under test
+    :param producer: a producer to test against
+    :param item_library: a library of items for use in testing
+    """
+    producer.schedule_put(0.2, item_library["voltage_1"])
+
+    consumer_group.assert_item(
+        name=item_library["voltage_1"].name,
+        value=item_library["voltage_1"].value,
+        quality=Anything,
+    )

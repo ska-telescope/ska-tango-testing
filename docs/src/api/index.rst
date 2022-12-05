@@ -24,6 +24,13 @@ ska_tango_testing.mock
     :members:
     :special-members: __init__, __call__
 
+ska_tango_testing.mock.placeholders
+-----------------------------------
+
+.. automodule:: ska_tango_testing.mock.placeholders
+    :members:
+    :special-members: __init__, __call__
+
 ska_tango_testing.mock.tango
 ----------------------------
 

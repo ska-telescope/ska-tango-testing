@@ -4,6 +4,7 @@ from typing import Callable
 import pytest
 import tango
 
+from ska_tango_testing.mock.placeholders import Anything
 from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
 
 
@@ -256,3 +257,17 @@ def test_assert_change_event_consumes_events(
     callback_group["status"].assert_not_called()
 
     callback_group.assert_not_called()
+
+
+def test_assert_any_change_event_when_event(
+    callback_group: MockTangoEventCallbackGroup,
+    schedule_event: Callable,
+) -> None:
+    """
+    Test that `assert_change_event` fails when the item is produced too late.
+
+    :param callback_group: the Tango event callback group under test.
+    :param schedule_event: a callable used to schedule a callback call.
+    """
+    schedule_event(0.2, callback_group["status"], "status", "IN_PROGRESS")
+    callback_group["status"].assert_change_event(Anything)

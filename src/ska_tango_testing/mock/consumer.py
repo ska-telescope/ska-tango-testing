@@ -471,7 +471,7 @@ class ConsumerAsserter:
         )
 
         for node in itertools.islice(iter(self._iterable), 0, lookahead):
-            if len(args) == 1 and node.payload["item"] != args[0]:
+            if len(args) == 1 and args[0] != node.payload["item"]:
                 logger.debug(
                     "assert_item: Positional argument does not exactly equal "
                     "item '%s'.",
@@ -487,7 +487,7 @@ class ConsumerAsserter:
                         repr(node.payload),
                     )
                     break
-                if node.payload[key] != value:
+                if value != node.payload[key]:
                     logger.debug(
                         "assert_item: '%s' characteristic is not '%s' in item "
                         "'%s'.",

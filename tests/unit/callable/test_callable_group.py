@@ -4,6 +4,7 @@ from typing import Callable
 import pytest
 
 from ska_tango_testing.mock import MockCallableGroup
+from ska_tango_testing.mock.placeholders import Anything
 
 
 def test_assert_no_call_when_no_call(
@@ -253,12 +254,21 @@ def test_assert_call_consumes_calls(
     callable_group.assert_not_called()
 
 
+@pytest.mark.parametrize("any_arg", [False, True])
+@pytest.mark.parametrize("any_kwarg", [False, True])
 def test_assert_against_call(
-    callable_group: MockCallableGroup, schedule_call: Callable
+    any_arg: bool,
+    any_kwarg: bool,
+    callable_group: MockCallableGroup,
+    schedule_call: Callable,
 ) -> None:
     """
     Test that assertions on a callback call consume the call on the group.
 
+    :param any_arg: whether to assert with `Anything` in place of a
+        positional argument.
+    :param any_kwarg: whether to assert with `Anything` in place of a
+        keyword argument.
     :param callable_group: the callback group under test
     :param schedule_call: a callable used to schedule a callback call.
     """
@@ -272,4 +282,78 @@ def test_assert_against_call(
         third_kwarg=3,
     )
 
-    callable_group.assert_against_call("a", arg1="second_arg", second_kwarg=2)
+    asserted_arg = Anything if any_arg else "second_arg"
+    asserted_kwarg = Anything if any_kwarg else 2
+    callable_group.assert_against_call(
+        "a", arg1=asserted_arg, second_kwarg=asserted_kwarg
+    )
+
+
+@pytest.mark.parametrize("any_arg", [False, True])
+@pytest.mark.parametrize("any_kwarg", [False, True])
+def test_assert_any_call_when_called(
+    any_arg: bool,
+    any_kwarg: bool,
+    callable_group: MockCallableGroup,
+    schedule_call: Callable,
+) -> None:
+    """
+    Test that Anything can be used in an assertion on the group.
+
+    :param any_arg: whether to assert with `Anything` in place of a
+        positional argument.
+    :param any_kwarg: whether to assert with `Anything` in place of a
+        keyword argument.
+    :param callable_group: the callback group under test
+    :param schedule_call: a callable used to schedule a callback call.
+    """
+    schedule_call(0.2, callable_group["a"], "foo", bah="bah")
+
+    asserted_arg = Anything if any_arg else "foo"
+    asserted_kwarg = Anything if any_kwarg else "bah"
+
+    call_details = callable_group.assert_call(
+        "a", asserted_arg, bah=asserted_kwarg
+    )
+    assert call_details == {
+        "category": "a",
+        "call_args": ("foo",),
+        "call_kwargs": {"bah": "bah"},
+        "arg0": "foo",
+        "bah": "bah",
+    }
+
+
+@pytest.mark.parametrize("any_arg", [False, True])
+@pytest.mark.parametrize("any_kwarg", [False, True])
+def test_assert_any_specific_call_when_called(
+    any_arg: bool,
+    any_kwarg: bool,
+    callable_group: MockCallableGroup,
+    schedule_call: Callable,
+) -> None:
+    """
+    Test that Anything can be used in an assertion on a specific callback.
+
+    :param any_arg: whether to assert with `Anything` in place of a
+        positional argument.
+    :param any_kwarg: whether to assert with `Anything` in place of a
+        keyword argument.
+    :param callable_group: the callback group under test
+    :param schedule_call: a callable used to schedule a callback call.
+    """
+    schedule_call(0.2, callable_group["a"], "foo", bah="bah")
+
+    asserted_arg = Anything if any_arg else "foo"
+    asserted_kwarg = Anything if any_kwarg else "bah"
+
+    call_details = callable_group["a"].assert_call(
+        asserted_arg, bah=asserted_kwarg
+    )
+    assert call_details == {
+        "category": "a",
+        "call_args": ("foo",),
+        "call_kwargs": {"bah": "bah"},
+        "arg0": "foo",
+        "bah": "bah",
+    }
