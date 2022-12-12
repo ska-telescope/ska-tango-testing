@@ -4,7 +4,7 @@ from typing import Any, Dict, List, Optional
 import pytest
 
 from ska_tango_testing.mock import CharacterizerType, MockConsumerGroup
-from ska_tango_testing.mock.placeholders import Anything
+from ska_tango_testing.mock.placeholders import Anything, OneOf
 
 from .conftest import FakeItem, TestingProducerProtocol
 
@@ -467,3 +467,44 @@ def test_assert_any_characteristic_when_item_has_characteristic(
         value=item_library["voltage_1"].value,
         quality=Anything,
     )
+
+
+def test_assert_oneof_item_when_item_is_available(
+    consumer_group: MockConsumerGroup,
+    producer: TestingProducerProtocol,
+    item_library: Dict[str, FakeItem],
+) -> None:
+    """
+    Test that assert `OneOf` multiple items passes when an item matches.
+
+    :param consumer_group: the consumer under test
+    :param producer: a producer to test against
+    :param item_library: a library of items for use in testing
+    """
+    producer.schedule_put(0.2, item_library["voltage_2"])
+    consumer_group.assert_item(
+        OneOf(item_library["voltage_1"], item_library["voltage_2"])
+    )
+
+
+def test_assert_oneof_item_when_no_item(
+    consumer_group: MockConsumerGroup,
+    producer: TestingProducerProtocol,
+    item_library: Dict[str, FakeItem],
+) -> None:
+    """
+    Test that asserting `OneOf` multiple items fails when not one of the items.
+
+    :param consumer_group: the consumer under test
+    :param producer: a producer to test against
+    :param item_library: a library of items for use in testing
+    """
+    producer.schedule_put(0.2, item_library["voltage_1"])
+
+    with pytest.raises(
+        AssertionError,
+        match="Expected matching item within the first 1 items",
+    ):
+        consumer_group.assert_item(
+            OneOf(item_library["voltage_2"], item_library["voltage_3"])
+        )

@@ -1,6 +1,7 @@
 # Version History
 
 ## unreleased
+* [LOW-387] OneOf placeholder
 * [LOW-385] Anything placeholder for more flexible assertions
 * [MCCS-1285] Support mock devices in lightweight Tango test harness
 

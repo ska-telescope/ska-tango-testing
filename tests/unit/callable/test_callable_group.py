@@ -4,7 +4,7 @@ from typing import Callable
 import pytest
 
 from ska_tango_testing.mock import MockCallableGroup
-from ska_tango_testing.mock.placeholders import Anything
+from ska_tango_testing.mock.placeholders import Anything, OneOf
 
 
 def test_assert_no_call_when_no_call(
@@ -357,3 +357,37 @@ def test_assert_any_specific_call_when_called(
         "arg0": "foo",
         "bah": "bah",
     }
+
+
+def test_assert_oneof_callback_called_when_call(
+    callable_group: MockCallableGroup,
+    schedule_call: Callable,
+) -> None:
+    """
+    Test that `assert_item` fails when the item is produced too late.
+
+    :param callable_group: the callable group under test
+    :param schedule_call: a callable used to schedule a callback call.
+    """
+    schedule_call(0.2, callable_group["a"], 1)
+
+    callable_group["a"].assert_call(OneOf(1, 2))
+
+
+def test_assert_oneof_callback_called_when_no_call(
+    callable_group: MockCallableGroup,
+    schedule_call: Callable,
+) -> None:
+    """
+    Test that `assert_item` fails when the item is produced too late.
+
+    :param callable_group: the callable group under test
+    :param schedule_call: a callable used to schedule a callback call.
+    """
+    schedule_call(0.2, callable_group["a"], 1)
+
+    with pytest.raises(
+        AssertionError,
+        match="Callable has not been called",
+    ):
+        callable_group["a"].assert_call(OneOf(2, 3))
