@@ -1,5 +1,7 @@
 """This module provides support for tango testing contexts."""
 
+from __future__ import annotations
+
 from types import TracebackType
 from typing import Any, Dict, List, Optional, Type, Union
 
@@ -106,7 +108,10 @@ class ThreadedTestTangoContextManager:
         self._device_info_by_class: Dict[
             Union[str, Type[tango.server.Device]], List[Dict[str, Any]]
         ] = {}
-        self._context = None
+        self._context: Optional[
+            ThreadedTestTangoContextManager._TangoContext
+        ] = None
+        self._mocks: Dict[str, tango.DeviceProxy] = {}
 
     def add_device(
         self,
@@ -127,6 +132,75 @@ class ThreadedTestTangoContextManager:
             {"name": device_name, "properties": properties}
         )
 
+    def add_mock_device(
+        self,
+        device_name: str,
+        device_mock: tango.DeviceProxy,
+    ) -> None:
+        """
+        Register a mock at a given device name.
+
+        Registering this mock means that when an attempts is made to
+        create a `tango.DeviceProxy` to that device name, this mock is
+        returned instead.
+
+        :param device_name: name of the device for which the mock is to
+            be registered.
+        :param device_mock: the mock to be registered at this name.
+        """
+        self._mocks[device_name] = device_mock
+
+    class _TangoContext:
+        def __init__(
+            self,
+            device_info: List[Dict[str, Any]],
+            mocks: Dict[str, tango.DeviceProxy],
+        ) -> None:
+            self._context = tango.test_context.MultiDeviceTestContext(
+                device_info,
+                process=False,
+                daemon=True,
+            )
+            self._mocks = mocks
+
+        def __enter__(self) -> TangoContextProtocol:
+            DeviceProxy.factory = self._proxy_factory
+            self._context.__enter__()
+            return self
+
+        def __exit__(
+            self,
+            exc_type: Optional[Type[BaseException]],
+            exception: Optional[BaseException],
+            trace: Optional[TracebackType],
+        ) -> bool:
+            # pylint: disable-next=assignment-from-no-return
+            return self._context.__exit__(exc_type, exception, trace)
+
+        def _proxy_factory(
+            self, name: str, *args: Any, **kwargs: Any
+        ) -> tango.DeviceProxy:
+            if name in self._mocks:
+                return self._mocks[name]
+            return tango.DeviceProxy(
+                self._context.get_device_access(name), *args, **kwargs
+            )
+
+        def get_device(self, device_name: str) -> tango.DeviceProxy:
+            """
+            Return a proxy to a Tango device.
+
+            This implementation first checks if a mock has been
+            registered, and if so it returns the registered mock.
+            Otherwise it attempts to create a proxy to the device
+            specified.
+
+            :param device_name: name of the device
+
+            :return: a proxy to the device
+            """
+            return self._proxy_factory(device_name)
+
     def __enter__(self) -> TangoContextProtocol:
         """
         Enter the context.
@@ -140,20 +214,8 @@ class ThreadedTestTangoContextManager:
             {"class": class_name, "devices": devices}
             for class_name, devices in self._device_info_by_class.items()
         ]
-
-        self._context = tango.test_context.MultiDeviceTestContext(
-            device_info,
-            process=False,
-            daemon=True,
-        )
-        assert self._context is not None  # for the type checker
-
-        DeviceProxy.factory = lambda name, *args, **kwargs: tango.DeviceProxy(
-            self._context.get_device_access(name), *args, **kwargs
-        )
-
-        self._context.__enter__()
-        return self._context
+        self._context = self._TangoContext(device_info, self._mocks)
+        return self._context.__enter__()
 
     def __exit__(
         self,
