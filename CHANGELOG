@@ -1,6 +1,8 @@
 # Version History
 
 ## unreleased
+* [LOW-385] Anything placeholder for more flexible assertions
+* [MCCS-1285] Support mock devices in lightweight Tango test harness
 
 ## 0.4.1
 * [LOW-341] Fix bug in MockCallable.configure_mock()

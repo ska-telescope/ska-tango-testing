@@ -491,3 +491,37 @@ can now tighten up our test assertion again:
 .. code-block:: python
 
     callback.assert_call(power=PowerState.ON, fault=False)
+
+
+Assertion placeholders
+----------------------
+Placeholders allow for flexibility in assertions by broadening the range
+of items that an assertion can match. So far, the only placeholder
+available is `Anything`. This matches any item at all.
+
+For example, suppose we want to assert a call with keyword arguments
+`name`, `value` and `timestamp`, but we don't know exactly what the
+value of the `timestamp` will be. One way to make such an assertion is
+
+.. code-block:: python
+
+    from ska_tango_testing.mock.placeholders import Anything
+
+    mock_callback.assert_call(
+        name="voltage",
+        value=0.0,
+        timestamp=Anything,
+    )
+
+and this assertion will match irrespective of the actual value of the
+`timestamp` keyword.
+
+Placeholders can be used in assertions anywhere that a specific item can
+by used:
+
+* In a `MockConsumer` assertion, it can replace an item or a category or
+  any characteristics
+* In a `MockCallable` or `MockCallableGroup` assertion, it can
+  substitute for a positional or keyword argument
+* In a `MockTangoEventCallbackGroup`, it can substitute for an entire
+  event, or for an event characteristic.
