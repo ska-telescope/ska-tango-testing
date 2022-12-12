@@ -84,6 +84,41 @@ Two context managers are provided:
   is provided. Until the bug is fixed, production code should use this
   class instead of :py:class:`tango.DeviceProxy`.
 
+  :py:class:`~ska_tango_testing.context.ThreadedTestTangoContextManager`
+  also supports mock devices. This is done with the
+  :py:meth:`~ska_tango_testing.context.ThreadedTestTangoContextManager.add_mock_device`
+  method:
+
+  .. code-block:: python
+
+    context_manager = ThreadedTestTangoContextManager()
+    context_manager.add_device(
+        "lab/controller/1",
+        LabControllerDevice,
+        SignalGeneratorName="lab/siggen/1",
+        SpectrumAnalyserName="lab/spectana/1",
+    )
+
+    context_manager.add_mock_device(
+        "lab/siggen/1",
+        unittest.mock.Mock(**signal_generator_mock_config)
+    )
+    context_manager.add_mock_device(
+        "lab/spectana/1",
+        unittest.mock.Mock(**spectrum_analyser_mock_config)
+    )
+    with context_manager as context:
+        controller = context.get_device("lab/controller/1")
+        signal_generator = context.get_device("lab/siggen/1")
+        spectrum_analyser = context.get_device("lab/spectana/1")
+
+        # Test that when we tell the lab controller to turn everything on,
+        # the signal generator and spectrum analyser are told to turn on.
+        controller.On()
+        signal_generator.On.assert_called_once_with()
+        spectrum_analyser.On.assert_called_once_with()
+  
+
 Mock consumers
 --------------
 The :py:class:`~ska_tango_testing.mock.MockConsumerGroup` class

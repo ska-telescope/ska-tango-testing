@@ -1,5 +1,6 @@
 """This module tests the ska_tango_testing version."""
 
+import unittest
 from typing import Optional
 
 import pytest
@@ -92,6 +93,33 @@ class TestThreadedTestTangoContextManager:
         with context_manager as context:
             device_1 = context.get_device("foo/bar/1")
             device_2 = context.get_device("foo/bar/2")
+
+            assert device_1.value == 1
+            assert device_2.value == 2
+
+            assert device_1.twin_value == 2
+            assert device_2.twin_value == 1
+
+    @pytest.mark.forked  # pylint: disable-next=no-self-use
+    def test_context_manager_with_device_and_mock(self) -> None:
+        """Test a context manager with a device and a mock."""
+        context_manager = ThreadedTestTangoContextManager()
+        context_manager.add_device(
+            "foo/bar/1", TwinDevice, Value=1, Twin="foo/bar/2"
+        )
+
+        mock = unittest.mock.Mock()
+        mock.value = 2
+
+        context_manager.add_mock_device("foo/bar/2", mock)
+
+        with context_manager as context:
+            device_1 = context.get_device("foo/bar/1")
+            device_2 = context.get_device("foo/bar/2")
+
+            type(mock).twin_value = unittest.mock.PropertyMock(
+                side_effect=lambda: device_1.value
+            )
 
             assert device_1.value == 1
             assert device_2.value == 2
