@@ -4,7 +4,7 @@ from typing import Callable
 import pytest
 
 from ska_tango_testing.mock import MockCallable
-from ska_tango_testing.mock.placeholders import Anything
+from ska_tango_testing.mock.placeholders import Anything, OneOf
 
 
 @pytest.mark.parametrize("any_arg", [False, True])
@@ -110,7 +110,10 @@ def test_assert_against_call(
     schedule_call: Callable,
 ) -> None:
     """
-    Test that assertions on a callback call consume the call on the group.
+    Test correct behaviour of `assert_against_call`.
+
+    This test also tests the behaviour of the `Anything` placeholder
+    when asserting against a call.
 
     :param any_arg: whether to assert with `Anything` in place of a
         positional argument.
@@ -161,3 +164,57 @@ def test_mock_configuration_exception() -> None:
     with pytest.raises(ValueError, match="side effect exception"):
         mock_callable("arg", kwarg="kwarg")
     mock_callable.assert_call("arg", kwarg="kwarg")
+
+
+@pytest.mark.parametrize("oneof_arg", [False, True])
+@pytest.mark.parametrize("oneof_kwarg", [False, True])
+def test_assert_oneof_against_call(
+    oneof_arg: bool,
+    oneof_kwarg: bool,
+    mock_callable: MockCallable,
+    schedule_call: Callable,
+) -> None:
+    """
+    Test behaviour of `OneOf` placeholder when asserting on a call.
+
+    :param oneof_arg: whether to assert with `OneOf` in place of a
+        positional argument.
+    :param oneof_kwarg: whether to assert with `OneOf` in place of a
+        keyword argument.
+    :param mock_callable: the mock callable under test
+    :param schedule_call: a callable used to schedule a callback call.
+    """
+    schedule_call(
+        0.2,
+        mock_callable,
+        "first_arg",
+        "second_arg",
+        first_kwarg=1,
+        second_kwarg=2,
+        third_kwarg=3,
+    )
+
+    asserted_arg = OneOf("second_arg", "foo") if oneof_arg else "second_arg"
+    asserted_kwarg = OneOf(2, -2) if oneof_kwarg else 2
+    mock_callable.assert_against_call(
+        arg1=asserted_arg, second_kwarg=asserted_kwarg
+    )
+
+
+def test_assert_oneof_callback_called_when_no_call(
+    mock_callable: MockCallable,
+    schedule_call: Callable,
+) -> None:
+    """
+    Test that asserting `OneOf` multiple items fails when no matching item.
+
+    :param mock_callable: the mock callable under test
+    :param schedule_call: a callable used to schedule a callback call.
+    """
+    schedule_call(0.2, mock_callable, 1)
+
+    with pytest.raises(
+        AssertionError,
+        match="Callable has not been called",
+    ):
+        mock_callable.assert_call(OneOf(2, 3))

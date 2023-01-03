@@ -4,7 +4,7 @@ from typing import Callable
 import pytest
 import tango
 
-from ska_tango_testing.mock.placeholders import Anything
+from ska_tango_testing.mock.placeholders import Anything, OneOf
 from ska_tango_testing.mock.tango import MockTangoEventCallbackGroup
 
 
@@ -264,10 +264,26 @@ def test_assert_any_change_event_when_event(
     schedule_event: Callable,
 ) -> None:
     """
-    Test that `assert_change_event` fails when the item is produced too late.
+    Test that `assert_change_event` passes when asserted with `Anything`.
 
     :param callback_group: the Tango event callback group under test.
     :param schedule_event: a callable used to schedule a callback call.
     """
     schedule_event(0.2, callback_group["status"], "status", "IN_PROGRESS")
     callback_group["status"].assert_change_event(Anything)
+
+
+def test_assert_oneof_change_event_when_event(
+    callback_group: MockTangoEventCallbackGroup,
+    schedule_event: Callable,
+) -> None:
+    """
+    Test that `assert_change_event` passes when a `OneOf` option matches.
+
+    :param callback_group: the Tango event callback group under test.
+    :param schedule_event: a callable used to schedule a callback call.
+    """
+    schedule_event(0.2, callback_group["status"], "status", "IN_PROGRESS")
+    callback_group["status"].assert_change_event(
+        OneOf("IN_PROGRESS", "COMPLETED")
+    )
