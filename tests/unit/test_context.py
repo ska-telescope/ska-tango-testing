@@ -147,12 +147,11 @@ class TestThreadedTestTangoContextManager:
         context_manager = ThreadedTestTangoContextManager()
 
         name = "foo/bar/2"
-        with context_manager as context:
-            with pytest.raises(
-                KeyError,
-                match=(
-                    f"Test context has no mock for {name}, "
-                    "and no devices at all."
-                ),
-            ):
-                _ = context.get_device(name)
+        with context_manager as context, pytest.raises(
+            KeyError,
+            match=(
+                f"Test context has no mock for {name}, "
+                "and no devices at all."
+            ),
+        ):
+            _ = context.get_device(name)
