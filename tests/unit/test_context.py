@@ -126,3 +126,33 @@ class TestThreadedTestTangoContextManager:
 
             assert device_1.twin_value == 2
             assert device_2.twin_value == 1
+
+    @pytest.mark.forked  # pylint: disable-next=no-self-use
+    def test_context_manager_with_mocks_only(self) -> None:
+        """Test a context manager with only a mock."""
+        context_manager = ThreadedTestTangoContextManager()
+
+        mock = unittest.mock.Mock()
+        mock.value = 2
+
+        context_manager.add_mock_device("foo/bar/2", mock)
+
+        with context_manager as context:
+            device = context.get_device("foo/bar/2")
+            assert device.value == 2
+
+    @pytest.mark.forked  # pylint: disable-next=no-self-use
+    def test_context_manager_with_no_devices_or_mocks(self) -> None:
+        """Test a context manager with no devices or mocks."""
+        context_manager = ThreadedTestTangoContextManager()
+
+        name = "foo/bar/2"
+        with context_manager as context:
+            with pytest.raises(
+                KeyError,
+                match=(
+                    f"Test context has no mock for {name}, "
+                    "and no devices at all."
+                ),
+            ):
+                _ = context.get_device(name)

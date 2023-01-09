@@ -156,16 +156,21 @@ class ThreadedTestTangoContextManager:
             device_info: List[Dict[str, Any]],
             mocks: Dict[str, tango.DeviceProxy],
         ) -> None:
-            self._context = tango.test_context.MultiDeviceTestContext(
-                device_info,
-                process=False,
-                daemon=True,
-            )
+            self._context: Optional[tango.test_context.MultiDeviceTestContext]
+            if device_info:
+                self._context = tango.test_context.MultiDeviceTestContext(
+                    device_info,
+                    process=False,
+                    daemon=True,
+                )
+            else:
+                self._context = None
             self._mocks = mocks
 
         def __enter__(self) -> TangoContextProtocol:
             DeviceProxy.factory = self._proxy_factory
-            self._context.__enter__()
+            if self._context is not None:
+                self._context.__enter__()
             return self
 
         def __exit__(
@@ -175,13 +180,20 @@ class ThreadedTestTangoContextManager:
             trace: Optional[TracebackType],
         ) -> bool:
             # pylint: disable-next=assignment-from-no-return
-            return self._context.__exit__(exc_type, exception, trace)
+            return self._context is not None and self._context.__exit__(
+                exc_type, exception, trace
+            )
 
         def _proxy_factory(
             self, name: str, *args: Any, **kwargs: Any
         ) -> tango.DeviceProxy:
             if name in self._mocks:
                 return self._mocks[name]
+            if self._context is None:
+                raise KeyError(
+                    f"Test context has no mock for {name}, "
+                    "and no devices at all."
+                )
             return tango.DeviceProxy(
                 self._context.get_device_access(name), *args, **kwargs
             )
