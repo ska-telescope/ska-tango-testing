@@ -2,6 +2,9 @@
 
 ## unreleased
 
+## 0.5.1
+* [MCCS-1297] Support only mock devices
+
 ## 0.5.0
 
 * [LOW-387] OneOf placeholder
