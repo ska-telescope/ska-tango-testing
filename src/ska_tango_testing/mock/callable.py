@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import queue
 import unittest.mock
-from typing import Any, Dict, Optional
+from typing import Any, Callable, Dict, Optional
 
 from .consumer import CharacterizerType, ConsumerAsserter, MockConsumerGroup
 
@@ -284,6 +284,7 @@ class MockCallableGroup:
             call_queue: queue.SimpleQueue,
             name: str,
             consumer_view: ConsumerAsserter,
+            wraps: Optional[Callable] = None,
         ) -> None:
             """
             Initialise a new instance.
@@ -291,20 +292,72 @@ class MockCallableGroup:
             :param call_queue: the queue in which calls are places
             :param name: the name of this callable
             :param consumer_view: the underlying view on the consumer
+            :param wraps: a callable to be wrapped by this one. See
+                :py:meth:`wraps` for details.
             """
             self._call_queue = call_queue
             self._name = name
             self._consumer_view = consumer_view
-            self._mock_configuration: Dict[str, Any] = {}
+
+            self._wraps = wraps or (  # pylint: disable-next=unnecessary-lambda
+                lambda *args, **kwargs: unittest.mock.Mock()(*args, **kwargs)
+            )
+
+        def wraps(self, callable_to_wrap: Callable) -> None:
+            """
+            Specify a callable for this mock callable to wrap.
+
+            This allows use of this class as a shim between a caller and
+            a called method. For example, suppose we need to provide an
+            `important_callable` that we expect to be called with
+            specific arguments. When called, this callable will do some
+            very important work that cannot be mocked out.
+
+            In testing, instead of mocking out the callable, we can wrap
+            it in a shim:
+
+            .. code-block:: py
+
+              important_shim = MockCallable(wraps=important_callable)
+
+            or
+
+            .. code-block:: py
+
+              important_shim = MockCallable()
+              important_shim.wraps(important_callable)
+
+            This way, `important_callable` will still be called, but we
+            can also assert on the call(s) as they pass through the
+            shim:
+
+            .. code-block:: py
+
+              important_shim.assert_call(0.0)
+
+            Note: calls to this method override any previous call to
+            :py:meth:`configure_mock`.
+
+            :param callable_to_wrap: a callable for this mock callable
+                to wrap
+            """
+            self._wraps = callable_to_wrap
 
         def configure_mock(self, **configuration: Any) -> None:
             """
             Configure the underlying mock.
 
+            Calling this method is similar to passing a configured mock
+            to :py:meth:`wraps`; it therefore overrides any previous
+            call to that method.
+
             :param configuration: keyword arguments to be passed to the
                 underlying mock.
             """
-            self._mock_configuration = configuration
+            # pylint: disable-next=unnecessary-lambda
+            self._wraps = lambda *args, **kwargs: unittest.mock.Mock(
+                **configuration
+            )(*args, **kwargs)
 
         def __call__(
             self: MockCallableGroup._Callable, *args: Any, **kwargs: Any
@@ -319,8 +372,7 @@ class MockCallableGroup:
             """
             self._call_queue.put((self._name, args, kwargs))
 
-            mock = unittest.mock.Mock(**self._mock_configuration)
-            return mock(*args, **kwargs)
+            return self._wraps(*args, **kwargs)
 
         def assert_call(
             self: MockCallableGroup._Callable,
@@ -425,15 +477,56 @@ class MockCallable:
 
     _tracebackhide_ = True
 
-    def __init__(self: MockCallable, timeout: Optional[float] = 1.0) -> None:
+    def __init__(
+        self: MockCallable,
+        timeout: Optional[float] = 1.0,
+        wraps: Optional[Callable] = None,
+    ) -> None:
         """
         Initialise a new instance.
 
         :param timeout: how long to wait for the call, in seconds, or
             None to wait forever. The default is 1 second.
+        :param wraps: a callable to be wrapped by this one. See
+            :py:meth:`wraps` for details.
         """
         name = "__mock_callable"
         self._view = MockCallableGroup(name, timeout=timeout)[name]
+        if wraps is not None:
+            self._view.wraps(wraps)
+
+    def wraps(self: MockCallable, wrapped: Callable) -> None:
+        """
+        Specify a callable for this mock callable to wrap.
+
+        This allows use of this class as a shim between a caller and
+        a called method. For example, suppose we need to provide an
+        `important_callable` that we expect to be called with
+        specific arguments. When called, this callable will do some
+        very important work that cannot be mocked out.
+
+        In testing, instead of mocking out the callable, we can wrap
+        it in a shim:
+
+        .. code-block:: py
+
+            important_shim = MockCallable()
+            important_shim.wraps(important_callable)
+
+        This way, `important_callable` will still be called, but we
+        can also assert on the call(s) as they pass through the
+        shim:
+
+        .. code-block:: py
+
+            important_shim.assert_call(0.0)
+
+        Note: calls to this method override any previous call to
+        :py:meth:`configure_mock`.
+
+        :param wrapped: a callable for this mock callable to wrap
+        """
+        self._view.wraps(wrapped)
 
     def configure_mock(self: MockCallable, **configuration: Any) -> None:
         """

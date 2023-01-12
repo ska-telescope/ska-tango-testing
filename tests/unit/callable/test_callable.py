@@ -1,5 +1,5 @@
 """This module contains tests of the :py:class:`MockCallable` class."""
-from typing import Callable
+from typing import Any, Callable
 
 import pytest
 
@@ -163,6 +163,34 @@ def test_mock_configuration_exception() -> None:
 
     with pytest.raises(ValueError, match="side effect exception"):
         mock_callable("arg", kwarg="kwarg")
+    mock_callable.assert_call("arg", kwarg="kwarg")
+
+
+def test_wraps_argument() -> None:
+    """Test that the `wraps` initialiser argument works as expected."""
+
+    def _wrapped(*args: Any, **kwargs: Any) -> Any:
+        return "foo"
+
+    mock_callable = MockCallable(wraps=_wrapped)
+
+    assert mock_callable("arg", kwarg="kwarg") == "foo"
+    mock_callable.assert_call("arg", kwarg="kwarg")
+
+
+def test_wraps_method(mock_callable: MockCallable) -> None:
+    """
+    Test that the `wraps` method works as expected.
+
+    :param mock_callable: the mock callable under test
+    """
+
+    def _wrapped(*args: Any, **kwargs: Any) -> Any:
+        return "foo"
+
+    mock_callable.wraps(_wrapped)
+
+    assert mock_callable("arg", kwarg="kwarg") == "foo"
     mock_callable.assert_call("arg", kwarg="kwarg")
 
 
