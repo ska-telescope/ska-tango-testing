@@ -290,7 +290,7 @@ def test_assert_oneof_change_event_when_event(
     )
 
 
-def test_assert_change_event_with_matching_numpy_array(
+def test_assert_change_event_with_numpy_array(
     callback_group: MockTangoEventCallbackGroup,
     schedule_event: Callable,
 ) -> None:
@@ -302,7 +302,7 @@ def test_assert_change_event_with_matching_numpy_array(
     ska-tango-testing coerces numpy arrays to (nested) lists.
 
     Here we test that an assertion with a list successfully passes when
-    the received event contains a matching subarray/
+    the received event contains a matching subarray.
 
     :param callback_group: the Tango event callback group under test.
     :param schedule_event: a callable used to schedule a callback call.
