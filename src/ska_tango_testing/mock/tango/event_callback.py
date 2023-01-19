@@ -3,6 +3,8 @@ from __future__ import annotations
 
 from typing import Any, Dict, Optional
 
+import numpy
+
 from ska_tango_testing.mock.callable import MockCallableGroup
 from ska_tango_testing.mock.consumer import CharacterizerType
 
@@ -28,7 +30,13 @@ def _event_characterizer_factory(
         if event.attr_value:
             attribute_data = event.attr_value
             characteristics["attribute_name"] = attribute_data.name
-            characteristics["attribute_value"] = attribute_data.value
+
+            if isinstance(attribute_data.value, numpy.ndarray):
+                characteristics[
+                    "attribute_value"
+                ] = attribute_data.value.tolist()
+            else:
+                characteristics["attribute_value"] = attribute_data.value
             characteristics["attribute_quality"] = attribute_data.quality
 
         return characteristics
@@ -100,7 +108,6 @@ class MockTangoEventCallbackGroup(MockCallableGroup):
             raise  # pylint: disable=try-except-raise
 
     class _EventCallback:
-
         _tracebackhide_ = True
 
         def __init__(

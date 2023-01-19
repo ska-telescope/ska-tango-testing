@@ -8,6 +8,7 @@ license = "BSD 3-clause new license"
 [tool.poetry.dependencies]
 python = "^3.7"
 pytango = "^9.3"
+numpy = "^1.19.2"
 
 [tool.poetry.dev-dependencies]
 black = "^22.1.0"

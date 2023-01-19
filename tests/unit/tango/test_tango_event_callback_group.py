@@ -1,6 +1,7 @@
 """This module contains tests of the mock callback module."""
 from typing import Callable
 
+import numpy
 import pytest
 import tango
 
@@ -287,3 +288,38 @@ def test_assert_oneof_change_event_when_event(
     callback_group["status"].assert_change_event(
         OneOf("IN_PROGRESS", "COMPLETED")
     )
+
+
+def test_assert_change_event_with_matching_numpy_array(
+    callback_group: MockTangoEventCallbackGroup,
+    schedule_event: Callable,
+) -> None:
+    """
+    Test handling of events with numpy arrays.
+
+    Tango events for spectrum and image attributes will be numpy arrays,
+    but numpy prevent equality checking between numpy arrays. Therefore
+    ska-tango-testing coerces numpy arrays to (nested) lists.
+
+    Here we test that an assertion with a list successfully passes when
+    the received event contains a matching subarray/
+
+    :param callback_group: the Tango event callback group under test.
+    :param schedule_event: a callable used to schedule a callback call.
+    """
+    schedule_event(0.2, callback_group["a"], "a", numpy.array([1.0, 2.0]))
+    schedule_event(0.2, callback_group["b"], "b", numpy.array([3.0, 4.0]))
+
+    # Test successful match
+    callback_group["a"].assert_change_event(
+        [pytest.approx(1.0), pytest.approx(2.0)],
+    )
+
+    # Test unsuccessful match
+    with pytest.raises(
+        AssertionError,
+        match="Callable has not been called with",
+    ):
+        callback_group["b"].assert_change_event(
+            [pytest.approx(1.0), pytest.approx(1.0)],
+        )
