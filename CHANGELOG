@@ -2,6 +2,10 @@
 
 ## unreleased
 
+## 0.5.2
+* [LOW-402] MockCallable "wraps" method
+* [LOW-411] Spectrum attribute support
+
 ## 0.5.1
 * [MCCS-1297] Support only mock devices
 
