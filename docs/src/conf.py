@@ -41,6 +41,10 @@ extensions = [
     "sphinx_autodoc_typehints",
 ]
 
+
+autodoc_mock_imports = ["numpy", "tango"]
+
+
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 
@@ -67,9 +71,6 @@ html_context = {
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
-
-
-autodoc_mock_imports = ["tango"]
 
 
 intersphinx_mapping = {

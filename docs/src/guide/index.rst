@@ -405,6 +405,16 @@ respectively.
     callbacks.assert_change_event("command_status", "COMPLETED")
     callbacks.assert_not_called()
 
+For spectrum and image attributes, the values in Tango change events are
+numpy arrays. However assertions should be expressed using python lists:
+
+.. code-block:: python
+
+    # The change event will actually contain a numpy array,
+    # but this assertion will still pass if the elements are the same
+    callbacks.assert_change_event("levels", [1, 2, 1, 3, 2])
+
+
 Return values
 -------------
 All methods that assert the presence of an item, such as
