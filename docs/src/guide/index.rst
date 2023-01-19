@@ -369,6 +369,65 @@ Note that we can
   callback, and then make assertions against that callback alone.
 
 
+Callable behaviour
+------------------
+Sometimes when the production code calls a callable, it expects some
+action to be performed or a value to be returned. Thus, if we simply
+replace that callable with a
+:py:class:`~ska_tango_testing.mock.MockCallable`, the expectations of
+of the caller will not be met, and thus problems may arise in testing.
+
+Two mechanisms are provided to address this:
+
+#. The `MockCallable` class has a
+   :py:meth:`~ska_tango_testing.mock.MockCallable.configure_mock`
+   method that can be used to configure the behaviour of an underlying
+   :py:class:`unittest.mock.Mock`. For example, if the callable is
+   supposed to return an integer, we can configure the underlying mock
+   so that it always returns `1`:
+
+   .. code-block:: python
+
+     mock_callable = MockCallable()
+     mock_callable.configure_mock(return_value=1)
+
+   The arguments to `configure_mock` are passed straight through to the
+   :py:meth:`unittest.mock.Mock.configure_mock` method of the underlying
+   :py:class:`unittest.mock.Mock`; so see that method for documentation.
+
+#. For cases where a callable performs essential behaviour that cannot
+   be mocked out, there is the option of *wrapping* the callable with a
+   `MockCallable`. When we wrap, the underlying callable still gets
+   called, but the call passes through the `MockCallable` on the way,
+   allowing us to assert against calls in the usual way:
+
+   .. code-block:: python
+
+     mock_callable = MockCallable(wraps=essential_callable)
+     mock_callable.assert_call(0.0)
+  
+   or
+
+   .. code-block:: python
+
+     mock_callable = MockCallable()
+     mock_callable.wraps(essential_callable)
+     mock_callable.assert_call(0.0)
+
+   or
+
+   .. code-block:: python
+
+     mock_callables = MockCallableGroup("foo", "bah")
+     mock_callable["bah"].wraps(essential_callable)
+     mock_callable.assert_call(bah, 0.0)
+
+Note that these two options are mutually exclusive: a `MockCallable`
+always wraps something: it is just a question of whether the thing
+wrapped is a vanilla mock, a configured mock, or a user-provided
+callable. Thus, each call to `configure_mock` or `wraps` replaces any
+previous call.
+
 Mock Tango event callbacks
 --------------------------
 A common use case for testing against callbacks in SKA is the callbacks
