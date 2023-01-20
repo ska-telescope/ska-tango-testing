@@ -6,11 +6,13 @@ authors = ["Drew Devereux <drew.devereux@csiro.au>"]
 license = "BSD 3-clause new license"
 
 [tool.poetry.dependencies]
-python = "^3.7"
-pytango = "9.3.3"
-numpy = "1.21.1"
+python = "^3.8"
+pytango = "^9.3.3"
+numpy = "^1.19.0"
 
 [tool.poetry.dev-dependencies]
+pytango = "9.3.6"
+numpy = "1.23.0"
 black = "^22.1.0"
 darglint = "^1.8.1"
 docformatter = "^1.4"
