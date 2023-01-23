@@ -2,6 +2,9 @@
 
 ## unreleased
 
+## 0.5.3
+* [LOW-414] Dependency bugfix
+
 ## 0.5.2
 * [LOW-402] MockCallable "wraps" method
 * [LOW-411] Spectrum attribute support

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "ska-tango-testing"
-version = "0.5.2"
+version = "0.5.3"
 description = "Test harness for testing SKA Tango devices"
 authors = ["Drew Devereux <drew.devereux@csiro.au>"]
 license = "BSD 3-clause new license"
