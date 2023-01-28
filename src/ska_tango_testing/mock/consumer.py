@@ -435,6 +435,37 @@ class ConsumerAsserter:
         )
         raise AssertionError("Expected no item, but an item is available.")
 
+    @staticmethod
+    def _payload_matches_assertion(
+        payload: Any, *args: Any, **kwargs: Any
+    ) -> bool:
+        if len(args) == 1 and args[0] != payload["item"]:
+            logger.debug(
+                "assert_item: Positional argument does not exactly equal "
+                "item '%s'.",
+                repr(payload["item"]),
+            )
+            return False
+
+        for key, value in kwargs.items():
+            if key not in payload:
+                logger.debug(
+                    "assert_item: No '%s' characteristic in item '%s'.",
+                    key,
+                    repr(payload),
+                )
+                return False
+            if value != payload[key]:
+                logger.debug(
+                    "assert_item: '%s' characteristic is not '%s' in item "
+                    "'%s'.",
+                    key,
+                    value,
+                    repr(payload),
+                )
+                return False
+        return True
+
     def assert_item(
         self: ConsumerAsserter,
         *args: Any,
@@ -478,32 +509,7 @@ class ConsumerAsserter:
         )
 
         for node in itertools.islice(iter(self._iterable), 0, lookahead):
-            if len(args) == 1 and args[0] != node.payload["item"]:
-                logger.debug(
-                    "assert_item: Positional argument does not exactly equal "
-                    "item '%s'.",
-                    repr(node.payload["item"]),
-                )
-                continue
-
-            for key, value in kwargs.items():
-                if key not in node.payload:
-                    logger.debug(
-                        "assert_item: No '%s' characteristic in item '%s'.",
-                        key,
-                        repr(node.payload),
-                    )
-                    break
-                if value != node.payload[key]:
-                    logger.debug(
-                        "assert_item: '%s' characteristic is not '%s' in item "
-                        "'%s'.",
-                        key,
-                        value,
-                        repr(node.payload),
-                    )
-                    break
-            else:
+            if self._payload_matches_assertion(node.payload, *args, **kwargs):
                 payload = node.payload
                 node.drop()
                 logger.debug(
