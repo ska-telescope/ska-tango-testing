@@ -129,6 +129,12 @@ class MockCallableGroup:
             matching call. The default is 1, in which case we are
             asserting against the *next* call.
 
+            If a "consume_nonmatches" keyword argument is provided,
+            this indicates whether calls that are examined
+            but do not match should be consumed
+            rather than left on the queue
+            to be examined by future assert calls.
+
             All other keyword arguments are keyword arguments
             asserted to be in the call.
 
@@ -138,12 +144,14 @@ class MockCallableGroup:
             within the timeout period
         """
         lookahead = kwargs.pop("lookahead", 1)
+        consume_nonmatches = kwargs.pop("consume_nonmatches", False)
         try:
             return self.assert_against_call(
                 callable_name,
                 call_args=args,
                 call_kwargs=kwargs,
                 lookahead=lookahead,
+                consume_nonmatches=consume_nonmatches,
             )
         except AssertionError:
             raise  # pylint: disable=try-except-raise
@@ -152,6 +160,7 @@ class MockCallableGroup:
         self: MockCallableGroup,
         callable_name: str,
         lookahead: Optional[int] = None,
+        consume_nonmatches: bool = False,
         **kwargs: Any,
     ) -> Dict[str, Any]:
         """
@@ -162,6 +171,10 @@ class MockCallableGroup:
         :param lookahead:  The number of calls to examine in search of a
             matching call. The default is 1, which means we are
             asserting against the *next* call.
+        :param consume_nonmatches: whether calls that are examined
+            but do not match should be consumed
+            rather than left on the queue
+            to be examined by future assert calls.
         :param kwargs: the characteristics that we are asserting the
             call to have. All call have
 
@@ -252,6 +265,7 @@ class MockCallableGroup:
             return self._mock_consumer_group.assert_item(
                 category=callable_name,
                 lookahead=lookahead or 1,
+                consume_nonmatches=consume_nonmatches,
                 **kwargs,
             )
         except AssertionError as assertion_error:
@@ -406,6 +420,11 @@ class MockCallableGroup:
                 in search of a matching call. The default is 1, in which
                 case we are asserting against the *next* call.
 
+                If a "consume_nonmatches" keyword argument is provided,
+                this indicates whether calls that are examined but do
+                not match should be consumed rather than left on the
+                queue to be examined by future assert calls.
+
                 All other keyword arguments are keyword arguments
                 asserted to be in the call.
 
@@ -415,11 +434,13 @@ class MockCallableGroup:
                 within the timeout period
             """
             lookahead = kwargs.pop("lookahead", 1)
+            consume_nonmatches = kwargs.pop("consume_nonmatches", False)
             try:
                 return self.assert_against_call(
                     call_args=args,
                     call_kwargs=kwargs,
                     lookahead=lookahead,
+                    consume_nonmatches=consume_nonmatches,
                 )
             except AssertionError:
                 raise  # pylint: disable=try-except-raise
@@ -427,6 +448,7 @@ class MockCallableGroup:
         def assert_against_call(
             self: MockCallableGroup._Callable,
             lookahead: Optional[int] = None,
+            consume_nonmatches: bool = False,
             **kwargs: Any,
         ) -> Dict[str, Any]:
             """
@@ -435,6 +457,9 @@ class MockCallableGroup:
             :param lookahead:  The number of calls to examine in search
                 of a matching call. The default is 1, which means we are
                 asserting against the *next* call.
+            :param consume_nonmatches: whether calls that are examined
+                but do not match should be consumed rather than left on
+                the queue to be examined by future assert calls.
             :param kwargs: the characteristics that we are asserting the
                 call to have. For details see
                 :py:meth:`MockCallableGroup.assert_against_call`.
@@ -447,9 +472,8 @@ class MockCallableGroup:
             try:
                 return self._consumer_view.assert_item(
                     category=self._name,
-                    # args=args,
-                    # kwargs=kwargs,
                     lookahead=lookahead or 1,
+                    consume_nonmatches=consume_nonmatches,
                     **kwargs,
                 )
             except AssertionError as assertion_error:
@@ -568,6 +592,12 @@ class MockCallable:
             matching call. The default is 1, in which case we are
             asserting against the *next* call.
 
+            If a "consume_nonmatches" keyword argument is provided,
+            this indicates whether calls that are examined
+            but do not match should be consumed
+            rather than left on the queue
+            to be examined by future assert calls.
+
             All other keyword arguments are keyword arguments
             asserted to be in the call.
 
@@ -577,11 +607,13 @@ class MockCallable:
             within the timeout period
         """
         lookahead = kwargs.pop("lookahead", 1)
+        consume_nonmatches = kwargs.pop("consume_nonmatches", False)
         try:
             return self.assert_against_call(
                 call_args=args,
                 call_kwargs=kwargs,
                 lookahead=lookahead,
+                consume_nonmatches=consume_nonmatches,
             )
         except AssertionError:
             raise  # pylint: disable=try-except-raise
@@ -589,6 +621,7 @@ class MockCallable:
     def assert_against_call(
         self: MockCallable,
         lookahead: Optional[int] = None,
+        consume_nonmatches: bool = False,
         **kwargs: Any,
     ) -> Dict[str, Any]:
         """
@@ -597,6 +630,10 @@ class MockCallable:
         :param lookahead:  The number of calls to examine in search of a
             matching call. The default is 1, which means we are
             asserting against the *next* call.
+        :param consume_nonmatches: whether calls that are examined
+            but do not match should be consumed
+            rather than left on the queue
+            to be examined by future assert calls.
         :param kwargs: the characteristics that we are asserting the
             call to have. For details see
             :py:meth:`MockCallableGroup.assert_against_call`.
@@ -610,6 +647,7 @@ class MockCallable:
             call_details = self._view.assert_against_call(
                 # args=args, kwargs=kwargs,
                 lookahead=lookahead or 1,
+                consume_nonmatches=consume_nonmatches,
                 **kwargs,
             )
             del call_details["category"]

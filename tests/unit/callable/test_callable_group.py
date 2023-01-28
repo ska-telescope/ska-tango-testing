@@ -254,6 +254,49 @@ def test_assert_call_consumes_calls(
     callable_group.assert_not_called()
 
 
+def test_general_assert_call_consumes_nonmatched_calls_when_told_to_do_so(
+    callable_group: MockCallableGroup, schedule_call: Callable
+) -> None:
+    """
+    Test that assertions on the group honour the `consume_nonmatches` flag.
+
+    :param callable_group: the callback group under test
+    :param schedule_call: a callable used to schedule a callback call.
+    """
+    schedule_call(0.2, callable_group["a"], "foo")
+    schedule_call(0.4, callable_group["b"], 1, one=1)
+    schedule_call(0.5, callable_group["b"], 2, two=2)
+    schedule_call(0.8, callable_group["b"], 3, three=3)
+
+    callable_group.assert_call(
+        "b", 3, three=3, lookahead=4, consume_nonmatches=True
+    )
+    callable_group.assert_not_called()
+
+
+def test_specific_assert_call_consumes_nonmatched_calls_when_told_to_do_so(
+    callable_group: MockCallableGroup, schedule_call: Callable
+) -> None:
+    """
+    Test that assertions on a specific callback honour `consume_nonmatches`.
+
+    :param callable_group: the callback group under test
+    :param schedule_call: a callable used to schedule a callback call.
+    """
+    schedule_call(0.2, callable_group["a"], "foo")
+    schedule_call(0.4, callable_group["b"], 1, one=1)
+    schedule_call(0.5, callable_group["b"], 2, two=2)
+    schedule_call(0.8, callable_group["b"], 3, three=3)
+
+    callable_group["b"].assert_call(
+        3, three=3, lookahead=3, consume_nonmatches=True
+    )
+    callable_group["b"].assert_not_called()
+
+    callable_group.assert_call("a", "foo")
+    callable_group.assert_not_called()
+
+
 @pytest.mark.parametrize("any_arg", [False, True])
 @pytest.mark.parametrize("any_kwarg", [False, True])
 def test_assert_against_call(

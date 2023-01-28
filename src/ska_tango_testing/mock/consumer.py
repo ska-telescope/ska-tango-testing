@@ -361,7 +361,11 @@ class MockConsumerGroup:
         self._group_view.assert_no_item()
 
     def assert_item(
-        self: MockConsumerGroup, *args: Any, lookahead: int = 1, **kwargs: Any
+        self: MockConsumerGroup,
+        *args: Any,
+        lookahead: int = 1,
+        consume_nonmatches: bool = False,
+        **kwargs: Any,
     ) -> Dict[str, Any]:
         """
         Assert that an item is available in any category.
@@ -377,12 +381,37 @@ class MockConsumerGroup:
             non-deterministic situations, we can provide a higher value.
             For example, a lookahead of 2 means that we are asserting
             the item will be one of the first two items.
+        :param consume_nonmatches: whether to consume items that were
+            examined but did not match the assertion.
+
+            An example where we would set this to `True` is:
+            we have changed the target fan speed from 3000 to 6000 RPM.
+            We want to assert that the fan speed will become 6000,
+            but we know it will reach that speed only gradually.
+            We expect to see a sequence of items something like
+            `[3859, 5104, 5934, 6001]`,
+            so we assert like:
+
+            .. code-block:: py
+
+                assert_item(
+                    "fan_speed",
+                    pytest.approx(6000, abs=10),
+                    lookahead=4,
+                    consume_nonmatches=True,
+                )
+
+            The first three items do not match, but they are still consumed.
+            The fourth items matches, and hence the assertion passes.
         :param kwargs: characteristics that the item is expected to have
 
         :return: the matched item
         """
         return self._group_view.assert_item(
-            *args, lookahead=lookahead, **kwargs
+            *args,
+            lookahead=lookahead,
+            consume_nonmatches=consume_nonmatches,
+            **kwargs,
         )
 
     def __getitem__(
@@ -470,6 +499,7 @@ class ConsumerAsserter:
         self: ConsumerAsserter,
         *args: Any,
         lookahead: int = 1,
+        consume_nonmatches: bool = False,
         **kwargs: Any,
     ) -> Dict[str, Any]:
         """
@@ -486,6 +516,28 @@ class ConsumerAsserter:
             non-deterministic situations, we can provide a higher value.
             For example, a lookahead of 2 means that we are asserting
             the item will be one of the first two items.
+        :param consume_nonmatches: whether to consume items that were
+            examined but did not match the assertion.
+
+            An example where we would set this to `True` is:
+            we have changed the target fan speed from 3000 to 6000 RPM.
+            We want to assert that the fan speed will become 6000,
+            but we know it will reach that speed only gradually.
+            We expect to see a sequence of items something like
+            `[3859, 5104, 5934, 6001]`,
+            so we assert like:
+
+            .. code-block:: py
+
+                assert_item(
+                    "fan_speed",
+                    pytest.approx(6000, abs=10),
+                    lookahead=4,
+                    consume_nonmatches=True,
+                )
+
+            The first three items do not match, but they are still consumed.
+            The fourth items matches, and hence the assertion passes.
         :param kwargs: characteristics that the item is expected to have
 
         :returns: the matched item
@@ -517,6 +569,8 @@ class ConsumerAsserter:
                     repr(payload),
                 )
                 return payload
+            if consume_nonmatches:
+                node.drop()
 
         logger.debug(
             "assert_item failed: no matching item within the first %d items",

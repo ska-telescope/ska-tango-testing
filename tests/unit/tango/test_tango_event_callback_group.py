@@ -260,6 +260,51 @@ def test_assert_change_event_consumes_events(
     callback_group.assert_not_called()
 
 
+def test_general_assert_change_event_consumes_nonmatches_when_told_to_do_so(
+    callback_group: MockTangoEventCallbackGroup, schedule_event: Callable
+) -> None:
+    """
+    Test that assertions on the group honour `consume_mismatches`.
+
+    :param callback_group: the Tango event callback group under test.
+    :param schedule_event: a callable used to schedule a callback call.
+    """
+    schedule_event(0.2, callback_group["a"], "a", 0)
+
+    schedule_event(0.4, callback_group["b"], "b", 1)
+    schedule_event(0.6, callback_group["b"], "b", 2)
+    schedule_event(0.8, callback_group["b"], "b", 3)
+
+    callback_group.assert_change_event(
+        "b", 3, lookahead=4, consume_nonmatches=True
+    )
+    callback_group.assert_not_called()
+
+
+def test_specific_assert_change_event_consumes_nonmatches_when_told_to_do_so(
+    callback_group: MockTangoEventCallbackGroup, schedule_event: Callable
+) -> None:
+    """
+    Test that assertions on a specific callback honour `consume_mismatches`.
+
+    :param callback_group: the Tango event callback group under test.
+    :param schedule_event: a callable used to schedule a callback call.
+    """
+    schedule_event(0.2, callback_group["a"], "a", 0)
+
+    schedule_event(0.4, callback_group["b"], "b", 1)
+    schedule_event(0.6, callback_group["b"], "b", 2)
+    schedule_event(0.8, callback_group["b"], "b", 3)
+
+    callback_group["b"].assert_change_event(
+        3, lookahead=3, consume_nonmatches=True
+    )
+    callback_group["b"].assert_not_called()
+
+    callback_group["a"].assert_change_event(0)
+    callback_group.assert_not_called()
+
+
 def test_assert_any_change_event_when_event(
     callback_group: MockTangoEventCallbackGroup,
     schedule_event: Callable,
