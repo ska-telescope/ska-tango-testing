@@ -35,15 +35,11 @@ class Node:  # pylint: disable=too-few-public-methods
         """
         self.prev: DefaultDict[Hashable, Optional[Node]] = defaultdict(None)
         self.next: DefaultDict[Hashable, Optional[Node]] = defaultdict(None)
+        self.dropped = False
         self.payload = payload
 
     def drop(self: Node) -> None:
         """Drop this node."""
-        # It's safe to dike this out of the data structure, because our use
-        # case only uses one iterator at a time, and this method won't be
-        # called until that one iterator has found the item it is looking for,
-        # so won't be used again. We therefore know that there are no external
-        # references to this node that will be left dangling by us dropping it.
         for category in self.next:
             # for the type checker
             prev_node = self.prev[category]
@@ -54,8 +50,13 @@ class Node:  # pylint: disable=too-few-public-methods
             if next_node is not None:
                 next_node.prev[category] = prev_node
 
-        self.prev.clear()
+        # An iterator might be pointing at this node.
+        # If an iterator finds itself pointing at a dropped node,
+        # it will need to back up until it finds one that is not dropped,
+        # and then go from there.
+        # Therefore it is safe to clear self.next here, but not self.prev.
         self.next.clear()
+        self.dropped = True
         self.payload = None
 
 
@@ -286,6 +287,12 @@ class ItemGroup:
             # do not obey this property are deemed broken."
             if self._node is self._item_group.last:
                 raise StopIteration
+
+            while self._node.dropped:
+                # for the type checker
+                prev_node = self._node.prev[self._category]
+                assert prev_node is not None
+                self._node = prev_node
 
             while self._node.next[self._category] is self._item_group.last:
                 try:
