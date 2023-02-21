@@ -1,6 +1,7 @@
 # Version History
 
 ## unreleased
+* [LOW-416] Support consuming non-matching items
 
 ## 0.5.3
 * [LOW-414] Dependency bugfix
