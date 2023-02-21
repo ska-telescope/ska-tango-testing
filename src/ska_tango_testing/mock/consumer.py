@@ -35,15 +35,11 @@ class Node:  # pylint: disable=too-few-public-methods
         """
         self.prev: DefaultDict[Hashable, Optional[Node]] = defaultdict(None)
         self.next: DefaultDict[Hashable, Optional[Node]] = defaultdict(None)
+        self.dropped = False
         self.payload = payload
 
     def drop(self: Node) -> None:
         """Drop this node."""
-        # It's safe to dike this out of the data structure, because our use
-        # case only uses one iterator at a time, and this method won't be
-        # called until that one iterator has found the item it is looking for,
-        # so won't be used again. We therefore know that there are no external
-        # references to this node that will be left dangling by us dropping it.
         for category in self.next:
             # for the type checker
             prev_node = self.prev[category]
@@ -54,8 +50,13 @@ class Node:  # pylint: disable=too-few-public-methods
             if next_node is not None:
                 next_node.prev[category] = prev_node
 
-        self.prev.clear()
+        # An iterator might be pointing at this node.
+        # If an iterator finds itself pointing at a dropped node,
+        # it will need to back up until it finds one that is not dropped,
+        # and then go from there.
+        # Therefore it is safe to clear self.next here, but not self.prev.
         self.next.clear()
+        self.dropped = True
         self.payload = None
 
 
@@ -287,6 +288,12 @@ class ItemGroup:
             if self._node is self._item_group.last:
                 raise StopIteration
 
+            while self._node.dropped:
+                # for the type checker
+                prev_node = self._node.prev[self._category]
+                assert prev_node is not None
+                self._node = prev_node
+
             while self._node.next[self._category] is self._item_group.last:
                 try:
                     self._item_group.poll_producer()
@@ -354,7 +361,11 @@ class MockConsumerGroup:
         self._group_view.assert_no_item()
 
     def assert_item(
-        self: MockConsumerGroup, *args: Any, lookahead: int = 1, **kwargs: Any
+        self: MockConsumerGroup,
+        *args: Any,
+        lookahead: int = 1,
+        consume_nonmatches: bool = False,
+        **kwargs: Any,
     ) -> Dict[str, Any]:
         """
         Assert that an item is available in any category.
@@ -370,12 +381,37 @@ class MockConsumerGroup:
             non-deterministic situations, we can provide a higher value.
             For example, a lookahead of 2 means that we are asserting
             the item will be one of the first two items.
+        :param consume_nonmatches: whether to consume items that were
+            examined but did not match the assertion.
+
+            An example where we would set this to `True` is:
+            we have changed the target fan speed from 3000 to 6000 RPM.
+            We want to assert that the fan speed will become 6000,
+            but we know it will reach that speed only gradually.
+            We expect to see a sequence of items something like
+            `[3859, 5104, 5934, 6001]`,
+            so we assert like:
+
+            .. code-block:: py
+
+                assert_item(
+                    "fan_speed",
+                    pytest.approx(6000, abs=10),
+                    lookahead=4,
+                    consume_nonmatches=True,
+                )
+
+            The first three items do not match, but they are still consumed.
+            The fourth items matches, and hence the assertion passes.
         :param kwargs: characteristics that the item is expected to have
 
         :return: the matched item
         """
         return self._group_view.assert_item(
-            *args, lookahead=lookahead, **kwargs
+            *args,
+            lookahead=lookahead,
+            consume_nonmatches=consume_nonmatches,
+            **kwargs,
         )
 
     def __getitem__(
@@ -428,10 +464,42 @@ class ConsumerAsserter:
         )
         raise AssertionError("Expected no item, but an item is available.")
 
+    @staticmethod
+    def _payload_matches_assertion(
+        payload: Any, *args: Any, **kwargs: Any
+    ) -> bool:
+        if len(args) == 1 and args[0] != payload["item"]:
+            logger.debug(
+                "assert_item: Positional argument does not exactly equal "
+                "item '%s'.",
+                repr(payload["item"]),
+            )
+            return False
+
+        for key, value in kwargs.items():
+            if key not in payload:
+                logger.debug(
+                    "assert_item: No '%s' characteristic in item '%s'.",
+                    key,
+                    repr(payload),
+                )
+                return False
+            if value != payload[key]:
+                logger.debug(
+                    "assert_item: '%s' characteristic is not '%s' in item "
+                    "'%s'.",
+                    key,
+                    value,
+                    repr(payload),
+                )
+                return False
+        return True
+
     def assert_item(
         self: ConsumerAsserter,
         *args: Any,
         lookahead: int = 1,
+        consume_nonmatches: bool = False,
         **kwargs: Any,
     ) -> Dict[str, Any]:
         """
@@ -448,6 +516,28 @@ class ConsumerAsserter:
             non-deterministic situations, we can provide a higher value.
             For example, a lookahead of 2 means that we are asserting
             the item will be one of the first two items.
+        :param consume_nonmatches: whether to consume items that were
+            examined but did not match the assertion.
+
+            An example where we would set this to `True` is:
+            we have changed the target fan speed from 3000 to 6000 RPM.
+            We want to assert that the fan speed will become 6000,
+            but we know it will reach that speed only gradually.
+            We expect to see a sequence of items something like
+            `[3859, 5104, 5934, 6001]`,
+            so we assert like:
+
+            .. code-block:: py
+
+                assert_item(
+                    "fan_speed",
+                    pytest.approx(6000, abs=10),
+                    lookahead=4,
+                    consume_nonmatches=True,
+                )
+
+            The first three items do not match, but they are still consumed.
+            The fourth items matches, and hence the assertion passes.
         :param kwargs: characteristics that the item is expected to have
 
         :returns: the matched item
@@ -471,32 +561,7 @@ class ConsumerAsserter:
         )
 
         for node in itertools.islice(iter(self._iterable), 0, lookahead):
-            if len(args) == 1 and args[0] != node.payload["item"]:
-                logger.debug(
-                    "assert_item: Positional argument does not exactly equal "
-                    "item '%s'.",
-                    repr(node.payload["item"]),
-                )
-                continue
-
-            for key, value in kwargs.items():
-                if key not in node.payload:
-                    logger.debug(
-                        "assert_item: No '%s' characteristic in item '%s'.",
-                        key,
-                        repr(node.payload),
-                    )
-                    break
-                if value != node.payload[key]:
-                    logger.debug(
-                        "assert_item: '%s' characteristic is not '%s' in item "
-                        "'%s'.",
-                        key,
-                        value,
-                        repr(node.payload),
-                    )
-                    break
-            else:
+            if self._payload_matches_assertion(node.payload, *args, **kwargs):
                 payload = node.payload
                 node.drop()
                 logger.debug(
@@ -504,6 +569,8 @@ class ConsumerAsserter:
                     repr(payload),
                 )
                 return payload
+            if consume_nonmatches:
+                node.drop()
 
         logger.debug(
             "assert_item failed: no matching item within the first %d items",

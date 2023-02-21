@@ -81,17 +81,23 @@ class MockTangoEventCallbackGroup(MockCallableGroup):
         callback_name: str,
         attribute_value: Any,
         lookahead: Optional[int] = None,
+        consume_nonmatches: bool = False,
     ) -> Dict[str, Any]:
         """
         Assert that the callback received a change event with the given value.
 
-        :param callback_name: name of the callback that we are asserting
-            to have been called
+        :param callback_name: name of the change event callback
+            that we are asserting to have been called
         :param attribute_value: new value of the attribute for which the
             change event has been sent
-        :param lookahead:  The number of calls to examine in search of a
-            matching call. The default is 1, which means we are
-            asserting against the *next* call.
+        :param lookahead:  The number of events to examine
+            in search of a matching call.
+            The default is 1,
+            which means we are asserting against the *next* call.
+        :param consume_nonmatches: whether events that are examined
+            but do not match should be consumed
+            rather than left on the queue
+            to be examined by future assert calls.
 
         :return: details of the change event
 
@@ -103,6 +109,7 @@ class MockTangoEventCallbackGroup(MockCallableGroup):
                 callback_name,
                 attribute_value=attribute_value,
                 lookahead=lookahead or 1,
+                consume_nonmatches=consume_nonmatches,
             )
         except AssertionError:
             raise  # pylint: disable=try-except-raise
@@ -131,6 +138,7 @@ class MockTangoEventCallbackGroup(MockCallableGroup):
             self,
             attribute_value: Any,
             lookahead: Optional[int] = None,
+            consume_nonmatches: bool = False,
         ) -> Dict[str, Any]:
             """
             Assert a change event with the given value.
@@ -140,6 +148,10 @@ class MockTangoEventCallbackGroup(MockCallableGroup):
             :param lookahead:  The number of calls to examine in search
                 of a matching call. The default is 1, which means we are
                 asserting against the *next* call.
+            :param consume_nonmatches: whether events that are examined
+                but do not match should be consumed
+                rather than left on the queue
+                to be examined by future assert calls.
 
             :return: details of the change event
 
@@ -150,6 +162,7 @@ class MockTangoEventCallbackGroup(MockCallableGroup):
                 return self._callable.assert_against_call(
                     attribute_value=attribute_value,
                     lookahead=lookahead or 1,
+                    consume_nonmatches=consume_nonmatches,
                 )
             except AssertionError:
                 raise  # pylint: disable=try-except-raise

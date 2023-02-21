@@ -187,6 +187,11 @@ in your tests:
 * ``group.assert_item(item, lookahead=2)`` -- assert that one of the
   next two items produced is equal to ``item``.
 
+* ``group.assert_item(item, lookahead=4, consume_nonmatches=True)`` --
+  assert that one of the next four items produced is equal to ``item``,
+  whilst discarding any non-matching items encountered prior to
+  encountering a match.
+
 * ``group["voltage"].assert_item()`` -- assert that an item has been
   produced in the "voltage" category.
 
@@ -199,8 +204,13 @@ in your tests:
   characterizer to extract the "value" attribute from the item.)
 
 * ``group["voltage"].assert_item(item, lookahead=2)`` -- assert that one
-  of the next two items in the "voltage" category are equal to
+  of the next two items in the "voltage" category is equal to
   ``item``.
+
+* ``group["voltage"].assert_item(item, lookahead=4, consume_nonmatches=True)``
+  -- assert that one of the next four items in the "voltage" category i
+  equal to ``item``, whilst discarding any non-matching items
+  encountered prior to encountering a match.
 
 
 Mock callables

@@ -416,6 +416,64 @@ def test_assert_consumes_items(
     consumer_group.assert_no_item()
 
 
+def test_general_assert_consumes_nonmatches_when_told_to_do_so(
+    consumer_group: MockConsumerGroup,
+    producer: TestingProducerProtocol,
+    item_library: Dict[str, FakeItem],
+) -> None:
+    """
+    Test that assertions on the group honour the `consume_nonmatches` flag.
+
+    :param consumer_group: the consumer under test
+    :param producer: a producer to test against
+    :param item_library: a library of items for use in testing
+    """
+    producer.schedule_put(0.2, item_library["current_1"])
+    producer.schedule_put(0.4, item_library["voltage_1"])
+    producer.schedule_put(0.6, item_library["voltage_2"])
+    producer.schedule_put(0.8, item_library["voltage_3"])
+
+    consumer_group.assert_item(
+        item_library["voltage_3"],
+        lookahead=4,
+        consume_nonmatches=True,
+    )
+
+    consumer_group.assert_no_item()
+
+
+def test_specific_assert_consumes_nonmatches_when_told_to_do_so(
+    consumer_group: MockConsumerGroup,
+    producer: TestingProducerProtocol,
+    item_library: Dict[str, FakeItem],
+) -> None:
+    """
+    Test that assertions on a specific category honour `consume_nonmatches`.
+
+    :param consumer_group: the consumer under test
+    :param producer: a producer to test against
+    :param item_library: a library of items for use in testing
+    """
+    producer.schedule_put(0.2, item_library["current_1"])
+    producer.schedule_put(0.4, item_library["voltage_1"])
+    producer.schedule_put(0.6, item_library["voltage_2"])
+    producer.schedule_put(0.8, item_library["voltage_3"])
+
+    consumer_group["voltage"].assert_item(
+        item_library["voltage_3"],
+        lookahead=3,
+        consume_nonmatches=True,
+    )
+
+    # Everything in this category has been consumed
+    # during the search for voltage_3
+    consumer_group["voltage"].assert_no_item()
+
+    # But current_1 is in another category, so it is still there.
+    consumer_group.assert_item(item_library["current_1"])
+    consumer_group.assert_no_item()
+
+
 def test_assert_any_item_when_item_is_available(
     consumer_group: MockConsumerGroup,
     producer: TestingProducerProtocol,
