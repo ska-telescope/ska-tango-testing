@@ -1,16 +1,23 @@
 # Version History
 
 ## unreleased
+
+## 0.6.0
+
+* [MCCS-1487] High-level test harness support
 * [LOW-416] Support consuming non-matching items
 
 ## 0.5.3
+
 * [LOW-414] Dependency bugfix
 
 ## 0.5.2
+
 * [LOW-402] MockCallable "wraps" method
 * [LOW-411] Spectrum attribute support
 
 ## 0.5.1
+
 * [MCCS-1297] Support only mock devices
 
 ## 0.5.0
