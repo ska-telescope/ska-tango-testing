@@ -1,6 +1,6 @@
 [MESSAGES CONTROL]
 disable=
     fixme,
-    # try-except-raise is a great way to write self-documenting code!
+    logging-fstring-interpolation,
     try-except-raise,
     
