@@ -8,16 +8,12 @@
 
 import os
 import sys
-import sphinx_rtd_theme
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
 sys.path.insert(0, os.path.abspath('../../src'))
-
-def setup(app):
-    app.add_css_file('css/custom.css')
 
 
 # -- Project information -----------------------------------------------------
@@ -46,7 +42,7 @@ autodoc_mock_imports = ["numpy", "tango"]
 
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ['_templates']
+# templates_path = []
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
@@ -59,22 +55,20 @@ exclude_patterns = []
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = "sphinx_rtd_theme"
+html_theme = "ska_ser_sphinx_theme"
 
-html_context = {
-    "favicon": "img/favicon_mono.ico",
-    "logo": "img/logo.png",
-    "theme_logo_only": True,
-}
+html_context = {}
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static']
+# html_static_path = []
 
 
 intersphinx_mapping = {
-    "https://docs.python.org/3.7/": None,
+    "https://docs.python.org/3.8/": None,
     "https://docs.pytest.org/en/7.1.x/": None,
-    "tango": ("https://pytango.readthedocs.io/en/v9.3.3/", None),
+    "tango": ("https://pytango.readthedocs.io/en/v9.3.6/", None),
 }
+
+nitpicky = True

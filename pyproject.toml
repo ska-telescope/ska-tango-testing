@@ -6,7 +6,7 @@ authors = ["Drew Devereux <drew.devereux@csiro.au>"]
 license = "BSD 3-clause new license"
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = "^3.8.1"
 pytango = "^9.3.3"
 numpy = "^1.19.0"
 
@@ -25,6 +25,11 @@ pylint-junit = "^0.3.2"
 pytest = "^7.1.1"
 pytest-cov = "^3.0.0"
 pytest-forked = "^1.4.0"
+
+[tool.poetry.group.docs.dependencies]
+Sphinx = "^5.2"
+sphinx-autodoc-typehints = "^1.19"
+ska-ser-sphinx-theme = "^0.1.1"
 
 [[tool.poetry.source]]
 name = 'skao'
