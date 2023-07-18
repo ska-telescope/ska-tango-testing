@@ -3,8 +3,11 @@ build:
   os: ubuntu-20.04
   tools:
     python: "3.10"
+  jobs:
+    post_create_environment:
+      - pip install poetry
+      - poetry config virtualenvs.create false
+    post_install:
+      - poetry install --no-root --only docs
 sphinx:
   configuration: docs/src/conf.py
-python:
-  install:
-  - requirements: docs/requirements.txt
