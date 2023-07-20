@@ -2,6 +2,9 @@
 
 ## unreleased
 
+## 0.6.1
+
+* [LOW-517] Timeout bugfix
 * [MCCS-1636] Use ska-ser-sphinx-theme for documentation
 
 ## 0.6.0
