@@ -566,3 +566,34 @@ def test_assert_oneof_item_when_no_item(
         consumer_group.assert_item(
             OneOf(item_library["voltage_2"], item_library["voltage_3"])
         )
+
+
+def test_assert_specific_item_in_stream_of_nonmatching_items(
+    consumer_group: MockConsumerGroup,
+    producer: TestingProducerProtocol,
+    item_library: Dict[str, FakeItem],
+    voltage: FakeItem,
+) -> None:
+    """
+    Test that `assert_item` times out even while receiving other events.
+
+    Specifically, we assert that an item will arrive within 1 second.
+    We don't actually drop the item onto the queue until much later than that,
+    but meanwhile we drop a constant stream of nonmatching items onto
+    the queue.
+
+    :param consumer_group: the consumer under test
+    :param producer: a producer to test against
+    :param item_library: a library of items for use in testing
+    :param voltage: a "voltage" item to use in testing
+    """
+    producer.schedule_put(0.8, item_library["current_1"])
+    producer.schedule_put(1.6, item_library["current_2"])
+    producer.schedule_put(2.4, item_library["current_3"])
+    producer.schedule_put(3.2, voltage)
+
+    with pytest.raises(
+        AssertionError,
+        match="Expected matching item within the first 1 items.",
+    ):
+        consumer_group["voltage"].assert_item(voltage)

@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import itertools
 import logging
+import time
 from collections import defaultdict
 from queue import Empty
 from typing import (
@@ -209,7 +210,10 @@ class ItemGroup:
 
         class _Iterable:  # pylint: disable=too-few-public-methods
             def __init__(
-                self: _Iterable, item_group: ItemGroup, category: Hashable
+                self: _Iterable,
+                item_group: ItemGroup,
+                category: Hashable,
+                timeout: Optional[float],
             ):
                 """
                 Initialise a new instance.
@@ -218,9 +222,12 @@ class ItemGroup:
                     iterable.
                 :param category: the category for which this iterable
                     provides an iterator
+                :param timeout: Number of seconds to wait for an item.
+                    A value of None means wait forever..
                 """
                 self._item_group = item_group
                 self._category = category
+                self._timeout = timeout
 
             def __iter__(self: _Iterable) -> ItemGroup.Iterator:
                 """
@@ -228,9 +235,11 @@ class ItemGroup:
 
                 :return: an iterator over the category.
                 """
-                return ItemGroup.Iterator(self._item_group, self._category)
+                return ItemGroup.Iterator(
+                    self._item_group, self._category, self._timeout
+                )
 
-        return _Iterable(self, category)
+        return _Iterable(self, category, self._timeout)
 
     def __iter__(self: ItemGroup) -> ItemGroup.Iterator:
         """
@@ -238,7 +247,7 @@ class ItemGroup:
 
         :return: an iterotor over the entire group.
         """
-        return ItemGroup.Iterator(self, self.GROUP_HOOK)
+        return ItemGroup.Iterator(self, self.GROUP_HOOK, self._timeout)
 
     class Iterator:
         """An iterator for an specific category of an item group."""
@@ -247,16 +256,20 @@ class ItemGroup:
             self: ItemGroup.Iterator,
             item_group: ItemGroup,
             category: Hashable,
-        ):
+            timeout: Optional[float],
+        ) -> None:
             """
             Initialise a new instance.
 
             :param item_group: the data structure that backs this
                 iterator
             :param category: the category to iterate over
+            :param timeout: Number of seconds to wait for an item.
+                A value of None means wait forever.
             """
             self._item_group = item_group
             self._category = category
+            self._timeout = timeout
 
             self._node = item_group.first
 
@@ -294,7 +307,12 @@ class ItemGroup:
                 assert prev_node is not None
                 self._node = prev_node
 
+            stop_time: float | None = None
+            if self._timeout is not None:
+                stop_time = time.time() + self._timeout
             while self._node.next[self._category] is self._item_group.last:
+                if stop_time is not None and time.time() > stop_time:
+                    raise StopIteration
                 try:
                     self._item_group.poll_producer()
                 except Empty:
