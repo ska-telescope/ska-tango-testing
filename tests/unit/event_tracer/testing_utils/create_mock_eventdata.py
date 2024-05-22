@@ -1,4 +1,4 @@
-"""Tools to create mock data"""
+"""Tools to create mock data for testing event tracer and logger."""
 
 from unittest.mock import MagicMock
 
@@ -8,13 +8,13 @@ import tango
 def create_mock_eventdata(dev_name, attribute, value, error=False):
     """Create a mock Tango event data object.
 
-    :param device: The device name.
+    :param dev_name: The device name.
     :param attribute: The attribute name.
     :param value: The current value.
     :param error: Whether the event is an error event, default is False.
+
     :return: A mock Tango event data object.
     """
-
     # Create a mock device
     mock_device = MagicMock(spec=tango.DeviceProxy)
     mock_device.dev_name.return_value = dev_name
