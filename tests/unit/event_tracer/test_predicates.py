@@ -6,14 +6,15 @@ as expected, matching the correct events and values.
 
 
 from datetime import datetime, timedelta
+from typing import Any
 from unittest.mock import MagicMock
 
 import pytest
 import tango
-from assertpy import assert_that
+from assertpy import assert_that  # type: ignore
 from pytest import fixture
 
-from ska_tango_testing.integration.predicates_and_assertions.predicates import (  # noqa: E501
+from ska_tango_testing.integration.predicates_and_assertions.predicates import (  # pylint: disable=line-too-long # noqa: E501
     event_has_previous_value,
     event_matches_parameters,
 )
@@ -33,7 +34,7 @@ class TestCustomPredicates:
     def create_dummy_event(
         device_name: str,
         attribute_name: str,
-        attribute_value: str,
+        attribute_value: Any,
         seconds_ago: float = 0,
     ) -> MagicMock:
         """Create a dummy :class::`ReceivedEvent` with the specified params.
@@ -50,14 +51,18 @@ class TestCustomPredicates:
         event.attribute_name = attribute_name
         event.attribute_value = attribute_value
         event.reception_time = datetime.now() - timedelta(seconds=seconds_ago)
-        event.has_device = lambda target_device_name: \
-            event.device_name == target_device_name
-        event.has_attribute = lambda target_attribute_name: \
-            event.attribute_name == target_attribute_name
+        event.has_device = (
+            lambda target_device_name: event.device_name == target_device_name
+        )
+        event.has_attribute = (
+            lambda target_attribute_name: event.attribute_name
+            == target_attribute_name
+        )
         return event
 
     @fixture
-    def tracer(self):
+    @staticmethod
+    def tracer() -> MagicMock:
         """Mock a tracer with an empty and accessible list of events.
 
         :return: A mock TangoEventTracer.
@@ -69,7 +74,7 @@ class TestCustomPredicates:
     # #######################################################
     # Tests for the build_previous_value_predicate function
 
-    def test_predicate_event_predicate_mock_matches(self):
+    def test_predicate_event_predicate_mock_matches(self) -> None:
         """An event should match the predicate if all fields match."""
         event = self.create_dummy_event("test/device/1", "attr1", 10)
 
@@ -84,7 +89,7 @@ class TestCustomPredicates:
             "The event should match the predicate if all fields match."
         ).is_true()
 
-    def test_predicate_event_predicate_soft_match(self):
+    def test_predicate_event_predicate_soft_match(self) -> None:
         """An event matches the predicate if specified fields match."""
         event = self.create_dummy_event("test/device/1", "attr1", 10)
 
@@ -95,7 +100,7 @@ class TestCustomPredicates:
             " if the specified fields match."
         ).is_true()
 
-    def test_predicate_tango_state_matches(self):
+    def test_predicate_tango_state_matches(self) -> None:
         """An event match when attribute is a :class::`tango.DevState`."""
         event = self.create_dummy_event(
             "test/device/1", "state", tango.DevState.ON
@@ -113,7 +118,7 @@ class TestCustomPredicates:
             " if the specified fields match."
         ).is_true()
 
-    def test_predicate_event_predicate_does_not_match(self):
+    def test_predicate_event_predicate_does_not_match(self) -> None:
         """An event matches the predicate if any field does not match."""
         event = self.create_dummy_event("test/device/1", "attr1", 10)
 
@@ -132,7 +137,9 @@ class TestCustomPredicates:
     # #######################################################
     # Tests for the build_previous_value_predicate function
 
-    def test_predicate_previous_value_predicate_matches(self, tracer):
+    def test_predicate_previous_value_predicate_matches(
+        self, tracer: MagicMock
+    ) -> None:
         """An event matches the predicate if the previous value matches.
 
         :param tracer: A mock TangoEventTracer.
@@ -152,7 +159,9 @@ class TestCustomPredicates:
             " if the previous value matches."
         ).is_true()
 
-    def test_predicate_previous_value_predicate_does_not_match(self, tracer):
+    def test_predicate_previous_value_predicate_does_not_match(
+        self, tracer: MagicMock
+    ) -> None:
         """An event matches the predicate if the previous value does not match.
 
         :param tracer: A mock TangoEventTracer.
@@ -173,8 +182,8 @@ class TestCustomPredicates:
         ).is_false()
 
     def test_predicate_previous_value_predicate_no_previous_event(
-        self, tracer
-    ):
+        self, tracer: MagicMock
+    ) -> None:
         """An event doesn't match the predicate if there is no previous event.
 
         :param tracer: A mock TangoEventTracer.
@@ -193,7 +202,9 @@ class TestCustomPredicates:
             "itself."
         ).is_false()
 
-    def test_predicate_previous_uses_most_recent(self, tracer):
+    def test_predicate_previous_uses_most_recent(
+        self, tracer: MagicMock
+    ) -> None:
         """An event previous value is the most recent of the past events.
 
         :param tracer: A mock TangoEventTracer.
@@ -219,7 +230,9 @@ class TestCustomPredicates:
             "just one of the previous events or just one which mathces"
         ).is_false()
 
-    def test_predicate_previous_doesnt_use_future_events(self, tracer):
+    def test_predicate_previous_doesnt_use_future_events(
+        self, tracer: MagicMock
+    ) -> None:
         """An event previous value should not be from future events.
 
         :param tracer: A mock TangoEventTracer.
@@ -241,7 +254,9 @@ class TestCustomPredicates:
             "The predicate should not consider future events."
         ).is_false()
 
-    def test_predicate_previous_doesnt_use_other_devices(self, tracer):
+    def test_predicate_previous_doesnt_use_other_devices(
+        self, tracer: MagicMock
+    ) -> None:
         """An event previous value should not be from other devices.
 
         :param tracer: A mock TangoEventTracer.
@@ -263,7 +278,9 @@ class TestCustomPredicates:
             "The predicate should not consider events from other devices."
         ).is_false()
 
-    def test_predicate_previous_doesnt_use_other_attributes(self, tracer):
+    def test_predicate_previous_doesnt_use_other_attributes(
+        self, tracer: MagicMock
+    ) -> None:
         """An event previous value should not be from other attributes.
 
         :param tracer: A mock TangoEventTracer.

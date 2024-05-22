@@ -13,11 +13,12 @@ those events correctly. For that, see :file::`test_tracer_subscribe_event.py`.
 import threading
 import time
 from datetime import datetime, timedelta
+from typing import Any
 from unittest.mock import patch
 
 import pytest
 import tango
-from assertpy import assert_that
+from assertpy import assert_that  # type: ignore
 
 from ska_tango_testing.integration.received_event import ReceivedEvent
 from ska_tango_testing.integration.tango_event_tracer import TangoEventTracer
@@ -32,14 +33,21 @@ class TestTangoEventTracer:
     # Fixtures and helper methods
 
     @pytest.fixture
-    def tracer(self) -> TangoEventTracer:
+    @staticmethod
+    def tracer() -> TangoEventTracer:
         """Create a `TangoEventTracer` instance for testing.
 
         :return: a `TangoEventTracer` instance.
         """
         return TangoEventTracer()
 
-    def add_event(self, tracer, device, value, seconds_ago=0) -> None:
+    @staticmethod
+    def add_event(
+        tracer: TangoEventTracer,
+        device: str,
+        value: Any,
+        seconds_ago: float = 0,
+    ) -> None:
         """Add an event to the tracer.
 
         :param tracer: The `TangoEventTracer` instance.
@@ -58,9 +66,11 @@ class TestTangoEventTracer:
                 seconds=seconds_ago
             )
 
-        tracer._add_event(test_event)
+        tracer._add_event(test_event)  # pylint: disable=protected-access
 
-    def delayed_add_event(self, tracer, device, value, delay) -> None:
+    def delayed_add_event(
+        self, tracer: TangoEventTracer, device: str, value: Any, delay: float
+    ) -> None:
         """Add an event to the tracer after a delay.
 
         :param tracer: The `TangoEventTracer` instance.
@@ -69,14 +79,16 @@ class TestTangoEventTracer:
         :param delay: The delay in seconds.
         """
 
-        def _add_event():
+        def _add_event() -> None:
+            """Add an event after a delay."""
             time.sleep(delay)
             self.add_event(tracer, device, value)
 
         threading.Thread(target=_add_event).start()
 
+    @staticmethod
     def _check_tracer_one_event(
-        self, tracer: TangoEventTracer, device: str, attribute: str, value
+        tracer: TangoEventTracer, device: str, attribute: str, value: Any
     ) -> None:
         """Check that tracer contains exactly one event with expected fields.
 
@@ -116,14 +128,15 @@ class TestTangoEventTracer:
             "test_device", "test_attribute", 123
         )
 
-        tracer._event_callback(test_event)
+        tracer._event_callback(test_event)  # pylint: disable=protected-access
 
         self._check_tracer_one_event(
             tracer, "test_device", "test_attribute", 123  # , 100
         )
 
+    @staticmethod
     def test_event_callback_when_error_ignore_event(
-        self, tracer: TangoEventTracer
+        tracer: TangoEventTracer,
     ) -> None:
         """Test that the event callback ignores events with errors.
 
@@ -133,7 +146,7 @@ class TestTangoEventTracer:
             "test_device", "test_attribute", 123, error=True
         )
 
-        tracer._event_callback(test_event)
+        tracer._event_callback(test_event)  # pylint: disable=protected-access
 
         assert_that(tracer.events).described_as(
             "Event callback should ignore events with errors"
@@ -142,78 +155,56 @@ class TestTangoEventTracer:
     # ########################################
     # Test cases: subscribe method
 
-    def test_subscribe_event(self, tracer: TangoEventTracer) -> None:
+    @staticmethod
+    def test_subscribe_event(tracer: TangoEventTracer) -> None:
         """Test subscribing to a device and attribute.
 
         :param tracer: The `TangoEventTracer` instance.
-
-        :raises AssertionError: when an assertion fails.
         """
         device_name = "test_device"
         attribute_name = "test_attribute"
 
         with patch("tango.DeviceProxy") as mock_proxy:
-
             tracer.subscribe_event(device_name, attribute_name)
 
-            try:
-                mock_proxy.assert_called_with(device_name)
-            except AssertionError:
-                raise AssertionError(
-                    "DeviceProxy should be called with the correct device name"
-                )
+            mock_proxy.assert_called_with(device_name)
+            mock_proxy.return_value.subscribe_event.assert_called_with(
+                attribute_name,
+                tango.EventType.CHANGE_EVENT,
+                tracer._event_callback,  # pylint: disable=protected-access
+            )
 
-            try:
-                mock_proxy.return_value.subscribe_event.assert_called_with(
-                    attribute_name,
-                    tango.EventType.CHANGE_EVENT,
-                    tracer._event_callback,
-                )
-            except AssertionError:
-                raise AssertionError(
-                    "subscribe_event should be called with "
-                    "the correct arguments"
-                )
-
+    @staticmethod
     def test_subscribe_event_passing_dev_factory(
-        self, tracer: TangoEventTracer
+        tracer: TangoEventTracer,
     ) -> None:
         """Test subscribing to a device and attribute passing a device factory.
 
         :param tracer: The `TangoEventTracer` instance.
-
-        :raises AssertionError: when an assertion fails.
         """
         device_name = "test_device"
         attribute_name = "test_attribute"
 
-        def device_factory(device_name):
+        def device_factory(device_name: str) -> tango.DeviceProxy:
+            """Create a device proxy.
+
+            :param device_name: The device name.
+
+            :return: A device proxy.
+            """
             return tango.DeviceProxy(device_name)
 
         with patch("tango.DeviceProxy") as mock_proxy:
-
             tracer.subscribe_event(
                 device_name, attribute_name, dev_factory=device_factory
             )
 
-            try:
-                mock_proxy.assert_called_with(device_name)
-            except AssertionError:
-                raise AssertionError(
-                    "DeviceProxy should be called with the correct device name"
-                )
-
-            try:
-                mock_proxy.return_value.subscribe_event.assert_called_with(
-                    attribute_name,
-                    tango.EventType.CHANGE_EVENT,
-                    tracer._event_callback,
-                )
-            except AssertionError:
-                raise AssertionError(
-                    "subscribe_event should be called with "
-                    "the correct arguments"
-                )
+            mock_proxy.assert_called_with(device_name)
+            mock_proxy.return_value.subscribe_event.assert_called_with(
+                attribute_name,
+                tango.EventType.CHANGE_EVENT,
+                tracer._event_callback,  # pylint: disable=protected-access
+            )
 
     def test_clear_events(self, tracer: TangoEventTracer) -> None:
         """Test clearing the events from the tracer.

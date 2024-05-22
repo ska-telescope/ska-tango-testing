@@ -9,11 +9,11 @@ capability of subscribing to events from a Tango device and capturing
 those events correctly. For that, see :file::`test_logger_subscribe_event.py`.
 """
 
-from unittest.mock import ANY, patch
+from unittest.mock import ANY, MagicMock, patch
 
 import pytest
 import tango
-from assertpy import assert_that
+from assertpy import assert_that  # type: ignore
 
 from ska_tango_testing.integration.tango_event_logger import (
     DEFAULT_LOG_ALL_EVENTS,
@@ -30,7 +30,8 @@ class TestTangoEventLogger:
     """Basic unit tests for the :class::`TangoEventLogger`."""
 
     @pytest.fixture
-    def logger(self):
+    @staticmethod
+    def logger() -> TangoEventLogger:
         """Return the :class::`TangoEventLogger` instance to test.
 
         :return: The :class::`TangoEventLogger`
@@ -38,11 +39,11 @@ class TestTangoEventLogger:
         return TangoEventLogger()
 
     @patch(LOGGING_PATH)
+    @staticmethod
     def test_log_event_writes_the_right_message_on_logging_info(
-        self,
-        mock_logging,
+        mock_logging: MagicMock,
         logger: TangoEventLogger,
-    ):
+    ) -> None:
         """log_event writes a message to the logger when called.
 
         :param mock_logging: The mock logging module.
@@ -50,7 +51,7 @@ class TestTangoEventLogger:
         """
         mock_event = create_mock_eventdata("test/device/1", "attribute1", 123)
 
-        logger._log_event(
+        logger._log_event(  # pylint: disable=protected-access
             event_data=mock_event,
             filtering_rule=DEFAULT_LOG_ALL_EVENTS,
             message_builder=DEFAULT_LOG_MESSAGE_BUILDER,
@@ -72,11 +73,11 @@ class TestTangoEventLogger:
         ).contains(str(123))
 
     @patch(LOGGING_PATH)
-    def test_log_event_does_not_write_message_when_filtering_rule_returns_false(  # noqa: E501
-        self,
-        mock_logging,
+    @staticmethod
+    def test_log_event_does_not_write_message_when_filtering_rule_returns_false(  # pylint: disable=line-too-long # noqa: E501
+        mock_logging: MagicMock,
         logger: TangoEventLogger,
-    ):
+    ) -> None:
         """log_event does not write a message when the filtering fail.
 
         :param mock_logging: The mock logging module.
@@ -84,7 +85,7 @@ class TestTangoEventLogger:
         """
         mock_event = create_mock_eventdata("test/device/1", "attribute1", 123)
 
-        logger._log_event(
+        logger._log_event(  # pylint: disable=protected-access
             event_data=mock_event,
             filtering_rule=lambda e: False,
             message_builder=DEFAULT_LOG_MESSAGE_BUILDER,
@@ -96,11 +97,11 @@ class TestTangoEventLogger:
         ).is_zero()
 
     @patch(LOGGING_PATH)
+    @staticmethod
     def test_log_event_writes_custom_message_when_required(
-        self,
-        mock_logging,
+        mock_logging: MagicMock,
         logger: TangoEventLogger,
-    ):
+    ) -> None:
         """log_event writes a custom message when required.
 
         :param mock_logging: The mock logging module.
@@ -108,7 +109,7 @@ class TestTangoEventLogger:
         """
         mock_event = create_mock_eventdata("test/device/1", "attribute1", 123)
 
-        logger._log_event(
+        logger._log_event(  # pylint: disable=protected-access
             event_data=mock_event,
             filtering_rule=DEFAULT_LOG_ALL_EVENTS,
             message_builder=lambda e: "Custom message",
@@ -121,11 +122,11 @@ class TestTangoEventLogger:
         ).is_equal_to("Custom message")
 
     @patch(LOGGING_PATH)
+    @staticmethod
     def test_log_event_when_event_contains_error_writes_error_message(
-        self,
-        mock_logging,
+        mock_logging: MagicMock,
         logger: TangoEventLogger,
-    ):
+    ) -> None:
         """log_event writes an error message when the event contains an error.
 
         :param mock_logging: The mock logging module.
@@ -138,7 +139,7 @@ class TestTangoEventLogger:
             error=True,
         )
 
-        logger._log_event(
+        logger._log_event(  # pylint: disable=protected-access
             event_data=mock_event,
             filtering_rule=DEFAULT_LOG_ALL_EVENTS,
             message_builder=DEFAULT_LOG_MESSAGE_BUILDER,
@@ -159,33 +160,19 @@ class TestTangoEventLogger:
             " the right message to the logger."
         ).contains(str(123))
 
-    def test_logger_subscribe_event(self, logger: TangoEventLogger):
+    @staticmethod
+    def test_logger_subscribe_event(logger: TangoEventLogger) -> None:
         """The logger subscribes to a device without exceptions.
 
         :param logger: The TangoEventLogger instance.
-
-        :raises AssertionError: If the test fails.
         """
         device_name = "test_device"
         attribute_name = "test_attribute"
 
         with patch("tango.DeviceProxy") as mock_proxy:
-
             logger.log_events_from_device(device_name, attribute_name)
 
-            try:
-                mock_proxy.assert_called_with(device_name)
-            except AssertionError:
-                raise AssertionError(
-                    "DeviceProxy should be called with the correct device name"
-                )
-
-            try:
-                mock_proxy.return_value.subscribe_event.assert_called_with(
-                    attribute_name, tango.EventType.CHANGE_EVENT, ANY
-                )
-            except AssertionError:
-                raise AssertionError(
-                    "subscribe_event should be called with "
-                    "the correct arguments"
-                )
+            mock_proxy.assert_called_with(device_name)
+            mock_proxy.return_value.subscribe_event.assert_called_with(
+                attribute_name, tango.EventType.CHANGE_EVENT, ANY
+            )

@@ -8,7 +8,6 @@ event sequence.
 """
 
 
-import logging
 from typing import Any, Optional
 
 from ..received_event import ReceivedEvent
@@ -75,7 +74,6 @@ def event_has_previous_value(
     # than the current event
 
     for evt in tracer.events:
-        logging.info(f"has_device: {evt.has_device(target_event.device_name)} - has_attribute: {evt.has_attribute(target_event.attribute_name)} - reception_time: {evt.reception_time < target_event.reception_time}")
         if (
             # the event is from the same device and attribute
             # and is previous to the target event
@@ -91,15 +89,11 @@ def event_has_previous_value(
                 or evt.reception_time > previous_event.reception_time
             ):
                 previous_event = evt
-                logging.info(f"Found previous: {previous_event.attribute_name} - {previous_event.attribute_value} - {previous_event.device_name}")
-                logging.info(f"Target: {target_event.attribute_name} - {target_event.attribute_value} - {target_event.device_name}")
-
 
     # If no previous event was found, return False (there is no event
     # before the target one, so none with the expected previous value)
     if previous_event is None:
         return False
-    
 
     # If the previous event was found, check if previous value matches
     return previous_event.attribute_value == previous_value
