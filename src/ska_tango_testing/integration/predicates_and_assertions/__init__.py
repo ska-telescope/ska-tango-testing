@@ -1,4 +1,4 @@
-"""Custom predicates and assertions for ::class::`TangoEventTracer`.
+"""Custom predicates and assertions for :class::`TangoEventTracer`.
 
 TODO: Add more documentation here.
 """

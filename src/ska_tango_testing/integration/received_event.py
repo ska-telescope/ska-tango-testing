@@ -1,4 +1,4 @@
-"""A Tango event which has been received by the ::class::`TangoEventTracer`."""
+"""A Tango event which has been received by the :class::`TangoEventTracer`."""
 
 from datetime import datetime
 from typing import Any, Union
@@ -7,7 +7,7 @@ import tango
 
 
 class ReceivedEvent:
-    """A Tango event received by the ::class::`TangoEventTracer`.
+    """A Tango event received by the :class::`TangoEventTracer`.
 
     This class is a wrapper around the Tango event data, which allows to
     access the most relevant information in a more user-friendly way. The main
@@ -15,11 +15,11 @@ class ReceivedEvent:
 
     - ::property::`device`: the device proxy that sent the event,
     - ::property::`device_name`: the name of the device that sent the event
-        (accessible also through the ::method::`has_device`, which allows to
+        (accessible also through the :method::`has_device`, which allows to
         check if the event comes from a given device name or using a
         device proxy instance),
     - ::property::`attribute_name`: the (short) name of the attribute that
-        sent the event (accessible also through the ::method::`has_attribute`,
+        sent the event (accessible also through the :method::`has_attribute`,
         which allows to check if the event comes from a given attribute name
         ignoring the case),
     - ::property::`attribute_value`: the new value of the attribute when
@@ -36,10 +36,10 @@ class ReceivedEvent:
 
     If you need to access the full event data, you can use the
     ::attribute::`event_data` attribute to access the original Tango
-    ::class::`EventData` object.
+    :class::`EventData` object.
 
     NOTE: You can use this class interface to build predicates for the
-    ::method::`TangoEventTracer.query_events` method, i.e.:
+    :method::`TangoEventTracer.query_events` method, i.e.:
 
     .. code-block:: python
 

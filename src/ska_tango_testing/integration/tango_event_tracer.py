@@ -194,7 +194,7 @@ class TangoEventTracer:
         :param attribute_name: The name of the attribute to subscribe to.
         :param dev_factory: A device factory method to get the device proxy.
             If not specified, the device proxy is created using the
-            default constructor ::class::`tango.DeviceProxy`.
+            default constructor :class::`tango.DeviceProxy`.
 
         :raises tango.DevFailed: If the subscription fails. A common reason
             for this is that the attribute is not subscribable (because the

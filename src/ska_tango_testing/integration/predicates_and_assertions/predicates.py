@@ -1,7 +1,7 @@
-"""Predicates to filter ::class::`TangoEventTracer` events in queries.
+"""Predicates to filter :class::`TangoEventTracer` events in queries.
 
-A collection of predicates to filter ::class::`ReceivedEvent` instances
-when calling the ::method::`TangoEventTracer.query_events` method. The main
+A collection of predicates to filter :class::`ReceivedEvent` instances
+when calling the :method::`TangoEventTracer.query_events` method. The main
 purpose of these predicates is to allow the user to compose complex queries
 to filter events based on their attributes but also on their position in the
 event sequence.
