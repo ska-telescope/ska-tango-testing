@@ -38,8 +38,8 @@ class TestTangoEventLogger:
         """
         return TangoEventLogger()
 
-    @patch(LOGGING_PATH)
     @staticmethod
+    @patch(LOGGING_PATH)
     def test_log_event_writes_the_right_message_on_logging_info(
         mock_logging: MagicMock,
         logger: TangoEventLogger,
@@ -72,8 +72,8 @@ class TestTangoEventLogger:
             " the right message to the logger."
         ).contains(str(123))
 
-    @patch(LOGGING_PATH)
     @staticmethod
+    @patch(LOGGING_PATH)
     def test_log_event_does_not_write_message_when_filtering_rule_returns_false(  # pylint: disable=line-too-long # noqa: E501
         mock_logging: MagicMock,
         logger: TangoEventLogger,
@@ -96,8 +96,8 @@ class TestTangoEventLogger:
             "The log_event method should not write a message to the logger."
         ).is_zero()
 
-    @patch(LOGGING_PATH)
     @staticmethod
+    @patch(LOGGING_PATH)
     def test_log_event_writes_custom_message_when_required(
         mock_logging: MagicMock,
         logger: TangoEventLogger,
@@ -121,8 +121,8 @@ class TestTangoEventLogger:
             " the custom message to the logger."
         ).is_equal_to("Custom message")
 
-    @patch(LOGGING_PATH)
     @staticmethod
+    @patch(LOGGING_PATH)
     def test_log_event_when_event_contains_error_writes_error_message(
         mock_logging: MagicMock,
         logger: TangoEventLogger,
