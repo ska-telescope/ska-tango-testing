@@ -11,3 +11,11 @@ docs-pre-build:
 	poetry install --no-root --only docs
 
 .PHONY: python-post-lint docs-pre-build
+
+# Variable to specify the test
+# (it will be used when calling pytest, with the `-k` option)
+TEST_TARGET ?= TangoEventTracer or TangoEventLogger
+
+# Run a single test
+python-test-focused: PYTHON_VARS_AFTER_PYTEST := --tb=long -k '$(TEST_TARGET)' $(PYTHON_VARS_AFTER_PYTEST)
+python-test-focused: python-test
