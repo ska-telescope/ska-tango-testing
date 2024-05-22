@@ -4,6 +4,10 @@ version = "0.6.1"
 description = "Test harness for testing SKA Tango devices"
 authors = ["Drew Devereux <drew.devereux@csiro.au>"]
 license = "BSD 3-clause new license"
+packages = [
+    { include = "ska_tango_testing", from = "src" },
+]
+
 
 [tool.poetry.dependencies]
 python = "^3.10"
@@ -28,6 +32,7 @@ pytest-forked = "^1.4.0"
 Sphinx = "^5.2"
 sphinx-autodoc-typehints = "^1.19"
 ska-ser-sphinx-theme = "^0.1.1"
+typing-extensions = "^4.11.0"
 
 [[tool.poetry.source]]
 name = 'skao'
