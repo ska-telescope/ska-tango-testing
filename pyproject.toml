@@ -28,6 +28,7 @@ pytest = "^7.1.1"
 pytest-cov = "^3.0.0"
 pytest-forked = "^1.4.0"
 pytest-json-report = "^1.5.0"
+assertpy = "^1.1"
 
 [tool.poetry.group.docs.dependencies]
 Sphinx = "^5.2"
