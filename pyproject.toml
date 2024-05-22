@@ -14,7 +14,7 @@ python = "^3.10"
 pytango = "^9.4.2"
 numpy = "^1.23.2"
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 black = "^22.1.0"
 darglint = "^1.8.1"
 isort = "^5.10.1"
