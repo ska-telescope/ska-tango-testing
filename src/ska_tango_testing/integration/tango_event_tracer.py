@@ -121,7 +121,7 @@ class TangoEventTracer:
         def test_attribute_change():
 
             tracer = TangoEventTracer()
-            tracer.subscribe_to_device("sys/tg_test/1", "attribute1")
+            tracer.subscribe_event("sys/tg_test/1", "attribute1")
 
             # do something that triggers the event
             # ...

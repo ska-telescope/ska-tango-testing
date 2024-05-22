@@ -18,10 +18,10 @@ Usage example:
 .. code-block:: python
 
     from assertpy import assert_that, add_extension
-    from ska_tango_examples.tango_event_tracer.tango_event_tracer import (
+    from ska_tango_testing.integration.tango_event_tracer import (
         TangoEventTracer
     )
-    from ska_tango_examples.tango_event_tracer.\
+    from ska_tango_testing.integration.\
         predicates_and_assertions.event_assertions import (
         exists_event
     )
@@ -30,7 +30,7 @@ Usage example:
 
     def test_event_occurs_within_timeout(sut, tracer: TangoEventTracer):
 
-        tracer.subscribe_to_device("devname", "attrname")
+        tracer.subscribe_event("devname", "attrname")
 
         # ... do something that triggers the event
 
