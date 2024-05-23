@@ -252,6 +252,20 @@ class TestTangoEventTracer:
     #     assert_that(result).described_as(
     #         "Found an unexpected event for 'device2' when none should exist."
     #     ).is_false()
+    def test_query_events_no_timeout_without_matching_event(
+        self, tracer: TangoEventTracer
+    ) -> None:
+        """No event is found when there isn't and no timeout is specified.
+
+        :param tracer: The `TangoEventTracer` instance.
+        """
+        self.add_event(tracer, "device1", 100, 5)
+        result = tracer.query_events(
+            lambda e: e.device_name == "device2", timeout=None
+        )
+        assert_that(result).described_as(
+            "Found an unexpected event for 'device2' when none should exist."
+        ).is_empty()
 
     def test_query_events_with_timeout_event_occurs(
         self, tracer: TangoEventTracer
@@ -278,7 +292,7 @@ class TestTangoEventTracer:
         """
         self.add_event(tracer, "device1", 100, 10)  # Event 10 seconds ago
 
-        # query_events with a timeout of 5 seconds
+        # query_events with a maximum age of 5 seconds
         result = tracer.query_events(
             lambda e: e.device_name == "device1" and e.reception_age() < 5,
         )
@@ -364,3 +378,26 @@ class TestTangoEventTracer:
         assert_that(result).described_as(
             "Expected to find 0 events for 'device4'"
         ).is_length(0)
+
+    def test_query_awaits_expected_target_n_events(
+        self, tracer: TangoEventTracer
+    ) -> None:
+        """The query is able to wait for the expected number of events.
+
+        :param tracer: The `TangoEventTracer` instance.
+        """
+        self.add_event(tracer, "device1", 100, 5)
+        self.add_event(tracer, "device1", 100, 3)
+        # add a delayed event that should be caught by the query
+        self.delayed_add_event(tracer, "device1", 100, 2)
+        # add a delayed event that is not necessary for the query
+        self.delayed_add_event(tracer, "device1", 100, 3)
+
+        result = tracer.query_events(
+            lambda e: e.device_name == "device1", timeout=5, target_n_events=3
+        )
+
+        assert_that(result).described_as(
+            "Expected to find 3 events for 'device1', instead found "
+            f"{'more' if len(result) > 3 else 'less'} ({len(result)})."
+        ).is_length(3)
