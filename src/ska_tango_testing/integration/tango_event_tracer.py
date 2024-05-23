@@ -108,28 +108,102 @@ class TangoEventTracer:
 
     This class allows you to:
 
-    - subscribe to change events for a specific attribute of a Tango device,
-    - store and access the events (in a thread-safe way),
-    - query the stored events based on a predicate function and a timeout,
-    - clear all stored events (in a thread-safe way), .
+    - subscribe to change events for a specific attribute of a Tango device
+      (see :py:meth:`subscribe_event`),
+    - store and access the events in a thread-safe way
+      (see :py:attr:`events`),
+    - query the stored events based on a predicate function that
+      selects which events match a desired criteria and a timeout,
+      which permits you to wait for that criteria to be satisfied
+      (see :py:meth:`query_events`).
 
     Usage example 1: test where you subscribe to a device
-    and query an attribute change event.
+    and assert that it exists exactly one state change event
+    to a TARGET_STATE within 10 seconds:
 
     .. code-block:: python
 
         def test_attribute_change():
 
             tracer = TangoEventTracer()
-            tracer.subscribe_event("sys/tg_test/1", "attribute1")
+            tracer.subscribe_event("sys/tg_test/1", "State")
 
             # do something that triggers the event
             # ...
 
             assert len(tracer.query_events(
-                lambda e: e.device_name == "sys/tg_test/1",
+                lambda e:
+                    e.has_device("sys/tg_test/1") and
+                    e.has_attribute("State") and
+                    e.current_value == TARGET_STATE,
                 timeout=10)) == 1
 
+    Queries are a powerful tool to make assertions on specific complex
+    behaviours of a device. For example, you may want to check that
+    a certain event is sent after another event, or that a certain
+    event is sent only when a certain condition is satisfied.
+
+    Usage example 2: test where you subscribe to a device and assert
+    that it exists exactly one state change event to a TARGET_STATE
+    within 10 seconds and that happens after another state change event
+    (with value INITIAL_STATE):
+
+    .. code-block:: python
+
+        def test_attribute_change():
+
+            tracer = TangoEventTracer()
+            tracer.subscribe_event("sys/tg_test/1", "State")
+
+            # do something that triggers the event
+            # ...
+
+            assert len(tracer.query_events(
+                lambda e:
+                    e.has_device("sys/tg_test/1") and
+                    e.has_attribute("State") and
+                    e.current_value == TARGET_STATE and
+
+                    # check that in all events before this one
+                    # there is at least one with the desired initial state
+                    # for the same device and attribute
+                    len([
+                        previous_event
+                        for previous_event in tracer.events
+                        if (previous_event.has_device(e.device_name) and
+                            previous_event.has_attribute(e.attribute_name) and
+                            previous_event.current_value == INITIAL_STATE)
+                    ]) >= 1,
+                    )
+                timeout=10)) == 1
+
+    If you are an end-user of this module, you will probably use the tracer
+    toghether with the `assertpy` custom assertions provided by
+    :py:mod:`ska_tango_testing.integration.tango_event_tracer_predicates`.
+    Your code will likely look like this:
+
+    .. code-block:: python
+
+        from assertpy import assert_that
+
+        def test_attribute_change(tracer): # tracer is a fixture
+
+            tracer.subscribe_event("sys/tg_test/1", "State")
+
+            # do something that triggers the event
+
+            assert_that(tracer).described_as(
+                "There must be a state change from "
+                "INITIAL_STATE to TARGET_STATE within 10 seconds."
+            ).within_timeout(10).has_events(
+                device_name="sys/tg_test/1",
+                attribute_name="State",
+                current_value=TARGET_STATE,
+                previous_value=INITIAL_STATE,
+            )
+
+    See :py:mod:`ska_tango_testing.integration.tango_event_tracer_predicates`
+    for more details.
     """
 
     def __init__(self) -> None:
@@ -292,6 +366,60 @@ class TangoEventTracer:
         target_n_events: int = 1,
     ) -> List[ReceivedEvent]:
         """Query stored an future events with a predicate and a timeout.
+
+        Queries are a tool to retrieve events that match a certain criteria
+        (predicate), optionally waiting for a certain time span (timeout) if
+        the criteria are not satisfied immediately. The method returns
+        all the matching events or an empty list if there are any. The
+        predicate is essentially a function that takes a
+        :py:class:`ReceivedEvent` as input and evaluates if the event
+        matches the desired criteria (returning `True` if it does)
+        or not (`False` otherwise).
+
+        The timeout is optional but highly recommended, because it allows
+        you to wait for a certain event to happen (e.g., a state change)
+        within a certain time span. Essentially, the query will "attend"
+        that in :py:attr:`events` there will be at least `target_n_events`
+        (which defaults to 1) that match the predicate.
+        If the query is already done, the method
+        returns immediately. If not, the method waits for the timeout to be
+        reached or the query to be done.
+
+        Usage example:
+
+        .. code-block:: python
+
+            # (you already made the right subscriptions)
+
+            # query just past events to get all events from a device X
+            # with attribute Y
+            all_events = tracer.query_events(
+                lambda e: e.has_device("sys/tg_test/1") and
+                          e.has_attribute("State")
+            )
+
+            # query future events aiming to get at least one event
+            # from device X with attribute Y that has a certain value
+            # (within 10 seconds)
+            future_query = tracer.query_events(
+                lambda e: e.has_device("sys/tg_test/1") and
+                          e.has_attribute("State") and
+                          e.current_value == TARGET_STATE,
+                timeout=10
+            )
+
+        To write good queries you have to understand the predicate mechanism.
+        The predicate can be as complex as you want, and inside it you can
+        also access the list of stored events using :py:attr:`events`.
+        Don't worry, everything is thread-safe and this will make you evaluate
+        always the most updated list of events. See
+        :py:mod:`ska_tango_testing.integration.tango_event_tracer_predicates`
+        for good examples of predicates. See also the :py:class:`ReceivedEvent`
+        class to understand how to access the event data.
+
+        As an alternative to queries, we recommend using the
+        `assertpy` custom assertions provided by
+        :py:mod:`ska_tango_testing.integration.tango_event_tracer_assertions`.
 
         :param predicate: A function that takes an event as input and returns.
             True if the event matches the desired criteria.
