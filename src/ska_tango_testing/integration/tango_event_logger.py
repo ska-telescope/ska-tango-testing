@@ -2,13 +2,14 @@
 
 import logging
 import threading
-from typing import Callable, Dict, List, Optional
+from typing import Callable, Dict, List, Optional, Union
 
 import tango
 
 from .received_event import ReceivedEvent
 
 
+# pylint: disable=duplicate-code
 def DEFAULT_LOG_ALL_EVENTS(  # pylint: disable=invalid-name
     _: ReceivedEvent,
 ) -> bool:
@@ -101,33 +102,31 @@ class TangoEventLogger:
 
     The logger can be used to log events from multiple devices and attributes.
 
-    Usage example 1: Given a device A, with two attributes X and Y, log all
-    change events from X and only the events from Y which have a value greater
-    than 10.
+    Usage example:
 
     .. code-block:: python
 
         logger = TangoEventLogger()
-        logger.log_events_from_Device("A", "X")
-        logger.log_events_from_Device(
-            "A", "Y",
+
+        # log all events from attribute "attr" of device "A"
+        logger.log_events_from_device("A", "attr")
+
+        # log only events from attribute "attr2" of device "A"
+        # when value > 10
+        logger.log_events_from_device(
+            "A", "attr2",
             filtering_rule=lambda e: e.attribute_value > 10
         )
 
-    Usage example 2: Given the device A of the previous example, log all change
-    events from Y, but costumize the message to say if the value > 10 or
-    not.
-
-    .. code-block:: python
-
-        logger = TangoEventLogger()
-        logger.log_events_from_Device(
-            "A", "Y",
+        # display a custom message when "B" changes its state
+        logger.log_events_from_device(
+            "B", "State",
             message_builder=lambda e:
-                DEFAULT_LOG_MESSAGE_BUILDER(e) + \
-                f"(Value > 10: {e.attribute_value > 10})"
+                f"B STATE CHANGED INTO {e.attribute_value}"
         )
 
+    All messages are displayed with the `INFO` logging level, except the events
+    containing errors that are displayed with the `ERROR` level.
     """
 
     def __init__(self) -> None:
@@ -141,7 +140,7 @@ class TangoEventLogger:
 
     def log_events_from_device(  # pylint: disable=too-many-arguments
         self,
-        device_name: str,
+        device_name: Union[str, tango.DeviceProxy],
         attribute_name: str,
         filtering_rule: Callable[
             [ReceivedEvent], bool
@@ -153,14 +152,43 @@ class TangoEventLogger:
     ) -> None:
         """Log change events from a Tango device attribute.
 
-        :param device_name: The name of the Tango target device.
+        This method subscribes to change events from a Tango device attribute
+        and logs them using a filtering rule and a message builder. By default,
+        all events are logged in a human-readable format.
+
+        Usage example:
+
+        .. code-block:: python
+
+            logger = TangoEventLogger()
+
+            # log all events from attribute "attr" of device "A"
+            logger.log_events_from_device("A", "attr")
+
+            # log only events from attribute "attr2" of device "A"
+            # when value > 10
+            logger.log_events_from_device(
+                "A", "attr2",
+                filtering_rule=lambda e: e.attribute_value > 10
+            )
+
+            # display a custom message when "B" changes its state
+            logger.log_events_from_device(
+                "B", "State",
+                message_builder=lambda e:
+                    f"B STATE CHANGED INTO {e.attribute_value}"
+            )
+
+        :param device_name: The name of the Tango target device (e.g.,
+            "sys/tg_test/1") or a :py:class:`tango.DeviceProxy` instance.
         :param attribute_name: The name of the attribute to subscribe to.
         :param filtering_rule: A function that takes a received event and
             returns whether it should be logged or not. By default, all events
-            are logged.
+            are logged. See :py:func:`DEFAULT_LOG_ALL_EVENTS` for more details.
         :param message_builder: A function that takes a received event and
             returns the (str) message to log. By default, it logs the event
-            in a human-readable format.
+            in a human-readable format. See
+            :py:func:`DEFAULT_LOG_MESSAGE_BUILDER` for more details.
         :param dev_factory: A device factory method to get the device proxy.
             If not specified, the device proxy is created using the
             default constructor :py:class:`tango.DeviceProxy`.
@@ -170,14 +198,14 @@ class TangoEventLogger:
             developer didn't set it to be "event-firing" or pollable).
             An alternative reason is that the device cannot be
             reached or it has no such attribute.
-        :raises ValueError: If the device_name is not a str or a Tango
-            DeviceProxy instance.
+        :raises ValueError: If device_name is not a string or a
+            :py:class:`tango.DeviceProxy` instance.
         """  # noqa: DAR402
         if isinstance(device_name, str):
             if dev_factory is None:
-                dev_factory = tango.DeviceProxy
-
-            device_proxy = dev_factory(device_name)
+                device_proxy = tango.DeviceProxy(device_name)
+            else:
+                device_proxy = dev_factory(device_name)
         elif isinstance(device_name, tango.DeviceProxy):
             device_proxy = device_name
         else:
@@ -186,8 +214,6 @@ class TangoEventLogger:
                 "or a Tango DeviceProxy instance. Instead, it is of type "
                 f"{type(device_name)}."
             )
-
-        device_proxy = dev_factory(device_name)
 
         def _callback(event_data: tango.EventData) -> None:
             """Log the received event using the filtering rule and mex builder.

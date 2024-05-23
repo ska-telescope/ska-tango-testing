@@ -207,9 +207,9 @@ class TangoEventTracer:
         """  # noqa: DAR402
         if isinstance(device_name, str):
             if dev_factory is None:
-                dev_factory = tango.DeviceProxy
-
-            device_proxy = dev_factory(device_name)
+                device_proxy = tango.DeviceProxy(device_name)
+            else:
+                device_proxy = dev_factory(device_name)
         elif isinstance(device_name, tango.DeviceProxy):
             device_proxy = device_name
         else:

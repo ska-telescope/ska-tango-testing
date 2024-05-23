@@ -4,3 +4,5 @@ disable=
     logging-fstring-interpolation,
     try-except-raise,
     
+[SIMILARITIES]
+ignore-imports=yes
