@@ -51,3 +51,16 @@ ska_tango_testing.integration
     :members:
     :special-members: __init__, 
 
+ska_tango_testing.integration.tango_event_tracer_predicates
+-----------------------------------------------------------
+
+.. automodule:: ska_tango_testing.integration.tango_event_tracer_predicates
+    :members:
+    :special-members: __init__
+
+ska_tango_testing.integration.tango_event_tracer_assertions
+-----------------------------------------------------------
+
+.. automodule:: ska_tango_testing.integration.tango_event_tracer_assertions
+    :members:
+    :special-members: __init__

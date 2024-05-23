@@ -14,8 +14,31 @@ def DEFAULT_LOG_ALL_EVENTS(  # pylint: disable=invalid-name
 ) -> bool:
     """Log all events.
 
-    This is the default filtering rule for the TangoEventLogger. It logs all
-    events without any filtering.
+    This is the default filtering rule for
+    :py:class:`TangoEventLogger`. It logs all events without any filtering.
+    You can write custom rules defining a function that takes a
+    :py:class:`ReceivedEvent` and returns a boolean. For example:
+
+    .. code-block:: python
+
+        def custom_filter(e: ReceivedEvent) -> bool:
+            return e.attribute_value > 10
+
+        logger.log_events_from_device(
+            device, "attribute_name",
+            filtering_rule=custom_filter
+        )
+
+    It could also be an inline lambda function. For example:
+
+    .. code-block:: python
+
+        logger.log_events_from_device(
+            device, "attribute_name",
+            # log only events with attribute_value > 10
+            filtering_rule=lambda e: e.attribute_value > 10
+        )
+
 
     :param _: The received event.
 
@@ -29,13 +52,39 @@ def DEFAULT_LOG_MESSAGE_BUILDER(  # pylint: disable=invalid-name
 ) -> str:
     """Log the event in a human-readable format.
 
-    This is the default message builder for the TangoEventLogger. It logs the
-    event in a human-readable format, including the device name,
+    This is the default message builder for :py:class:`TangoEventLogger`.
+    It logs the events in a human-readable format, including the device name,
     attribute name, and the new value of the attribute.
+
+    You can write custom message builders defining a function that takes a
+    :py:class:`ReceivedEvent` and returns a string. For example:
+
+    .. code-block:: python
+
+        def custom_message_builder(e: ReceivedEvent) -> str:
+            return (
+                f"CUSTOM MESSAGE: At {e.reception_time}, {e.device_name} "
+                + f"{e.attribute_name} changed to {e.attribute_value}."
+            )
+
+        logger.log_events_from_device(
+            device, "attribute_name",
+            message_builder=custom_message_builder
+        )
+
+    It could also be an inline lambda function. For example:
+
+    .. code-block:: python
+
+        logger.log_events_from_device(
+            device, "attribute_name",
+            # log using to string default method
+            message_builder=lambda e: str(e)
+        )
 
     :param event: The received event.
 
-    :return: The message to log.
+    :return: The message that will be logged.
     """
     return (
         f"    EVENT_LOGGER:\tAt {event.reception_time}, {event.device_name} "

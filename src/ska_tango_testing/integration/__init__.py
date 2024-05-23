@@ -18,17 +18,34 @@ The three main classes provided by this module are:
     It is useful to access quickly the event data and to build predicates
     for the queries.
 
-Other than those 3 main classes, this module provides a set of predicates
+Other than those three main classes, this module provides a set of predicates
+(:py:mod:`ska_tango_testing.integration.tango_event_tracer_predicates`)
 that can be used to filter events when calling the
 :py:meth:`TangoEventTracer.query_events` method (e.g.,
 "select all events from device X with attribute Y that have a certain value
 and a certain previous value"), but also some high-level custom
 `assertpy` assertions to make it easier to write tests
-using :py:class:`TangoEventTracer`.
+using :py:class:`TangoEventTracer`
+(:py:mod:`ska_tango_testing.integration.tango_event_tracer_predicates`).
+
+If you are an end-user of this module, you will probably use the tracer
+toghether with the custom assertions. See
+:py:mod:`ska_tango_testing.integration.tango_event_tracer_predicates`
+for more details and usage examples.
 """
 
 from .received_event import ReceivedEvent
-from .tango_event_logger import TangoEventLogger
+from .tango_event_logger import (
+    DEFAULT_LOG_ALL_EVENTS,
+    DEFAULT_LOG_MESSAGE_BUILDER,
+    TangoEventLogger,
+)
 from .tango_event_tracer import TangoEventTracer
 
-__all__ = ["TangoEventTracer", "TangoEventLogger", "ReceivedEvent"]
+__all__ = [
+    "TangoEventTracer",
+    "TangoEventLogger",
+    "ReceivedEvent",
+    "DEFAULT_LOG_ALL_EVENTS",
+    "DEFAULT_LOG_MESSAGE_BUILDER",
+]

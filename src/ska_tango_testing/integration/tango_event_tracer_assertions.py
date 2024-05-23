@@ -1,7 +1,8 @@
-"""Basic custom event-based assertions for :py:class:`TangoEventTracer`.
+"""Basic custom event-based assertions for `TangoEventTracer`.
 
-This module provides some example of basic custom :py:mod:`assertpy` assertions
-to be used with :py:class:`TangoEventTracer` instances. These assertions can be
+This module provides some example of basic custom `assertpy` assertions
+to be used with :py:class:`ska_tango_testing.integration.TangoEventTracer`
+instances. These assertions can be
 used to verify properties about the events captured by the tracer.
 
 Essentially they are query calls to the tracer, within
@@ -10,7 +11,7 @@ complex predicate.
 
 You can and you are encouraged to take those assertions as a starting point
 to create more complex ones, as needed by your test cases. If you want to do
-that it is suggested to check :py:mod:`assertpy` documentation to understand
+that it is suggested to check `assertpy` documentation to understand
 how to create custom assertions (https://assertpy.github.io/docs.html).
 
 Usage example:
@@ -18,37 +19,50 @@ Usage example:
 .. code-block:: python
 
     from assertpy import assert_that, add_extension
-    from ska_tango_testing.integration.tango_event_tracer import (
+    from ska_tango_testing.integration import (
         TangoEventTracer
     )
-    from ska_tango_testing.integration.\
-        predicates_and_assertions.event_assertions import (
-        exists_event
+    from ska_tango_testing.integration.tango_event_tracer_assertions (
+        has_change_event_occurred,
+        within_timeout,
     )
 
-    # ...
+    # IMPORTANT: Add the custom assertions to the assertpy context
+    add_extension(has_change_event_occurred)
+    add_extension(within_timeout)
 
     def test_event_occurs_within_timeout(sut, tracer: TangoEventTracer):
 
+        # subscribe to the events
         tracer.subscribe_event("devname", "attrname")
+        tracer.subscribe_event("devname", "attr2")
 
         # ... do something that triggers the event
 
-        # Check that an attr change event happens within 10 seconds
+        # Check that a generic event has occurred
         assert_that(tracer).has_change_event_occurred(
             device_name="devname",
             attribute_name="attrname",
+            attribute_value=5,
+        )
+
+        # Check that an attr change from "old_value" to "new_value"
+        # has occurred or will occur within 5 seconds in any device.
+        # Describe the eventual failure with an evocative message.
+        assert_that(tracer).described_as(
+            "An event from 'old_value' to 'new_value' for 'attr2' should have"
+            " been occurred within 5 seconds in some device."
+        ).within_timeout(5).has_change_event_occurred(
+            attribute_name="attr2",
             attribute_value="new_value",
             previous_value="old_value",
-            timeout=10
         )
 
 NOTE: Just an important note. To make assertions about the events order
 - i.e., assertion which include a verification with the shape
-"event1 happens before event2" (:py:func:`exists_event` with
-:py:param:`previous_value` set to a specific value is an example) - we
+"event1 happens before event2", like the call of the example 2 - we
 are currently using the reception time
-(:py:attr:`ReceivedEvent.reception_time`)
+(:py:attr:`ska_tango_testing.integration.ReceivedEvent.reception_time`)
 as a way to compare events. It's important to remind we are dealing with
 a distributed system and the reception time may be misleading in some
 cases (e.g., the reception time of the event may not be the same as the
@@ -79,23 +93,27 @@ from .tango_event_tracer_predicates import (
 
 
 def _get_tracer(self: Any) -> TangoEventTracer:
-    """Get the :py:class:`TangoEventTracer` instance from the assertpy context.
+    """Get the `TangoEventTracer` instance from the `assertpy` context.
 
-    Helper method to get the :py:class:`TangoEventTracer` instance from the
-    assertpy context or raise an error if it is not found.
+    Helper method to get the
+    :py:class:`ska_tango_testing.integration.TangoEventTracer`
+    instance from the `assertpy` context which is stored in the 'val'.
+    It fails if the instance is not found.
 
-    :param self: The assertpy context object.
+    :param self: The `assertpy` context object.
 
-    :return: The :py:class:`TangoEventTracer` instance.
+    :return: The `TangoEventTracer` instance.
 
-    :raises ValueError: If the :py:class:`TangoEventTracer` instance is not
-        found (i.e., the assertion is not called with a tracer instance).
+    :raises ValueError: If the
+        :py:class:`ska_tango_testing.integration.TangoEventTracer`
+        instance is not found (i.e., the assertion is not called with
+        a tracer instance).
     """
     if not hasattr(self, "val") or not isinstance(self.val, TangoEventTracer):
         raise ValueError(
-            "The TangoEventTracer instance must be stored in the 'val' "
+            "The 'TangoEventTracer' instance must be stored in the 'val' "
             "attribute of the assertpy context. Try using the 'assert_that' "
-            "method with the TangoEventTracer instance as argument.\n"
+            "method with the 'TangoEventTracer' instance as argument.\n"
             "Example: assert_that(tracer).has_change_event_occurred(...)"
         )
     return self.val
@@ -143,15 +161,17 @@ def within_timeout(self: Any, timeout: Union[int, float]) -> Any:
     from the moment the assertion is called. If the event will not occur
     within this time, the assertion will fail. If no timeout is provided,
     the assertion will consieder only already existing events
-    (i.e., there will be no waiting)
+    (i.e., there will be no waiting).
 
-    :param self: The assertpy context object (It is passed automatically)
+    :param self: The `assertpy` context object (It is passed automatically)
     :param timeout: The time in seconds to wait for the event to occur.
 
     :return: The decorated assertion context.
 
-    :raises ValueError: If the :py:class:`TangoEventTracer` instance is not
-        found (i.e., the assertion is not called with a tracer instance).
+    :raises ValueError: If the
+        :py:class:`ska_tango_testing.integration.TangoEventTracer`
+        instance is not found (i.e., the method is called outside
+        an 'assert_that(tracer)' context).
     """  # noqa: DAR402
     # verify the tracer is stored in the assertpy context or raise an error
     _get_tracer(self)
@@ -171,10 +191,10 @@ def has_change_event_occurred(
 ) -> Any:
     """Verify that an event matching a given predicate occurs.
 
-    Custom assertpy assertion to verify that an event matching a given
+    Custom `assertpy` assertion to verify that an event matching a given
     predicate occurs, eventually within a specified timeout.
 
-    :param self: The assertpy context object (It is passed automatically)
+    :param self: The `assertpy` context object (It is passed automatically)
     :param device_name: The device name to match. If not provided, it will
         match any device name.
     :param attribute_name: The attribute name to match. If not provided,
@@ -184,11 +204,12 @@ def has_change_event_occurred(
     :param previous_value: The previous value to match. If not provided,
         it will match any previous value.
 
-    :return: The assertpy context object.
+    :return: The `assertpy` context object.
 
-    :raises ValueError: If the :py:class:`TangoEventTracer` instance is not
-        found (i.e., the method is called outside an 'assert_that(tracer)'
-        context).
+    :raises ValueError: If the
+        :py:class:`ska_tango_testing.integration.TangoEventTracer`
+        instance is not found (i.e., the method is called outside
+        an 'assert_that(tracer)' context).
     """  # noqa: DAR402
     # check self has a tracer object
     tracer = _get_tracer(self)
@@ -269,9 +290,10 @@ def not_exists_event(
 
     :return: The assertpy context object.
 
-    :raises ValueError: If the :py:class:`TangoEventTracer` instance is not
-        found (i.e., the method is called outside an 'assert_that(tracer)'
-        context).
+    :raises ValueError: If the
+        :py:class:`ska_tango_testing.integration.TangoEventTracer`
+        instance is not found (i.e., the method is called outside
+        an 'assert_that(tracer)' context).
     """  # noqa: DAR402
     # check self has a tracer object
     tracer = _get_tracer(self)
