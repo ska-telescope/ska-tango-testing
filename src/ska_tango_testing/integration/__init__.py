@@ -8,3 +8,9 @@ of SKA Tango devices. In particular, it provides:
 - A class :class::`TangoEventLogger` that can be used to subscribe to
     events from a Tango device and then live log them for debugging purposes.
 """
+
+from .tango_event_tracer import TangoEventTracer
+from .tango_event_logger import TangoEventLogger
+from .received_event import ReceivedEvent
+
+__all__ = ["TangoEventTracer", "TangoEventLogger", "ReceivedEvent"]

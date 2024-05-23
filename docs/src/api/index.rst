@@ -43,3 +43,11 @@ ska_tango_testing.mock.tango
 .. automodule:: ska_tango_testing.mock.tango
     :members:
     :special-members: __init__, __call__
+
+ska_tango_testing.integration
+-----------------------------
+
+.. automodule:: ska_tango_testing.integration
+    :members:
+    :special-members: __init__, 
+
