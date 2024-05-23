@@ -1,4 +1,4 @@
-"""A Tango event which has been received by the :class::`TangoEventTracer`."""
+"""A Tango event which received by :py:class:`TangoEventTracer`."""
 
 from datetime import datetime
 from typing import Any, Union
@@ -7,39 +7,36 @@ import tango
 
 
 class ReceivedEvent:
-    """A Tango event received by the :class::`TangoEventTracer`.
+    """A Tango event which received by :py:class:`TangoEventTracer`.
 
-    This class is a wrapper around the Tango event data, which allows to
-    access the most relevant information in a more user-friendly way. The main
-    attributes are:
+    This class is a wrapper around the Tango :py:class:`tango.EventData`,
+    which allows to access the most relevant information in a more
+    user-friendly way. The main attributes are:
 
-    - ::property::`device`: the device proxy that sent the event,
-    - ::property::`device_name`: the name of the device that sent the event
-        (accessible also through the :method::`has_device`, which allows to
+    - :py:attr:`device`: the device proxy that sent the event,
+    - :py:attr:`device_name`: the name of the device that sent the event
+        (accessible also through the :py:meth:`has_device`, which allows to
         check if the event comes from a given device name or using a
         device proxy instance),
-    - ::property::`attribute_name`: the (short) name of the attribute that
-        sent the event (accessible also through the :method::`has_attribute`,
+    - :py:attr:`attribute_name`: the (short) name of the attribute that
+        sent the event (accessible also through the :py:meth:`has_attribute`,
         which allows to check if the event comes from a given attribute name
         ignoring the case),
-    - ::property::`attribute_value`: the new value of the attribute when
+    - :py:attr:`attribute_value`: the new value of the attribute when
         the event was sent.
-    - ::property::`attribute`: the full name of the attribute that sent the
-        event.
 
     Other than that, the event data contains also:
 
-    - ::property::`reception_time`: a timestamp of when the event was received
-        by the tracer.
-
+    - :py:attr:`reception_time`: a timestamp of when the event was
+        received by the tracer.
 
 
     If you need to access the full event data, you can use the
-    ::attribute::`event_data` attribute to access the original Tango
-    :class::`EventData` object.
+    `event_data` attribute to access the original Tango
+    :py:class:`tango.EventData` object.
 
     NOTE: You can use this class interface to build predicates for the
-    :method::`TangoEventTracer.query_events` method, i.e.:
+    :py:meth:`TangoEventTracer.query_events` method, i.e.:
 
     .. code-block:: python
 
@@ -50,6 +47,12 @@ class ReceivedEvent:
             timeout=10)
 
     """
+
+    event_data: tango.EventData
+    """The original received :py:class:`tango.EventData` object."""
+
+    reception_time: datetime
+    """The timestamp of when the event was received by the tracer."""
 
     def __init__(self, event_data: tango.EventData):
         """Initialise the ReceivedEvent with the event data.
@@ -179,6 +182,6 @@ class ReceivedEvent:
     #     'http://sys/tg_test/1/attribute1'.
 
     #     If you need to access only the short name of the attribute 4
-    #     (e.g. 'attribute1'), use the ::property::`attribute_name`.
+    #     (e.g. 'attribute1'), use the :py:meth:`attribute_name`.
     #     """
     #     return self.event_data.attr_name

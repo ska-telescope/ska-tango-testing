@@ -1,12 +1,12 @@
-"""Basic unit tests for :class::`TangoEventTracer`.
+"""Basic unit tests for :py:class:`TangoEventTracer`.
 
 This set of tests covers the basic individual methods of the
-:class::`TangoEventTracer` class. The tests are designed to trigger
+:py:class:`TangoEventTracer` class. The tests are designed to trigger
 each single method in isolation and check that it behaves as expected.
 
 Those tests are not exhaustive, because they do not cover the actual
 capability of subscribing to events from a Tango device and capturing
-those events correctly. For that, see :file::`test_tracer_subscribe_event.py`.
+those events correctly. For that, see `test_tracer_subscribe_event.py`.
 """
 
 # import logging

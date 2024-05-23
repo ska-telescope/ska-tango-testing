@@ -1,12 +1,12 @@
-"""Basic unit tests for :class::`TangoEventLogger`.
+"""Basic unit tests for :py:class:`TangoEventLogger`.
 
 This set of tests covers the basic individual methods of the
-:class::`TangoEventLogger` class. The tests are designed to trigger
+:py:class:`TangoEventLogger` class. The tests are designed to trigger
 each single method in isolation and check that it behaves as expected.
 
 Those tests are not exhaustive, because they do not cover the actual
 capability of subscribing to events from a Tango device and capturing
-those events correctly. For that, see :file::`test_logger_subscribe_event.py`.
+those events correctly. For that, see `test_logger_subscribe_event.py`.
 """
 
 from unittest.mock import ANY, MagicMock, patch
@@ -27,14 +27,14 @@ LOGGING_PATH = "ska_tango_testing.integration.tango_event_logger.logging"
 
 @pytest.mark.Tracer
 class TestTangoEventLogger:
-    """Basic unit tests for the :class::`TangoEventLogger`."""
+    """Basic unit tests for the :py:class:`TangoEventLogger`."""
 
     @pytest.fixture
     @staticmethod
     def logger() -> TangoEventLogger:
-        """Return the :class::`TangoEventLogger` instance to test.
+        """Return the :py:class:`TangoEventLogger` instance to test.
 
-        :return: The :class::`TangoEventLogger`
+        :return: The :py:class:`TangoEventLogger`
         """
         return TangoEventLogger()
 

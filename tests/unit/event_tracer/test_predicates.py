@@ -1,6 +1,6 @@
-"""Test the custom predicates for the :class::`TangoEventTracer`.
+"""Test the custom predicates for the :py:class:`TangoEventTracer`.
 
-Ensure that the custom predicates for the :class::`TangoEventTracer` work
+Ensure that the custom predicates for the :py:class:`TangoEventTracer` work
 as expected, matching the correct events and values.
 """
 
@@ -24,9 +24,9 @@ from ska_tango_testing.integration.tango_event_tracer import TangoEventTracer
 
 @pytest.mark.Tracer
 class TestCustomPredicates:
-    """Test the custom predicates for the :class::`TangoEventTracer`.
+    """Test the custom predicates for the :py:class:`TangoEventTracer`.
 
-    Ensure that the custom predicates for the :class::`TangoEventTracer` work
+    Ensure that the custom predicates for the :py:class:`TangoEventTracer` work
     as expected, matching the correct events and values.
     """
 
@@ -37,14 +37,14 @@ class TestCustomPredicates:
         attribute_value: Any,
         seconds_ago: float = 0,
     ) -> MagicMock:
-        """Create a dummy :class::`ReceivedEvent` with the specified params.
+        """Create a dummy :py:class:`ReceivedEvent` with the specified params.
 
         :param device_name: The device name.
         :param attribute_name: The attribute name.
         :param attribute_value: The attribute value.
         :param seconds_ago: The time in seconds since the event was received.
 
-        :return: A dummy :class::`ReceivedEvent`.
+        :return: A dummy :py:class:`ReceivedEvent`.
         """
         event = MagicMock(spec=ReceivedEvent)
         event.device_name = device_name
@@ -101,7 +101,7 @@ class TestCustomPredicates:
         ).is_true()
 
     def test_predicate_tango_state_matches(self) -> None:
-        """An event match when attribute is a :class::`tango.DevState`."""
+        """An event match when attribute is a :py:class:`tango.DevState`."""
         event = self.create_dummy_event(
             "test/device/1", "state", tango.DevState.ON
         )
