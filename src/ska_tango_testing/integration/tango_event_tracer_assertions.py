@@ -67,8 +67,12 @@ from typing import Any, Optional, Union
 
 import tango
 
-from ..tango_event_tracer import TangoEventTracer
-from .predicates import ANY, event_has_previous_value, event_matches_parameters
+from .tango_event_tracer import TangoEventTracer
+from .tango_event_tracer_predicates import (
+    ANY,
+    event_has_previous_value,
+    event_matches_parameters,
+)
 
 # TODO: It would be nice to type those functions with the right
 # assertpy types, but it is not clear how to do that yet.

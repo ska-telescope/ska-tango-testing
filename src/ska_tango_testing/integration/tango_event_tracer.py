@@ -52,7 +52,7 @@ class _EventQuery:
         # event to signal that the query is done
         self.thread_event = threading.Event()
 
-    def update_events(self, events: List[ReceivedEvent]) -> None:
+    def update_with_events(self, events: List[ReceivedEvent]) -> None:
         """Update the list of matching events with new events.
 
         Between the new events, only the ones that match the predicate
@@ -137,20 +137,21 @@ class TangoEventTracer:
         # set of received events
         self._events: List[ReceivedEvent] = []
 
-        # lock for thread safety
-        self.lock = threading.Lock()
+        # lock for thread safety in event handling
+        self._events_lock = threading.Lock()
 
         # dictionary of subscription ids (foreach device proxy
         # are stored the subscription ids of the subscribed attributes)
         self._subscription_ids: Dict[tango.DeviceProxy, List[int]] = {}
 
-        self.subscriptions_lock = threading.Lock()
+        # lock for thread safety in subscription handling
+        self._subscriptions_lock = threading.Lock()
 
         # list of pending queries
         self._pending_queries: List[_EventQuery] = []
 
         # lock for pending queries
-        self.query_lock = threading.Lock()
+        self._query_lock = threading.Lock()
 
     def __del__(self) -> None:
         """Teardown the object and unsubscribe from all subscriptions.
@@ -169,12 +170,12 @@ class TangoEventTracer:
 
         :return: A copy of the stored events.
         """  # noqa: D402
-        with self.lock:
+        with self._events_lock:
             return self._events.copy()
 
     def clear_events(self) -> None:
         """Clear all stored events."""
-        with self.lock:
+        with self._events_lock:
             self._events.clear()
 
     # #############################
@@ -226,7 +227,7 @@ class TangoEventTracer:
         )
 
         # store the subscription id
-        with self.subscriptions_lock:
+        with self._subscriptions_lock:
             if device_proxy not in self._subscription_ids:
                 self._subscription_ids[device_proxy] = []
             self._subscription_ids[device_proxy].append(subid)
@@ -254,21 +255,21 @@ class TangoEventTracer:
 
         :param event: The event to add.
         """
-        with self.lock:
+        with self._events_lock:
             self._events.append(event)
 
         # logging.info("Trying unlocking %s pending queries.",
         #              str(len(self._pending_queries)))
 
         # update all pending queries
-        with self.query_lock:
+        with self._query_lock:
             for query in self._pending_queries:
-                query.update_events(self._events)
+                query.update_with_events(self.events)
                 query.try_unlock()
 
     def unsubscribe_all(self) -> None:
         """Unsubscribe from all subscriptions."""
-        with self.subscriptions_lock:
+        with self._subscriptions_lock:
             for device_proxy, device_sub_ids in self._subscription_ids.items():
                 for subscription_id in device_sub_ids:
                     try:
@@ -309,7 +310,7 @@ class TangoEventTracer:
         # that match a predicate
         # within a certain timeout
         query = _EventQuery(predicate, target_n_events, timeout)
-        query.update_events(self.events)
+        query.update_with_events(self.events)
 
         # if the query is already done, return the matching events
         if query.is_done():
@@ -326,15 +327,19 @@ class TangoEventTracer:
     def _wait_query(self, query: _EventQuery) -> None:
         """Wait for a query to be done in a thread-safe way.
 
+        The query is marked as pending and then waited for. When the query
+        is satisfied or a timeout is reached, the query is unlocked
+        and the process continues.
+
         :param query: The query object to wait for.
         """
         # add the query to the list of pending queries
-        with self.query_lock:
+        with self._query_lock:
             self._pending_queries.append(query)
 
-        # wait for the query to be done
+        # wait for the query to be done (or the timeout to be reached)
         query.wait()
 
         # remove the query from the list of pending queries
-        with self.query_lock:
+        with self._query_lock:
             self._pending_queries.remove(query)

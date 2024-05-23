@@ -10,8 +10,8 @@ event sequence.
 
 from typing import Any, Optional
 
-from ..received_event import ReceivedEvent
-from ..tango_event_tracer import TangoEventTracer
+from .received_event import ReceivedEvent
+from .tango_event_tracer import TangoEventTracer
 
 ANY = None
 
