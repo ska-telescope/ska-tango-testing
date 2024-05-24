@@ -177,9 +177,10 @@ class TangoEventTracer:
                     )
                 timeout=10)) == 1
 
-    If you are an end-user of this module, you will probably use the tracer
-    toghether with the `assertpy` custom assertions provided by
-    :py:mod:`ska_tango_testing.integration.tango_event_tracer_predicates`.
+    **IMPORTANT NOTE**: If you are an end-user of this module, you will
+    probably use the tracer toghether with the already provided `assertpy`
+    custom assertions, which are implemented in
+    :py:mod:`ska_tango_testing.integration.tango_event_predicates`.
     Your code will likely look like this:
 
     .. code-block:: python
@@ -202,7 +203,7 @@ class TangoEventTracer:
                 previous_value=INITIAL_STATE,
             )
 
-    See :py:mod:`ska_tango_testing.integration.tango_event_tracer_predicates`
+    See :py:mod:`ska_tango_testing.integration.tango_event_predicates`
     for more details.
     """
 
@@ -263,6 +264,29 @@ class TangoEventTracer:
         dev_factory: Optional[Callable[[str], tango.DeviceProxy]] = None,
     ) -> None:
         """Subscribe to change events for a Tango device attribute.
+
+        It's the same as subscribing to a change event in a Tango
+        device, but the received events are stored in the tracer instance
+        (in a thread-safe way) and can be accessed later with
+        :py:meth:`query_events`, with :py:attr:`events` or with
+        custom assertions.
+
+        Usage example:
+
+        .. code-block:: python
+
+            # you can provide just the device name and the attribute name
+            tracer.subscribe_event("sys/tg_test/1", "State")
+
+            # if you already have a device proxy, you can pass it directly
+            tracer.subscribe_event(device_proxy, "State")
+
+            # if you have the name of the device, but for some reason
+            # you don't want us to create the device proxy using the
+            # default constructor, you can provide a factory method
+            tracer.subscribe_event("sys/tg_test/1", "State",
+                                      dev_factory=my_custom_dev_factory)
+
 
         :param device_name: The name of the Tango target device. Alternatively,
             if you already have a device proxy, you can pass it directly.
@@ -372,7 +396,8 @@ class TangoEventTracer:
         the criteria are not satisfied immediately. The method returns
         all the matching events or an empty list if there are any. The
         predicate is essentially a function that takes a
-        :py:class:`ReceivedEvent` as input and evaluates if the event
+        :py:class:`ska_tango_testing.integration.received_event.ReceivedEvent`
+        as input and evaluates if the event
         matches the desired criteria (returning `True` if it does)
         or not (`False` otherwise).
 
@@ -396,13 +421,17 @@ class TangoEventTracer:
             all_events = tracer.query_events(
                 lambda e: e.has_device("sys/tg_test/1") and
                           e.has_attribute("State")
+                          # NOTE: making this call instead of
+                          # e.attribute_value == "State" prevents
+                          # case sensitivity issues
             )
 
             # query future events aiming to get at least one event
             # from device X with attribute Y that has a certain value
             # (within 10 seconds)
             future_query = tracer.query_events(
-                lambda e: e.has_device("sys/tg_test/1") and
+                # you can use directly the device proxy instead of the name
+                lambda e: e.has_device(X_dev_proxy) and
                           e.has_attribute("State") and
                           e.current_value == TARGET_STATE,
                 timeout=10
@@ -413,13 +442,16 @@ class TangoEventTracer:
         also access the list of stored events using :py:attr:`events`.
         Don't worry, everything is thread-safe and this will make you evaluate
         always the most updated list of events. See
-        :py:mod:`ska_tango_testing.integration.tango_event_tracer_predicates`
-        for good examples of predicates. See also the :py:class:`ReceivedEvent`
+        :py:mod:`ska_tango_testing.integration.tango_event_predicates`
+        for good examples of predicates.
+        See also the
+        :py:class:`ska_tango_testing.integration.received_event.ReceivedEvent`
         class to understand how to access the event data.
 
-        As an alternative to queries, we recommend using the
-        `assertpy` custom assertions provided by
-        :py:mod:`ska_tango_testing.integration.tango_event_tracer_assertions`.
+        **IMPORTANT NOTE**: As an alternative to queries, for most of
+        end-users we recommend using the already implemented `assertpy`
+        custom assertions provided by
+        :py:mod:`ska_tango_testing.integration.tango_event_assertions`.
 
         :param predicate: A function that takes an event as input and returns.
             True if the event matches the desired criteria.

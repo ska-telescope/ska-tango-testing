@@ -6,46 +6,150 @@ events, query them (within a timeout), log them in real-time, and build
 complex queries and assertions to verify the behaviour of a complex
 set of devices.
 
-The three main classes provided by this module are:
+For a quick start, you can use the :py:class:`TangoEventTracer` class
+to subscribe to events from a Tango device and then use it with the
+custom assertions provided by
+:py:mod:`ska_tango_testing.integration.tango_event_assertions`
+to make assertions on the received events.
 
-- A class :py:class:`TangoEventTracer` that can be used to subscribe to
-    events from a Tango device and then query them for making assertions.
-- A class :py:class:`TangoEventLogger` that can be used to subscribe to
-    events from a Tango device and then live log them for debugging purposes.
-- A class :py:class:`ReceivedEvent` that wraps
-    :py:class:`tango.EventData` and represents an event received by the
-    :py:class:`TangoEventTracer` or the :py:class:`TangoEventLogger`.
-    It is useful to access quickly the event data and to build predicates
-    for the queries.
+.. code-block:: python
 
-Other than those three main classes, this module provides a set of predicates
-(:py:mod:`ska_tango_testing.integration.tango_event_tracer_predicates`)
-that can be used to filter events when calling the
-:py:meth:`TangoEventTracer.query_events` method (e.g.,
-"select all events from device X with attribute Y that have a certain value
-and a certain previous value"), but also some high-level custom
-`assertpy` assertions to make it easier to write tests
-using :py:class:`TangoEventTracer`
-(:py:mod:`ska_tango_testing.integration.tango_event_tracer_predicates`).
+    from assertpy import assert_that
+    from ska_tango_testing.integration import TangoEventTracer
 
-If you are an end-user of this module, you will probably use the tracer
-toghether with the custom assertions. See
-:py:mod:`ska_tango_testing.integration.tango_event_tracer_predicates`
-for more details and usage examples.
+    def test_a_device_changes_state_when_triggered():
+
+        # create the tracer
+        tracer = TangoEventTracer()
+
+        # subscribe to events from a device
+        tracer.subscribe_to_events("sys/tg_test/1", "obsState")
+
+        # do something that triggers the event
+        # ...
+
+        # use an assertion to check a state change happened
+        assert_that(tracer).described_as(
+            "The device should change state"
+        ).within_timeout(10).has_event(
+            device="sys/tg_test/1",
+            attribute="obsState",
+            value="ON",
+            previous_value="OFF",
+        )
+
+If you need to log events in real-time, you can use a quick utility
+function :py:func:`log_tango_events` to log events from a set of devices
+and attributes. This is useful for debugging purposes and to see which
+events are received in real-time while running a test.
+
+.. code-block:: python
+
+    # (other imports)
+
+    from ska_tango_testing.integration import log_tango_events
+
+    def test_a_device_changes_state_when_triggered():
+
+        # log events in real-time
+        log_tango_events({
+            "sys/tg_test/1": ["obsState"],
+            "sys/other_device/100": ["attr1", "attr2"],
+        })
+
+        # (rest of the test)
+
+For more advanced usage of the event tracer, we suggest to read
+the documentation of the :py:class:`TangoEventTracer` class, and then
+give a look at :py:mod:`ska_tango_testing.integration.tango_event_assertions`,
+:py:mod:`ska_tango_testing.integration.received_event`, and
+:py:mod:`ska_tango_testing.integration.tango_event_predicates`.
+
+For more advanced usage of the event logger, we suggest to read
+the documentation of the
+:py:class:`ska_tango_testing.integration.tango_event_logger.TangoEventLogger`
+class.
 """
 
-from .received_event import ReceivedEvent
-from .tango_event_logger import (
-    DEFAULT_LOG_ALL_EVENTS,
-    DEFAULT_LOG_MESSAGE_BUILDER,
-    TangoEventLogger,
-)
+from typing import Callable, Dict, List, Union
+
+import tango
+from assertpy import add_extension  # type: ignore
+
+from .tango_event_assertions import event_has_previous_value, within_timeout
+from .tango_event_logger import TangoEventLogger
 from .tango_event_tracer import TangoEventTracer
 
+# register the tracer custom assertions
+add_extension(event_has_previous_value)
+add_extension(within_timeout)
+
+
+# provide a quick utility function to log events
+# (instead of a full logger)
+def log_tango_events(
+    device_attribute_map: Dict[Union[str, tango.DeviceProxy], List[str]],
+    dev_factory: Callable[[str], tango.DeviceProxy] = tango.DeviceProxy,
+) -> TangoEventLogger:
+    """Log events from a set of devices and attributes.
+
+    Quick utility function to log events from a set of devices and attributes.
+    It uses a
+    :py:mod:`ska_tango_testing.integration.tango_event_logger.TangoEventLogger`
+    instance to log the events
+    in real-time using the default logger. This is useful for debugging
+    purposes and to see the events in real-time while running a test.
+
+    Usage example:
+
+    .. code-block:: python
+
+        # basic usage
+        log_events({
+            "sys/tg_test/1": ["attr1", "attr2"],
+            "sys/tg_test/2": ["State"],
+        })
+
+        # usage with proxy instead of device name
+        log_events({dev_proxy: ["attr"]})
+
+        # usage providing a custom factory to create the device proxy
+        log_events({
+            "sys/tg_test/1": ["attr1", "attr2"],
+            "sys/tg_test/2": ["State"],
+        }, dev_factory=my_custom_dev_factory)
+
+    For more advanced usage, you can see
+    :py:mod:`ska_tango_testing.integration.tango_event_logger.TangoEventLogger`
+    class directly, which allows you to customise the logging policy
+    (filtering some messages) and the message builder (formatting the
+    messages in a custom way).
+
+    :param device_attribute_map: A dictionary mapping devices to a list
+        of attribute names you are interested in logging. Each device
+        could be specified either as a device name (str) or as a
+        :py:class:`tango.DeviceProxy` instance.
+    :param dev_factory: An optional factory function that can be used instead
+        of the default :py:class:`tango.DeviceProxy` constructor
+        (if you need to customise the device proxy creation).
+
+    :return: The `TangoEventLogger` instance that is used to log
+        the given events.
+    """
+    logger = TangoEventLogger()
+
+    for device, attr_list in device_attribute_map.items():
+        dev_proxy = dev_factory(device)
+        for attr in attr_list:
+            logger.log_events_from_device(
+                dev_proxy, attr, dev_factory=dev_factory
+            )
+
+    return logger
+
+
+# expose just a minimal set of classes and functions
 __all__ = [
     "TangoEventTracer",
-    "TangoEventLogger",
-    "ReceivedEvent",
-    "DEFAULT_LOG_ALL_EVENTS",
-    "DEFAULT_LOG_MESSAGE_BUILDER",
+    "log_tango_events",
 ]

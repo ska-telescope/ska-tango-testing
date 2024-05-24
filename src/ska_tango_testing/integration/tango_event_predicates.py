@@ -1,8 +1,8 @@
 """Predicates to filter `TangoEventTracer` events in queries.
 
 A collection of predicates to filter
-:py:class:`ska_tango_testing.integration.ReceivedEvent` instances
-when calling the
+:py:class:`ska_tango_testing.integration.received_event.ReceivedEvent`
+instances when calling the
 :py:meth:`ska_tango_testing.integration.TangoEventTracer.query_events`
 method. The main purpose of these predicates is to allow the user to compose
 complex queries to filter events based on their attributes but also on their
@@ -11,7 +11,7 @@ position in the event sequence.
 If you are an end-user of this module, you will probably not need to
 write or use these predicates directly. Instead, you will use the custom
 `assertpy` assertions (see
-:py:mod:`ska_tango_testing.integration.tango_event_tracer_assertions`). If
+:py:mod:`ska_tango_testing.integration.tango_event_assertions`). If
 you wish to write custom predicates we still recommend to check the custom
 code for usage examples.
 """

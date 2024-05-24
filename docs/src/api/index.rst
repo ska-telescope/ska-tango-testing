@@ -51,16 +51,31 @@ ska_tango_testing.integration
     :members:
     :special-members: __init__, 
 
-ska_tango_testing.integration.tango_event_tracer_predicates
------------------------------------------------------------
+ska_tango_testing.integration.tango_event_assertions
+----------------------------------------------------
 
-.. automodule:: ska_tango_testing.integration.tango_event_tracer_predicates
+.. automodule:: ska_tango_testing.integration.tango_event_assertions
     :members:
     :special-members: __init__
 
-ska_tango_testing.integration.tango_event_tracer_assertions
------------------------------------------------------------
+ska_tango_testing.integration.tango_event_logger
+------------------------------------------------
 
-.. automodule:: ska_tango_testing.integration.tango_event_tracer_assertions
+.. automodule:: ska_tango_testing.integration.tango_event_logger
     :members:
     :special-members: __init__
+
+ska_tango_testing.integration.received_event
+--------------------------------------------
+
+.. automodule:: ska_tango_testing.integration.received_event
+    :members:
+    :special-members: __init__
+
+ska_tango_testing.integration.tango_event_predicates
+----------------------------------------------------
+
+.. automodule:: ska_tango_testing.integration.tango_event_predicates
+    :members:
+    :special-members: __init__
+

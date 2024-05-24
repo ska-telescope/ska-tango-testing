@@ -1,4 +1,4 @@
-"""A Tango event which received by :py:class:`TangoEventTracer`."""
+"""A Tango event which received by `TangoEventTracer`."""
 
 from datetime import datetime
 from typing import Any, Union
@@ -7,43 +7,37 @@ import tango
 
 
 class ReceivedEvent:
-    """A Tango event which received by :py:class:`TangoEventTracer`.
+    """A Tango event which received by `TangoEventTracer`.
+
+    This class represents a received event from a Tango device
+    :py:attr:`device_name`, regarding an attribute :py:attr:`attribute_name`
+    which contains a new value :py:attr:`attribute_value`. The event
+    has been received at :py:attr:`reception_time` in this testing
+    context (by a
+    :py:class:`ska_tango_testing.integration.TangoEventTracer`
+    or something similar).
 
     This class is a wrapper around the Tango :py:class:`tango.EventData`,
-    which allows to access the most relevant information in a more
-    user-friendly way. The main attributes are:
+    which extracts and exposes the most relevant information for testing
+    purposes. If you need to access the original Tango event data, you
+    can use the :py:attr:`event_data` attribute.
 
-    - :py:attr:`device`: the device proxy that sent the event,
-    - :py:attr:`device_name`: the name of the device that sent the event
-        (accessible also through the :py:meth:`has_device`, which allows to
-        check if the event comes from a given device name or using a
-        device proxy instance),
-    - :py:attr:`attribute_name`: the (short) name of the attribute that
-        sent the event (accessible also through the :py:meth:`has_attribute`,
-        which allows to check if the event comes from a given attribute name
-        ignoring the case),
-    - :py:attr:`attribute_value`: the new value of the attribute when
-        the event was sent.
-
-    Other than that, the event data contains also:
-
-    - :py:attr:`reception_time`: a timestamp of when the event was
-        received by the tracer.
-
-
-    If you need to access the full event data, you can use the
-    `event_data` attribute to access the original Tango
-    :py:class:`tango.EventData` object.
-
-    NOTE: You can use this class interface to build predicates for the
-    :py:meth:`TangoEventTracer.query_events` method, i.e.:
+    The main use of this class is to build predicates for the
+    :py:meth:`ska_tango_testing.integration.TangoEventTracer.query_events`
+    method, which allows you to
+    filter the received events based on the device, attribute, value, etc.
+    using various methods like :py:meth:`has_device` and
+    :py:meth:`has_attribute` (NOTE: expecially this is highly recommended
+    to avoid case sensitivity issues in the attribute name).
 
     .. code-block:: python
 
         query_result = tracer.query_events(
-            lambda e: e.device_name == "sys/tg_test/1",
-                    and e.attribute_name == "attribute1",
-                    and e.attribute_value == 10,
+            lambda e: e.has_device("sys/tg_test/1")
+                    and e.has_attribute("attribute1")
+                    and e.attribute_value == 10
+                    # the event happened after another event
+                    and e.reception_time > other_event.reception_time,
             timeout=10)
 
     """
@@ -100,6 +94,8 @@ class ReceivedEvent:
     def device_name(self) -> str:
         """The name of the device that sent the event.
 
+        Example: 'sys/tg_test/1'
+
         :return: The name of the device.
         """
         return self.event_data.device.dev_name()
@@ -107,6 +103,13 @@ class ReceivedEvent:
     @property
     def attribute_name(self) -> str:
         """The (short) name of the attribute that sent the event.
+
+        Examples: 'attribute1', 'state', etc.
+
+        NOTE: The attribute name is always lower case, as
+        it is returned by the Tango event data. To avoid case
+        sensitivity issues, always use lower case when comparing
+        attribute names or use the :py:meth:`has_attribute` method.
 
         :return: The name of the attribute.
         """
@@ -121,7 +124,8 @@ class ReceivedEvent:
     def attribute_value(self) -> Any:
         """The new value of the attribute when the event was sent.
 
-        :return: The new value of the attribute.
+        :return: The new value of the attribute. The type of the value
+            depends on the attribute type.
         """
         return self.event_data.attr_value.value
 

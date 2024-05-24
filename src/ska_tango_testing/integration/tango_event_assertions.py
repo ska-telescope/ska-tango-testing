@@ -22,7 +22,7 @@ Usage example:
     from ska_tango_testing.integration import (
         TangoEventTracer
     )
-    from ska_tango_testing.integration.tango_event_tracer_assertions (
+    from ska_tango_testing.integration.tango_event_assertions (
         has_change_event_occurred,
         within_timeout,
     )
@@ -53,6 +53,7 @@ Usage example:
             "An event from 'old_value' to 'new_value' for 'attr2' should have"
             " been occurred within 5 seconds in some device."
         ).within_timeout(5).has_change_event_occurred(
+            # (if I don't care about the device name, ANY will match)
             attribute_name="attr2",
             attribute_value="new_value",
             previous_value="old_value",
@@ -62,7 +63,7 @@ NOTE: Just an important note. To make assertions about the events order
 - i.e., assertion which include a verification with the shape
 "event1 happens before event2", like the call of the example 2 - we
 are currently using the reception time
-(:py:attr:`ska_tango_testing.integration.ReceivedEvent.reception_time`)
+(:py:attr:`ska_tango_testing.integration.received_event.ReceivedEvent.reception_time`)
 as a way to compare events. It's important to remind we are dealing with
 a distributed system and the reception time may be misleading in some
 cases (e.g., the reception time of the event may not be the same as the
@@ -74,19 +75,19 @@ it would be better to use that instead of the reception time as a way to
 compare events (if it comes from a centralized server and not from the
 device itself, because it is important to remember that in distributed
 systems the devices clocks may not be perfectly synchronized).
-"""
+"""  # pylint: disable=line-too-long
 
 from datetime import datetime
 from typing import Any, Optional, Union
 
 import tango
 
-from .tango_event_tracer import TangoEventTracer
-from .tango_event_tracer_predicates import (
+from .tango_event_predicates import (
     ANY,
     event_has_previous_value,
     event_matches_parameters,
 )
+from .tango_event_tracer import TangoEventTracer
 
 # TODO: It would be nice to type those functions with the right
 # assertpy types, but it is not clear how to do that yet.
@@ -161,7 +162,7 @@ def within_timeout(self: Any, timeout: Union[int, float]) -> Any:
     from the moment the assertion is called. If the event will not occur
     within this time, the assertion will fail. If no timeout is provided,
     the assertion will consieder only already existing events
-    (i.e., there will be no waiting).
+    (i.e., there will be no "awaits" for future events).
 
     :param self: The `assertpy` context object (It is passed automatically)
     :param timeout: The time in seconds to wait for the event to occur.
@@ -266,7 +267,7 @@ def has_change_event_occurred(
     return self
 
 
-def not_exists_event(
+def hasnt_change_event_occurred(
     self: Any,
     device_name: Optional[str] = ANY,
     attribute_name: Optional[str] = ANY,
