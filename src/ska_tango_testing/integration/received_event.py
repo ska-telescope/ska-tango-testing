@@ -1,4 +1,4 @@
-"""A Tango event which received by `TangoEventTracer`."""
+"""A Tango event received by some device to notify a change."""
 
 from datetime import datetime
 from typing import Any, Union
@@ -7,46 +7,33 @@ import tango
 
 
 class ReceivedEvent:
-    """A Tango event which received by `TangoEventTracer`.
+    """A Tango event received by some device to notify a change.
 
     This class represents a received event from a Tango device
     :py:attr:`device_name`, regarding an attribute :py:attr:`attribute_name`
     which contains a new value :py:attr:`attribute_value`. The event
     has been received at :py:attr:`reception_time` in this testing
-    context (by a
-    :py:class:`ska_tango_testing.integration.TangoEventTracer`
-    or something similar).
+    context.
 
     This class is a wrapper around the Tango :py:class:`tango.EventData`,
     which extracts and exposes the most relevant information for testing
     purposes. If you need to access the original Tango event data, you
     can use the :py:attr:`event_data` attribute.
 
-    The main use of this class is to build predicates for the
-    :py:meth:`ska_tango_testing.integration.TangoEventTracer.query_events`
-    method, which allows you to
-    filter the received events based on the device, attribute, value, etc.
-    using various methods like :py:meth:`has_device` and
-    :py:meth:`has_attribute` (NOTE: expecially this is highly recommended
-    to avoid case sensitivity issues in the attribute name).
+    Since in SKAO tests not always the developers use the (string) device
+    name, it's provided a method :py:meth:`has_device` to check if the
+    event comes from a given device (the same method accepts a string too)
 
-    .. code-block:: python
-
-        query_result = tracer.query_events(
-            lambda e: e.has_device("sys/tg_test/1")
-                    and e.has_attribute("attribute1")
-                    and e.attribute_value == 10
-                    # the event happened after another event
-                    and e.reception_time > other_event.reception_time,
-            timeout=10)
-
+    Since the attribute name received by the Tango event is always lower
+    case, it's provided a method :py:meth:`has_attribute` to check if the
+    event comes from a given attribute (to make it case insensitive).
     """
 
     event_data: tango.EventData
     """The original received :py:class:`tango.EventData` object."""
 
     reception_time: datetime
-    """The timestamp of when the event was received by the tracer."""
+    """The (local) timestamp of when the event was received."""
 
     def __init__(self, event_data: tango.EventData):
         """Initialise the ReceivedEvent with the event data.
@@ -83,14 +70,6 @@ class ReceivedEvent:
     # EventData properties
 
     @property
-    def device(self) -> tango.DeviceProxy:
-        """The device proxy that sent the event.
-
-        :return: The device proxy.
-        """
-        return self.event_data.device
-
-    @property
     def device_name(self) -> str:
         """The name of the device that sent the event.
 
@@ -106,19 +85,30 @@ class ReceivedEvent:
 
         Examples: 'attribute1', 'state', etc.
 
-        NOTE: The attribute name is always lower case, as
+        **IMPORTANT NOTE**: The attribute name is always lower case, as
         it is returned by the Tango event data. To avoid case
         sensitivity issues, always use lower case when comparing
         attribute names or use the :py:meth:`has_attribute` method.
 
+        Example: an event from an attribute 'State'
+
+        .. code-block:: python
+
+            event.attribute_name # 'state'
+            event.attribute_name == 'State' # False
+            event.attribute_name == 'state' # True
+            event.has_attribute('State') # True
+            event.has_attribute('state') # True
+
+
         :return: The name of the attribute.
         """
-        # TODO: Why if we use the following line, it occasionally
-        # fails with a segmentation fault? Is event_data not a copy?
-        # returnself.event_data.attr_value.name
         return self.event_data.attr_name.split("/")[-1].replace(
             "#dbase=no", ""
         )
+        # TODO: Why if instead we use the following line, it occasionally
+        # fails with a segmentation fault? Is event_data not a copy?
+        # returnself.event_data.attr_value.name
 
     @property
     def attribute_value(self) -> Any:
@@ -160,7 +150,20 @@ class ReceivedEvent:
     def has_attribute(self, target_attribute_name: str) -> bool:
         """Check if the event comes from a given attribute.
 
-        NOTE: A lower case comparison is used to avoid case sensitivity.
+        **IMPORTANT NOTE**: A lower case comparison is used to avoid
+        case sensitivity. This is preferred because attribute name
+        in :py:class:`tango.EventData` is always lower case.
+
+        Example: an event from an attribute 'State'
+
+        .. code-block:: python
+
+            event.attribute_name # 'state'
+            event.attribute_name == 'State' # False
+            event.attribute_name == 'state' # True
+            event.has_attribute('State') # True
+            event.has_attribute('state') # True
+
 
         :param target_attribute_name: The name of the attribute to check
             against.
@@ -174,9 +177,21 @@ class ReceivedEvent:
     def reception_age(self) -> float:
         """Return the age of the event in seconds since it was received.
 
+        The age is calculated as the difference between the current time
+        (local) and the (local) time when the event was received
+        :py:attr:`reception_time`.
+
         :return: The age of the event in seconds.
         """
         return (datetime.now() - self.reception_time).total_seconds()
+
+    # @property
+    # def device(self) -> tango.DeviceProxy:
+    #     """The device proxy that sent the event.
+
+    #     :return: The device proxy.
+    #     """
+    #     return self.event_data.device
 
     # @property
     # def attribute(self) -> str:

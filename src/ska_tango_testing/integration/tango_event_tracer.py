@@ -143,44 +143,10 @@ class TangoEventTracer:
     a certain event is sent after another event, or that a certain
     event is sent only when a certain condition is satisfied.
 
-    Usage example 2: test where you subscribe to a device and assert
-    that it exists exactly one state change event to a TARGET_STATE
-    within 10 seconds and that happens after another state change event
-    (with value INITIAL_STATE):
-
-    .. code-block:: python
-
-        def test_attribute_change():
-
-            tracer = TangoEventTracer()
-            tracer.subscribe_event("sys/tg_test/1", "State")
-
-            # do something that triggers the event
-            # ...
-
-            assert len(tracer.query_events(
-                lambda e:
-                    e.has_device("sys/tg_test/1") and
-                    e.has_attribute("State") and
-                    e.current_value == TARGET_STATE and
-
-                    # check that in all events before this one
-                    # there is at least one with the desired initial state
-                    # for the same device and attribute
-                    len([
-                        previous_event
-                        for previous_event in tracer.events
-                        if (previous_event.has_device(e.device_name) and
-                            previous_event.has_attribute(e.attribute_name) and
-                            previous_event.current_value == INITIAL_STATE)
-                    ]) >= 1,
-                    )
-                timeout=10)) == 1
-
     **IMPORTANT NOTE**: If you are an end-user of this module, you will
     probably use the tracer toghether with the already provided `assertpy`
     custom assertions, which are implemented in
-    :py:mod:`ska_tango_testing.integration.tango_event_predicates`.
+    :py:mod:`ska_tango_testing.integration.tango_event_assertions`.
     Your code will likely look like this:
 
     .. code-block:: python
@@ -426,9 +392,9 @@ class TangoEventTracer:
                           # case sensitivity issues
             )
 
-            # query future events aiming to get at least one event
+            # query events aiming to get at least one event
             # from device X with attribute Y that has a certain value
-            # (within 10 seconds)
+            # (waiting at most 10 seconds if the event is not there yet)
             future_query = tracer.query_events(
                 # you can use directly the device proxy instead of the name
                 lambda e: e.has_device(X_dev_proxy) and
@@ -460,11 +426,11 @@ class TangoEventTracer:
         :param target_n_events: How many events do you expect to find with this
             query? If in past events you don't reach the target number, the
             method will wait till you reach the target number or you reach
-            the timeout. Defaults to 1 so in case of a waiting loop, the method
+            the timeout. Defaults to 1 so in case of waiting, the method
             will return the first event.
 
         :return: all matching events within the timeout
-            period, an empty list otherwise.
+            period if there are any, or an empty list if there are none.
         """
         # we aim to get a certain target number of events
         # that match a predicate
