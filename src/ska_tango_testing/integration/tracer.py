@@ -363,7 +363,7 @@ class TangoEventTracer:
         the criteria are not satisfied immediately. The method returns
         all the matching events or an empty list if there are any. The
         predicate is essentially a function that takes a
-        :py:class:`ska_tango_testing.integration.event.ReceivedEvent`
+        :py:class:`~ska_tango_testing.integration.event.ReceivedEvent`
         as input and evaluates if the event
         matches the desired criteria (returning `True` if it does)
         or not (`False` otherwise).
@@ -412,7 +412,7 @@ class TangoEventTracer:
         :py:mod:`ska_tango_testing.integration.predicates`
         for good examples of predicates.
         See also the
-        :py:class:`ska_tango_testing.integration.event.ReceivedEvent`
+        :py:class:`~ska_tango_testing.integration.event.ReceivedEvent`
         class to understand how to access the event data.
 
         **IMPORTANT NOTE**: As an alternative to queries, for most of

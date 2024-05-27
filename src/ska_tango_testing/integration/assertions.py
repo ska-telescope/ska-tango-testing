@@ -2,7 +2,7 @@
 
 This module provides some example of basic custom
 `assertpy <https://assertpy.github.io/index.html>`_ assertions
-to be used with :py:class:`ska_tango_testing.integration.TangoEventTracer`
+to be used with :py:class:`~ska_tango_testing.integration.TangoEventTracer`
 instances. These assertions can be
 used to verify properties about the events captured by the tracer.
 
@@ -62,9 +62,9 @@ how to create custom assertions (https://assertpy.github.io/docs.html).
 
 NOTE: Just an important note. To make assertions about the events order
 - i.e., assertion which include a verification with the shape
-"event1 happens before event2", like the call of the example 2 - we
+"event1 happens before event2", like when you use `previous_value` - we
 are currently using the reception time
-(:py:attr:`ska_tango_testing.integration.event.ReceivedEvent.reception_time`)
+(:py:attr:`~ska_tango_testing.integration.event.ReceivedEvent.reception_time`)
 as a way to compare events. It's important to remind we are dealing with
 a distributed system and the reception time may be misleading in some
 cases (e.g., the reception time of the event may not be the same as the
@@ -94,7 +94,7 @@ def _get_tracer(self: Any) -> TangoEventTracer:
     """Get the `TangoEventTracer` instance from the `assertpy` context.
 
     Helper method to get the
-    :py:class:`ska_tango_testing.integration.TangoEventTracer`
+    :py:class:`~ska_tango_testing.integration.TangoEventTracer`
     instance from the `assertpy` context which is stored in the 'val'.
     It fails if the instance is not found.
 
@@ -103,7 +103,7 @@ def _get_tracer(self: Any) -> TangoEventTracer:
     :return: The `TangoEventTracer` instance.
 
     :raises ValueError: If the
-        :py:class:`ska_tango_testing.integration.TangoEventTracer`
+        :py:class:`~ska_tango_testing.integration.TangoEventTracer`
         instance is not found (i.e., the assertion is not called with
         a tracer instance).
     """
@@ -155,7 +155,7 @@ def _print_passed_event_args(
 def within_timeout(self: Any, timeout: Union[int, float]) -> Any:
     """Add a timeout to an event-based assertion function.
 
-    :py:class:`ska_tango_testing.integration.TangoEventTracer`
+    :py:class:`~ska_tango_testing.integration.TangoEventTracer`
     allows to query events within a timeout. In other words, you can
     make assertions about events that will occur in the future within
     a certain time frame and "await" for them (if they didn't occur yet).
@@ -200,9 +200,9 @@ def within_timeout(self: Any, timeout: Union[int, float]) -> Any:
     :return: The decorated assertion context.
 
     :raises ValueError: If the
-        :py:class:`ska_tango_testing.integration.TangoEventTracer`
+        :py:class:`~ska_tango_testing.integration.TangoEventTracer`
         instance is not found (i.e., the method is called outside
-        an `assert_that(tracer)` context).
+        an ``assert_that(tracer)`` context).
     """  # noqa: DAR402
     # verify the tracer is stored in the assertpy context or raise an error
     _get_tracer(self)
@@ -261,9 +261,9 @@ def has_change_event_occurred(
     :return: The `assertpy` context object.
 
     :raises ValueError: If the
-        :py:class:`ska_tango_testing.integration.TangoEventTracer`
+        :py:class:`~ska_tango_testing.integration.TangoEventTracer`
         instance is not found (i.e., the method is called outside
-        an `assert_that(tracer)` context).
+        an ``assert_that(tracer)`` context).
     """  # noqa: DAR402
     # check self has a tracer object
     tracer = _get_tracer(self)
@@ -360,9 +360,9 @@ def hasnt_change_event_occurred(
     :return: The assertpy context object.
 
     :raises ValueError: If the
-        :py:class:`ska_tango_testing.integration.TangoEventTracer`
+        :py:class:`~ska_tango_testing.integration.TangoEventTracer`
         instance is not found (i.e., the method is called outside
-        an `assert_that(tracer)` context).
+        an ``assert_that(tracer)`` context).
     """  # noqa: DAR402
     # check self has a tracer object
     tracer = _get_tracer(self)

@@ -67,7 +67,7 @@ give a look at :py:mod:`ska_tango_testing.integration.assertions`,
 
 For more advanced usage of the event logger, we suggest to read
 the documentation of the
-:py:class:`ska_tango_testing.integration.logger.TangoEventLogger`
+:py:class:`~ska_tango_testing.integration.logger.TangoEventLogger`
 class.
 """
 

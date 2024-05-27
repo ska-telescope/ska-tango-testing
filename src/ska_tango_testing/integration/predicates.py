@@ -1,7 +1,7 @@
 """Predicates to filter `TangoEventTracer` events in queries.
 
 A collection of predicates to filter
-:py:class:`ska_tango_testing.integration.event.ReceivedEvent`
+:py:class:`~ska_tango_testing.integration.event.ReceivedEvent`
 instances when calling the
 :py:meth:`ska_tango_testing.integration.TangoEventTracer.query_events`
 method. The main purpose of these predicates is to allow the user to compose
