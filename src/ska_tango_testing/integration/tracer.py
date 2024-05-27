@@ -15,7 +15,7 @@ from typing import Callable, Dict, List, Optional, Union
 
 import tango
 
-from .received_event import ReceivedEvent
+from .event import ReceivedEvent
 
 
 class _EventQuery:
@@ -147,7 +147,7 @@ class TangoEventTracer:
     probably use the tracer toghether with the already provided
     `assertpy <https://assertpy.github.io/index.html>`_
     custom assertions, which are implemented in
-    :py:mod:`ska_tango_testing.integration.tango_event_assertions`.
+    :py:mod:`ska_tango_testing.integration.assertions`.
     Your code will likely look like this:
 
     .. code-block:: python
@@ -170,7 +170,7 @@ class TangoEventTracer:
                 previous_value=INITIAL_STATE,
             )
 
-    See :py:mod:`ska_tango_testing.integration.tango_event_predicates`
+    See :py:mod:`ska_tango_testing.integration.predicates`
     for more details.
     """
 
@@ -363,7 +363,7 @@ class TangoEventTracer:
         the criteria are not satisfied immediately. The method returns
         all the matching events or an empty list if there are any. The
         predicate is essentially a function that takes a
-        :py:class:`ska_tango_testing.integration.received_event.ReceivedEvent`
+        :py:class:`ska_tango_testing.integration.event.ReceivedEvent`
         as input and evaluates if the event
         matches the desired criteria (returning `True` if it does)
         or not (`False` otherwise).
@@ -409,17 +409,17 @@ class TangoEventTracer:
         also access the list of stored events using :py:attr:`events`.
         Don't worry, everything is thread-safe and this will make you evaluate
         always the most updated list of events. See
-        :py:mod:`ska_tango_testing.integration.tango_event_predicates`
+        :py:mod:`ska_tango_testing.integration.predicates`
         for good examples of predicates.
         See also the
-        :py:class:`ska_tango_testing.integration.received_event.ReceivedEvent`
+        :py:class:`ska_tango_testing.integration.event.ReceivedEvent`
         class to understand how to access the event data.
 
         **IMPORTANT NOTE**: As an alternative to queries, for most of
         end-users we recommend using the already implemented
         `assertpy <https://assertpy.github.io/index.html>`_
         custom assertions provided by
-        :py:mod:`ska_tango_testing.integration.tango_event_assertions`.
+        :py:mod:`ska_tango_testing.integration.assertions`.
 
         :param predicate: A function that takes an event as input and returns.
             True if the event matches the desired criteria.

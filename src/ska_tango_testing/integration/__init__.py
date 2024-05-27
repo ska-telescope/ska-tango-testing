@@ -9,7 +9,7 @@ set of devices.
 For a quick start, you can use the :py:class:`TangoEventTracer` class
 to subscribe to events from a Tango device and then use it with the
 custom assertions provided by
-:py:mod:`ska_tango_testing.integration.tango_event_assertions`
+:py:mod:`ska_tango_testing.integration.assertions`
 to make assertions on the received events.
 
 .. code-block:: python
@@ -61,13 +61,13 @@ events are received in real-time while running a test.
 
 For more advanced usage of the event tracer, we suggest to read
 the documentation of the :py:class:`TangoEventTracer` class, and then
-give a look at :py:mod:`ska_tango_testing.integration.tango_event_assertions`,
-:py:mod:`ska_tango_testing.integration.received_event`, and
-:py:mod:`ska_tango_testing.integration.tango_event_predicates`.
+give a look at :py:mod:`ska_tango_testing.integration.assertions`,
+:py:mod:`ska_tango_testing.integration.event`, and
+:py:mod:`ska_tango_testing.integration.predicates`.
 
 For more advanced usage of the event logger, we suggest to read
 the documentation of the
-:py:class:`ska_tango_testing.integration.tango_event_logger.TangoEventLogger`
+:py:class:`ska_tango_testing.integration.logger.TangoEventLogger`
 class.
 """
 
@@ -76,13 +76,13 @@ from typing import Callable, Dict, List, Union
 import tango
 from assertpy import add_extension  # type: ignore
 
-from .tango_event_assertions import (
+from .assertions import (
     has_change_event_occurred,
     hasnt_change_event_occurred,
     within_timeout,
 )
-from .tango_event_logger import TangoEventLogger
-from .tango_event_tracer import TangoEventTracer
+from .logger import TangoEventLogger
+from .tracer import TangoEventTracer
 
 # register the tracer custom assertions
 add_extension(has_change_event_occurred)
@@ -100,7 +100,7 @@ def log_events(
 
     Quick utility function to log events from a set of devices and attributes.
     It uses a
-    :py:mod:`ska_tango_testing.integration.tango_event_logger.TangoEventLogger`
+    :py:mod:`ska_tango_testing.integration.logger.TangoEventLogger`
     instance to log the events
     in real-time using the default logger. This is useful for debugging
     purposes and to see the events in real-time while running a test.
@@ -125,7 +125,7 @@ def log_events(
         }, dev_factory=my_custom_dev_factory)
 
     For more advanced usage, you can see
-    :py:mod:`ska_tango_testing.integration.tango_event_logger.TangoEventLogger`
+    :py:mod:`ska_tango_testing.integration.logger.TangoEventLogger`
     class directly, which allows you to customise the logging policy
     (filtering some messages) and the message builder (formatting the
     messages in a custom way).

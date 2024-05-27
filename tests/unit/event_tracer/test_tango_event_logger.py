@@ -15,14 +15,14 @@ import pytest
 import tango
 from assertpy import assert_that  # type: ignore
 
-from ska_tango_testing.integration.tango_event_logger import (
+from ska_tango_testing.integration.logger import (
     DEFAULT_LOG_ALL_EVENTS,
     DEFAULT_LOG_MESSAGE_BUILDER,
     TangoEventLogger,
 )
 from tests.unit.event_tracer.testing_utils import create_mock_eventdata
 
-LOGGING_PATH = "ska_tango_testing.integration.tango_event_logger.logging"
+LOGGING_PATH = "ska_tango_testing.integration.logger.logging"
 
 
 @pytest.mark.Tracer

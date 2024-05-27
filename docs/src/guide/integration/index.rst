@@ -13,16 +13,16 @@ attributes change events, store them locally and then make assertions on
 them using the assertion library
 `assertpy <https://assertpy.github.io/index.html>`_ and some additional
 assertions provided by the module itself (see 
-:py:mod:`~ska_tango_testing.integration.tango_event_assertions`).
+:py:mod:`~ska_tango_testing.integration.assertions`).
 
 This module provides also some additional event logging utilities.
 
 To begin using :py:mod:`ska_tango_testing.integration` we recommend to
-start with the :ref:`getting_started_tango_event_tracer` guide, to learn about
+start with the :ref:`getting_started_tracer` guide, to learn about
 :py:class:`~ska_tango_testing.integration.TangoEventTracer` and the already
 available assertions and then, only if needed, to move to the more advanced
 features described in the :ref:`custom_queries_and_assertions` section and
-in the :ref:`API reference <integration_tango_event_tracer_api>`.
+in the :ref:`API reference <integration_tracer_api>`.
 
 .. toctree::
    :maxdepth: 2

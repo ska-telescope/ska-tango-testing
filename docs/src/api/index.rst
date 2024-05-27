@@ -45,7 +45,7 @@ ska_tango_testing.mock.tango
     :special-members: __init__, __call__
 
 
-.. _integration_tango_event_tracer_api:
+.. _integration_tracer_api:
 
 ska_tango_testing.integration
 -----------------------------
@@ -54,31 +54,31 @@ ska_tango_testing.integration
     :members:
     :special-members: __init__, 
 
-ska_tango_testing.integration.tango_event_assertions
+ska_tango_testing.integration.assertions
 ----------------------------------------------------
 
-.. automodule:: ska_tango_testing.integration.tango_event_assertions
+.. automodule:: ska_tango_testing.integration.assertions
     :members:
     :special-members: __init__
 
-ska_tango_testing.integration.tango_event_logger
+ska_tango_testing.integration.logger
 ------------------------------------------------
 
-.. automodule:: ska_tango_testing.integration.tango_event_logger
+.. automodule:: ska_tango_testing.integration.logger
     :members:
     :special-members: __init__
 
-ska_tango_testing.integration.received_event
+ska_tango_testing.integration.event
 --------------------------------------------
 
-.. automodule:: ska_tango_testing.integration.received_event
+.. automodule:: ska_tango_testing.integration.event
     :members:
     :special-members: __init__
 
-ska_tango_testing.integration.tango_event_predicates
+ska_tango_testing.integration.predicates
 ----------------------------------------------------
 
-.. automodule:: ska_tango_testing.integration.tango_event_predicates
+.. automodule:: ska_tango_testing.integration.predicates
     :members:
     :special-members: __init__
 

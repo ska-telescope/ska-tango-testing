@@ -14,12 +14,12 @@ import tango
 from assertpy import assert_that  # type: ignore
 from pytest import fixture
 
-from ska_tango_testing.integration.received_event import ReceivedEvent
-from ska_tango_testing.integration.tango_event_predicates import (  # pylint: disable=line-too-long # noqa: E501
+from ska_tango_testing.integration.event import ReceivedEvent
+from ska_tango_testing.integration.predicates import (  # pylint: disable=line-too-long # noqa: E501
     event_has_previous_value,
     event_matches_parameters,
 )
-from ska_tango_testing.integration.tango_event_tracer import TangoEventTracer
+from ska_tango_testing.integration.tracer import TangoEventTracer
 
 
 @pytest.mark.Tracer

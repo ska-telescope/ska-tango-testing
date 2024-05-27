@@ -6,7 +6,7 @@ from typing import Callable, Dict, List, Optional, Union
 
 import tango
 
-from .received_event import ReceivedEvent
+from .event import ReceivedEvent
 
 
 # pylint: disable=duplicate-code
@@ -250,17 +250,17 @@ class TangoEventLogger:
         :param filtering_rule: The filtering rule to apply.
         :param message_builder: The message builder to use.
         """
-        received_event = ReceivedEvent(event_data)
+        event = ReceivedEvent(event_data)
 
         # if event passes the filter, log it using the message builder
-        if not filtering_rule(received_event):
+        if not filtering_rule(event):
             return
 
         # log as error or info depending on the event
-        if received_event.is_error:
-            logging.error(message_builder(received_event))
+        if event.is_error:
+            logging.error(message_builder(event))
 
-        logging.info(message_builder(received_event))
+        logging.info(message_builder(event))
 
     def unsubscribe_all(self) -> None:
         """Unsubscribe from all events."""

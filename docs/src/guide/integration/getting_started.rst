@@ -1,4 +1,4 @@
-.. _getting_started_tango_event_tracer:
+.. _getting_started_tracer:
 
 Getting started with TangoEventTracer
 -------------------------------------
@@ -25,7 +25,7 @@ that permits you to:
 - make assertions over them, with the support of the assertion library
   `assertpy <https://assertpy.github.io/index.html>`_ and some additional
   assertions methods provided by
-  :py:mod:`ska_tango_testing.integration.tango_event_assertions`.
+  :py:mod:`ska_tango_testing.integration.assertions`.
 
 
 Basic usage
@@ -97,14 +97,14 @@ To comment the code above.
 3. We assume that some action (not shown in the code) triggers the event we
    are interested in (which can be a blocking call or an asynchronous one).
 4. We use the assertion method
-   :py:func:`~ska_tango_testing.integration.tango_event_assertions.has_change_event_occurred`
+   :py:func:`~ska_tango_testing.integration.assertions.has_change_event_occurred`
    to check that the
    event happened as expected. The method takes the device name,
    the attribute name, the expected value, and the previous value. 
    The method will first verify if such an event is already in the tracer,
    and if not, it will wait for it to happen, up to a timeout of 10 seconds
    (optionally specified with the method
-   :py:func:`~ska_tango_testing.integration.tango_event_assertions.within_timeout`
+   :py:func:`~ska_tango_testing.integration.assertions.within_timeout`
    ).
 
 Quick explaination of the assertion
@@ -130,14 +130,14 @@ the library already provides a lot of assertion methods (mostly to check
 primitive types, collections, and strings), but you can easily extend it.
 In the code above, we used two custom methods:
 
-- :py:func:`~ska_tango_testing.integration.tango_event_assertions.within_timeout`
+- :py:func:`~ska_tango_testing.integration.assertions.within_timeout`
   is used to (optionally) specify a timeout for the assertion, which is a
   maximum time limit to wait for the event to happen (if it is not already).
   Timeout may be a good tool to avoid explicit sleep times or "await" calls
   for asynchronous events. If not specified, the default timeout is 0 seconds,
   so the assertion will fail immediately if the event is not already in the
   tracer.
-- :py:func:`~ska_tango_testing.integration.tango_event_assertions.has_change_event_occurred`
+- :py:func:`~ska_tango_testing.integration.assertions.has_change_event_occurred`
   is an elastic assertion method that checks if a change event has occurred
 
   - on a specific device and attribute,
@@ -156,7 +156,7 @@ in the next section, it permits also to provide very detailed error messages
 in case of failure. 
 
 For more details on the assertion methods, see the documentation of
-:py:mod:`ska_tango_testing.integration.tango_event_assertions`.
+:py:mod:`ska_tango_testing.integration.assertions`.
 
 Error messages and debugging
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -250,7 +250,7 @@ Logging
 A further tool which could help you in debugging is the live-logging system.
 Other than the tracer, :py:mod:`ska_tango_testing.integration` provides
 also a simple event logging utility, based on a
-:py:class:`~ska_tango_testing.integration.tango_event_logger.TangoEventLogger`
+:py:class:`~ska_tango_testing.integration.logger.TangoEventLogger`
 class.
 
 The most basic usage of the logger is the quick utility method

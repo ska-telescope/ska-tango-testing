@@ -20,8 +20,8 @@ import pytest
 import tango
 from assertpy import assert_that  # type: ignore
 
-from ska_tango_testing.integration.received_event import ReceivedEvent
-from ska_tango_testing.integration.tango_event_tracer import TangoEventTracer
+from ska_tango_testing.integration.event import ReceivedEvent
+from ska_tango_testing.integration.tracer import TangoEventTracer
 from tests.unit.event_tracer.testing_utils import create_mock_eventdata
 
 
