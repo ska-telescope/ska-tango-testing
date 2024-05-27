@@ -163,7 +163,7 @@ class TangoEventTracer:
             assert_that(tracer).described_as(
                 "There must be a state change from "
                 "INITIAL_STATE to TARGET_STATE within 10 seconds."
-            ).within_timeout(10).has_events(
+            ).within_timeout(10).has_change_event_occurred(
                 device_name="sys/tg_test/1",
                 attribute_name="State",
                 current_value=TARGET_STATE,
