@@ -4,15 +4,17 @@ version = "0.6.1"
 description = "Test harness for testing SKA Tango devices"
 authors = ["Drew Devereux <drew.devereux@csiro.au>"]
 license = "BSD 3-clause new license"
+packages = [
+    { include = "ska_tango_testing", from = "src" },
+]
+
 
 [tool.poetry.dependencies]
-python = "^3.8.1"
-pytango = "^9.3.3"
-numpy = "^1.19.0"
+python = "^3.10"
+pytango = "^9.4.2"
+numpy = "^1.23.2"
 
-[tool.poetry.dev-dependencies]
-pytango = "9.3.6"
-numpy = "1.23.0"
+[tool.poetry.group.dev.dependencies]
 black = "^22.1.0"
 darglint = "^1.8.1"
 isort = "^5.10.1"
@@ -30,10 +32,15 @@ pytest-forked = "^1.4.0"
 Sphinx = "^5.2"
 sphinx-autodoc-typehints = "^1.19"
 ska-ser-sphinx-theme = "^0.1.1"
+typing-extensions = "^4.11.0"
 
 [[tool.poetry.source]]
 name = 'skao'
 url = 'https://artefact.skao.int/repository/pypi-internal/simple'
+
+[[tool.poetry.source]]
+name = "PyPI-public"
+url = 'https://pypi.org/simple'
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

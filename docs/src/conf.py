@@ -66,9 +66,9 @@ html_context = {}
 
 
 intersphinx_mapping = {
-    "https://docs.python.org/3.8/": None,
+    "https://docs.python.org/3.10/": None,
     "https://docs.pytest.org/en/7.1.x/": None,
-    "tango": ("https://pytango.readthedocs.io/en/v9.3.6/", None),
+    "tango": ("https://pytango.readthedocs.io/en/v9.4.2/", None),
 }
 
 nitpicky = True
