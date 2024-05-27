@@ -63,6 +63,15 @@ For example:
         event.reception_age() < 60
     )
 
+**NOTE**: as you noticed, in the predicate we often preferred to use the
+``has_X`` methods of the 
+:py:class:`~ska_tango_testing.integration.event.ReceivedEvent` class
+instead of directly comparing attributes. This is because the ``has_X`` methods
+are more robust and can handle some tricky cases (like the case insensitive
+comparison of the attribute name; see
+:py:class:`ska_tango_testing.integration.event.ReceivedEvent`
+for more information).
+
 In more complex cases, predicates can also include complex verification logic
 which include the history of the events. In practice, you do that using the
 ``tracer`` object and
@@ -79,8 +88,8 @@ For example:
 
         for evt in tracer.events:
             if (
-                evt.device == event.device and
-                evt.attribute == event.attribute and
+                evt.has_device(event.device_name) and
+                evt.has_attribute(event.attribute_name) and
                 evt.reception_time < event.reception_time
             ):
                 return True
@@ -89,6 +98,12 @@ For example:
 
     # Query the events
     events = tracer.query_events(predicate)
+
+**NOTE**: if your query has a timeout, don't worry accessing ``tracer.events``.
+That property is thread-safe and, since the tracer will continue to collect
+events, it will be updated with the new events that arrive while the query
+is waiting, so every time your predicate will be evaluated it will use
+updated data.
 
 Some meaningful examples of predicates are available in the
 :py:mod:`ska_tango_testing.integration.predicates` module, where are
