@@ -417,7 +417,7 @@ class TangoEventTracer:
 
         **IMPORTANT NOTE**: As an alternative to queries, for most of
         end-users we recommend using the already implemented
-        `assertpy <https://assertpy.github.io/index.html>`_ 
+        `assertpy <https://assertpy.github.io/index.html>`_
         custom assertions provided by
         :py:mod:`ska_tango_testing.integration.tango_event_assertions`.
 
