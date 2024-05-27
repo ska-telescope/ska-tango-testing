@@ -23,7 +23,7 @@ to make assertions on the received events.
         tracer = TangoEventTracer()
 
         # subscribe to events from a device
-        tracer.subscribe_to_events("sys/tg_test/1", "obsState")
+        tracer.subscribe_event("sys/tg_test/1", "obsState")
 
         # do something that triggers the event
         # ...
@@ -31,7 +31,7 @@ to make assertions on the received events.
         # use an assertion to check a state change happened
         assert_that(tracer).described_as(
             "The device should change state"
-        ).within_timeout(10).has_event(
+        ).within_timeout(10).has_change_event_occurred(
             device="sys/tg_test/1",
             attribute="obsState",
             value="ON",
@@ -39,7 +39,7 @@ to make assertions on the received events.
         )
 
 If you need to log events in real-time, you can use a quick utility
-function :py:func:`log_tango_events` to log events from a set of devices
+function :py:func:`log_events` to log events from a set of devices
 and attributes. This is useful for debugging purposes and to see which
 events are received in real-time while running a test.
 
@@ -47,12 +47,12 @@ events are received in real-time while running a test.
 
     # (other imports)
 
-    from ska_tango_testing.integration import log_tango_events
+    from ska_tango_testing.integration import log_events
 
     def test_a_device_changes_state_when_triggered():
 
         # log events in real-time
-        log_tango_events({
+        log_events({
             "sys/tg_test/1": ["obsState"],
             "sys/other_device/100": ["attr1", "attr2"],
         })
@@ -76,18 +76,23 @@ from typing import Callable, Dict, List, Union
 import tango
 from assertpy import add_extension  # type: ignore
 
-from .tango_event_assertions import event_has_previous_value, within_timeout
+from .tango_event_assertions import (
+    has_change_event_occurred,
+    hasnt_change_event_occurred,
+    within_timeout,
+)
 from .tango_event_logger import TangoEventLogger
 from .tango_event_tracer import TangoEventTracer
 
 # register the tracer custom assertions
-add_extension(event_has_previous_value)
+add_extension(has_change_event_occurred)
+add_extension(hasnt_change_event_occurred)
 add_extension(within_timeout)
 
 
 # provide a quick utility function to log events
 # (instead of a full logger)
-def log_tango_events(
+def log_events(
     device_attribute_map: Dict[Union[str, tango.DeviceProxy], List[str]],
     dev_factory: Callable[[str], tango.DeviceProxy] = tango.DeviceProxy,
 ) -> TangoEventLogger:
@@ -151,5 +156,5 @@ def log_tango_events(
 # expose just a minimal set of classes and functions
 __all__ = [
     "TangoEventTracer",
-    "log_tango_events",
+    "log_events",
 ]

@@ -10,7 +10,7 @@ position in the event sequence.
 
 If you are an end-user of this module, you will probably not need to
 write or use these predicates directly. Instead, you will use the custom
-`assertpy` assertions (see
+`assertpy <https://assertpy.github.io/index.html>`_ assertions (see
 :py:mod:`ska_tango_testing.integration.tango_event_assertions`). If
 you wish to write custom predicates we still recommend to check the custom
 code for usage examples.

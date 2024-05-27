@@ -1,6 +1,7 @@
 """Basic custom event-based assertions for `TangoEventTracer`.
 
-This module provides some example of basic custom `assertpy` assertions
+This module provides some example of basic custom
+`assertpy <https://assertpy.github.io/index.html>`_ assertions
 to be used with :py:class:`ska_tango_testing.integration.TangoEventTracer`
 instances. These assertions can be
 used to verify properties about the events captured by the tracer.

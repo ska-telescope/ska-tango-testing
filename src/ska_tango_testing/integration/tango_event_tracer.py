@@ -144,7 +144,8 @@ class TangoEventTracer:
     event is sent only when a certain condition is satisfied.
 
     **IMPORTANT NOTE**: If you are an end-user of this module, you will
-    probably use the tracer toghether with the already provided `assertpy`
+    probably use the tracer toghether with the already provided
+    `assertpy <https://assertpy.github.io/index.html>`_
     custom assertions, which are implemented in
     :py:mod:`ska_tango_testing.integration.tango_event_assertions`.
     Your code will likely look like this:
@@ -415,7 +416,8 @@ class TangoEventTracer:
         class to understand how to access the event data.
 
         **IMPORTANT NOTE**: As an alternative to queries, for most of
-        end-users we recommend using the already implemented `assertpy`
+        end-users we recommend using the already implemented
+        `assertpy <https://assertpy.github.io/index.html>`_ 
         custom assertions provided by
         :py:mod:`ska_tango_testing.integration.tango_event_assertions`.
 

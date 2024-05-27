@@ -44,6 +44,9 @@ ska_tango_testing.mock.tango
     :members:
     :special-members: __init__, __call__
 
+
+.. _integration_tango_event_tracer_api:
+
 ska_tango_testing.integration
 -----------------------------
 
