@@ -146,6 +146,12 @@ defined separately), you can define a custom assertion which calles the query
 result and if the assertion fails, personalize the error message
 adding meaningful information.
 
+**NOTE**: Custom assertions of this module are already exported
+to the `assertpy` context in :py:mod:`ska_tango_testing.integration`, so
+if you are an end-user, if you import the module somewhere in your tests
+you already have access to the assertions. Sometimes your IDE may not
+recognize the custom assertions, but they are there.
+
 If you want to define a custom assertion, we suggest you read
 `assertpy documentation <https://assertpy.github.io/docs.html>`_ 
 to understand the structure which is expected for your code and also to
