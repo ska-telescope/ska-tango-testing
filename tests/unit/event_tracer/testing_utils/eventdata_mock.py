@@ -5,8 +5,12 @@ from unittest.mock import MagicMock
 
 import tango
 
+from tests.unit.event_tracer.testing_utils.dev_proxy_mock import (
+    create_dev_proxy_mock,
+)
 
-def create_mock_eventdata(
+
+def create_eventdata_mock(
     dev_name: str, attribute: str, value: Any, error: bool = False
 ) -> MagicMock:
     """Create a mock Tango event data object.
@@ -19,8 +23,7 @@ def create_mock_eventdata(
     :return: A mock Tango event data object.
     """
     # Create a mock device
-    mock_device = MagicMock(spec=tango.DeviceProxy)
-    mock_device.dev_name.return_value = dev_name
+    mock_device = create_dev_proxy_mock(dev_name)
 
     # Create a mock attribute value
     mock_attr_value = MagicMock()

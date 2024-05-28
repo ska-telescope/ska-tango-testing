@@ -21,7 +21,10 @@ from ska_tango_testing.integration.logger import (
     DEFAULT_LOG_MESSAGE_BUILDER,
     TangoEventLogger,
 )
-from tests.unit.event_tracer.testing_utils import create_mock_eventdata
+from tests.unit.event_tracer.testing_utils import create_eventdata_mock
+from tests.unit.event_tracer.testing_utils.dev_proxy_mock import (
+    DeviceProxyMock,
+)
 
 LOGGING_PATH = "ska_tango_testing.integration.logger.logging"
 
@@ -50,7 +53,7 @@ class TestTangoEventLogger:
         :param mock_logging: The mock logging module.
         :param logger: The TangoEventLogger instance.
         """
-        mock_event = create_mock_eventdata("test/device/1", "attribute1", 123)
+        mock_event = create_eventdata_mock("test/device/1", "attribute1", 123)
 
         logger._log_event(  # pylint: disable=protected-access
             event_data=mock_event,
@@ -84,7 +87,7 @@ class TestTangoEventLogger:
         :param mock_logging: The mock logging module.
         :param logger: The TangoEventLogger instance.
         """
-        mock_event = create_mock_eventdata("test/device/1", "attribute1", 123)
+        mock_event = create_eventdata_mock("test/device/1", "attribute1", 123)
 
         logger._log_event(  # pylint: disable=protected-access
             event_data=mock_event,
@@ -108,7 +111,7 @@ class TestTangoEventLogger:
         :param mock_logging: The mock logging module.
         :param logger: The TangoEventLogger instance.
         """
-        mock_event = create_mock_eventdata("test/device/1", "attribute1", 123)
+        mock_event = create_eventdata_mock("test/device/1", "attribute1", 123)
 
         logger._log_event(  # pylint: disable=protected-access
             event_data=mock_event,
@@ -133,7 +136,7 @@ class TestTangoEventLogger:
         :param mock_logging: The mock logging module.
         :param logger: The TangoEventLogger instance.
         """
-        mock_event = create_mock_eventdata(
+        mock_event = create_eventdata_mock(
             "test/device/1",
             "attribute1",
             123,
@@ -170,7 +173,9 @@ class TestTangoEventLogger:
         device_name = "test_device"
         attribute_name = "test_attribute"
 
-        with patch("tango.DeviceProxy") as mock_proxy:
+        with patch(
+            "tango.DeviceProxy", new_callable=DeviceProxyMock
+        ) as mock_proxy:
             logger.log_events_from_device(device_name, attribute_name)
 
             mock_proxy.assert_called_with(device_name)
@@ -178,13 +183,18 @@ class TestTangoEventLogger:
                 attribute_name, tango.EventType.CHANGE_EVENT, ANY
             )
 
+    # ########################################
+    # Quick log utility function shortcut
+
     @staticmethod
     def test_log_utility_function_subscribe_event() -> None:
         """The quick logger utiliy subscribes to device without exceptions."""
         device_name = "test_device"
         attribute_name = "test_attribute"
 
-        with patch("tango.DeviceProxy") as mock_proxy:
+        with patch(
+            "tango.DeviceProxy", new_callable=DeviceProxyMock
+        ) as mock_proxy:
             logger = log_events({device_name: [attribute_name]})
 
             mock_proxy.assert_called_with(device_name)
@@ -201,7 +211,9 @@ class TestTangoEventLogger:
         attribute_name_1 = "test_attribute_1"
         attribute_name_2 = "test_attribute_2"
 
-        with patch("tango.DeviceProxy") as mock_proxy:
+        with patch(
+            "tango.DeviceProxy", new_callable=DeviceProxyMock
+        ) as mock_proxy:
             log_events(
                 {
                     device_name_1: [attribute_name_1, attribute_name_2],
@@ -221,15 +233,39 @@ class TestTangoEventLogger:
         attribute_name_1 = "test_attribute_1"
         attribute_name_2 = "test_attribute_2"
 
-        with patch("tango.DeviceProxy") as mock_proxy:
+        with patch(
+            "tango.DeviceProxy", new_callable=DeviceProxyMock
+        ) as mock_proxy:
             log_events(
                 {
                     device_name_1: [attribute_name_1],
                     device_name_2: [attribute_name_2],
                 }
             )
-
             mock_proxy.assert_called_with(device_name_2)
             mock_proxy.return_value.subscribe_event.assert_called_with(
                 attribute_name_2, tango.EventType.CHANGE_EVENT, ANY
             )
+
+    @staticmethod
+    def test_log_utility_subscribe_passing_devproxy() -> None:
+        """The quick logger utility subscribes using a device proxy."""
+        device_name_1 = "test_device_1"
+        attribute_name_1 = "test_attribute_1"
+
+        with patch("tango.DeviceProxy", new_callable=DeviceProxyMock):
+
+            device_1 = tango.DeviceProxy(device_name_1)
+
+            log_events(
+                {
+                    device_1: [attribute_name_1],
+                }
+            )
+
+            device_1.subscribe_event.assert_called_once()
+
+            # get args of last call on the first device
+            args, _ = device_1.subscribe_event.call_args
+            assert_that(args[0]).is_equal_to(attribute_name_1)
+            assert_that(args[1]).is_equal_to(tango.EventType.CHANGE_EVENT)

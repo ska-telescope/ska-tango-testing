@@ -22,7 +22,10 @@ from assertpy import assert_that  # type: ignore
 
 from ska_tango_testing.integration.event import ReceivedEvent
 from ska_tango_testing.integration.tracer import TangoEventTracer
-from tests.unit.event_tracer.testing_utils import create_mock_eventdata
+from tests.unit.event_tracer.testing_utils import create_eventdata_mock
+from tests.unit.event_tracer.testing_utils.dev_proxy_mock import (
+    DeviceProxyMock,
+)
 
 
 @pytest.mark.Tracer
@@ -57,7 +60,7 @@ class TestTangoEventTracer:
             default is 0.
         """
         test_event = ReceivedEvent(
-            create_mock_eventdata(device, "test_attribute", value)
+            create_eventdata_mock(device, "test_attribute", value)
         )
 
         # Set the timestamp to the past (if needed)
@@ -124,7 +127,7 @@ class TestTangoEventTracer:
 
         :param tracer: The `TangoEventTracer` instance.
         """
-        test_event = create_mock_eventdata(
+        test_event = create_eventdata_mock(
             "test_device", "test_attribute", 123
         )
 
@@ -142,7 +145,7 @@ class TestTangoEventTracer:
 
         :param tracer: The `TangoEventTracer` instance.
         """
-        test_event = create_mock_eventdata(
+        test_event = create_eventdata_mock(
             "test_device", "test_attribute", 123, error=True
         )
 
@@ -157,14 +160,15 @@ class TestTangoEventTracer:
 
     @staticmethod
     def test_subscribe_event(tracer: TangoEventTracer) -> None:
-        """Test subscribing to a device and attribute.
+        """Subscribe to a device and attribute.
 
         :param tracer: The `TangoEventTracer` instance.
         """
-        device_name = "test_device"
-        attribute_name = "test_attribute"
+        device_name, attribute_name = "test_device", "test_attribute"
 
-        with patch("tango.DeviceProxy") as mock_proxy:
+        with patch(
+            "tango.DeviceProxy", new_callable=DeviceProxyMock
+        ) as mock_proxy:
             tracer.subscribe_event(device_name, attribute_name)
 
             mock_proxy.assert_called_with(device_name)
@@ -175,15 +179,35 @@ class TestTangoEventTracer:
             )
 
     @staticmethod
-    def test_subscribe_event_passing_dev_factory(
+    def test_subscribe_event_passing_instance(
         tracer: TangoEventTracer,
     ) -> None:
-        """Test subscribing to a device and attribute passing a device factory.
+        """Subscribe to a device and attribute passing a device instance.
 
         :param tracer: The `TangoEventTracer` instance.
         """
-        device_name = "test_device"
-        attribute_name = "test_attribute"
+        device_name, attribute_name = "test_device", "test_attribute"
+
+        with patch("tango.DeviceProxy", new_callable=DeviceProxyMock):
+
+            device_proxy = tango.DeviceProxy(device_name)
+            tracer.subscribe_event(device_proxy, attribute_name)
+
+            device_proxy.subscribe_event.assert_called_with(
+                attribute_name,
+                tango.EventType.CHANGE_EVENT,
+                tracer._event_callback,  # pylint: disable=protected-access
+            )
+
+    @staticmethod
+    def test_subscribe_event_passing_dev_factory(
+        tracer: TangoEventTracer,
+    ) -> None:
+        """Subscribe to a device and attribute passing a device factory.
+
+        :param tracer: The `TangoEventTracer` instance.
+        """
+        device_name, attribute_name = "test_device", "test_attribute"
 
         def device_factory(device_name: str) -> tango.DeviceProxy:
             """Create a device proxy.
@@ -194,7 +218,9 @@ class TestTangoEventTracer:
             """
             return tango.DeviceProxy(device_name)
 
-        with patch("tango.DeviceProxy") as mock_proxy:
+        with patch(
+            "tango.DeviceProxy", new_callable=DeviceProxyMock
+        ) as mock_proxy:
             tracer.subscribe_event(
                 device_name, attribute_name, dev_factory=device_factory
             )
