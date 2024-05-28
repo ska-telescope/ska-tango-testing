@@ -15,6 +15,7 @@ import pytest
 import tango
 from assertpy import assert_that  # type: ignore
 
+from ska_tango_testing.integration import log_events
 from ska_tango_testing.integration.logger import (
     DEFAULT_LOG_ALL_EVENTS,
     DEFAULT_LOG_MESSAGE_BUILDER,
@@ -175,4 +176,60 @@ class TestTangoEventLogger:
             mock_proxy.assert_called_with(device_name)
             mock_proxy.return_value.subscribe_event.assert_called_with(
                 attribute_name, tango.EventType.CHANGE_EVENT, ANY
+            )
+
+    @staticmethod
+    def test_log_utility_function_subscribe_event() -> None:
+        """The quick logger utiliy subscribes to device without exceptions."""
+        device_name = "test_device"
+        attribute_name = "test_attribute"
+
+        with patch("tango.DeviceProxy") as mock_proxy:
+            logger = log_events({device_name: [attribute_name]})
+
+            mock_proxy.assert_called_with(device_name)
+            mock_proxy.return_value.subscribe_event.assert_called_with(
+                attribute_name, tango.EventType.CHANGE_EVENT, ANY
+            )
+
+            assert_that(logger).is_instance_of(TangoEventLogger)
+
+    @staticmethod
+    def test_log_utility_subscribe_multiple_attributes() -> None:
+        """The quick logger utility subscribes to multiple attributes."""
+        device_name_1 = "test_device_1"
+        attribute_name_1 = "test_attribute_1"
+        attribute_name_2 = "test_attribute_2"
+
+        with patch("tango.DeviceProxy") as mock_proxy:
+            log_events(
+                {
+                    device_name_1: [attribute_name_1, attribute_name_2],
+                }
+            )
+
+            mock_proxy.assert_called_with(device_name_1)
+            mock_proxy.return_value.subscribe_event.assert_called_with(
+                attribute_name_2, tango.EventType.CHANGE_EVENT, ANY
+            )
+
+    @staticmethod
+    def test_log_utility_subscribe_multiple_devices() -> None:
+        """The quick logger utility subscribes to multiple devices."""
+        device_name_1 = "test_device_1"
+        device_name_2 = "test_device_2"
+        attribute_name_1 = "test_attribute_1"
+        attribute_name_2 = "test_attribute_2"
+
+        with patch("tango.DeviceProxy") as mock_proxy:
+            log_events(
+                {
+                    device_name_1: [attribute_name_1],
+                    device_name_2: [attribute_name_2],
+                }
+            )
+
+            mock_proxy.assert_called_with(device_name_2)
+            mock_proxy.return_value.subscribe_event.assert_called_with(
+                attribute_name_2, tango.EventType.CHANGE_EVENT, ANY
             )

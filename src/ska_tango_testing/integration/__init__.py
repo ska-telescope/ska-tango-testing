@@ -71,7 +71,7 @@ the documentation of the
 class.
 """
 
-from typing import Callable, Dict, List, Union
+from typing import Callable, Dict, List, Optional, Union
 
 import tango
 from assertpy import add_extension  # type: ignore
@@ -94,7 +94,7 @@ add_extension(within_timeout)
 # (instead of a full logger)
 def log_events(
     device_attribute_map: Dict[Union[str, tango.DeviceProxy], List[str]],
-    dev_factory: Callable[[str], tango.DeviceProxy] = tango.DeviceProxy,
+    dev_factory: Optional[Callable[[str], tango.DeviceProxy]] = None,
 ) -> TangoEventLogger:
     """Log events from a set of devices and attributes.
 
@@ -144,10 +144,9 @@ def log_events(
     logger = TangoEventLogger()
 
     for device, attr_list in device_attribute_map.items():
-        dev_proxy = dev_factory(device)
         for attr in attr_list:
             logger.log_events_from_device(
-                dev_proxy, attr, dev_factory=dev_factory
+                device, attr, dev_factory=dev_factory
             )
 
     return logger
