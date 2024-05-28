@@ -32,9 +32,9 @@ to make assertions on the received events.
         assert_that(tracer).described_as(
             "The device should change state"
         ).within_timeout(10).has_change_event_occurred(
-            device="sys/tg_test/1",
-            attribute="obsState",
-            value="ON",
+            device_name="sys/tg_test/1",
+            attribute_name="obsState",
+            current_value="ON",
             previous_value="OFF",
         )
 

@@ -16,12 +16,12 @@ The main tool is a class called
 :py:class:`~ska_tango_testing.integration.TangoEventTracer`
 that permits you to:
 
-- subscribe to change events on Tango devices attributes, 
+- subscribe to change events on Tango devices attributes;
 - automatically collect the events in background, and store them in a 
-  thread-safe way, 
+  thread-safe way;
 - query them, using a predicate to filter the
   events you are interested in and a timeout mechanism to eventually wait
-  for them to happen if they are not already there, 
+  for them to happen if they are not already there;
 - make assertions over them, with the support of the assertion library
   `assertpy <https://assertpy.github.io/index.html>`_ and some additional
   assertions methods provided by
@@ -118,10 +118,10 @@ library that permits you to write expressive assertions on your code.
 Essentially:
 
 - through the entry point ``assert_that`` (the only thing you need to import),
-  you point to the object of your assertion (the thing you want to check),
+  you point to the object of your assertion (the thing you want to check);
 - through the method ``described_as`` you can optionally specify a custom
   message to describe the assertion (usually to describe the expected behavior,
-  the context and the motivation of the assertion),
+  the context and the motivation of the assertion);
 - after that construct, you can chain the assertion methods, each of which
   will check a specific condition on the object of the assertion.
 

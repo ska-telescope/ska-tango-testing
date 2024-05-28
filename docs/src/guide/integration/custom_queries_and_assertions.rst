@@ -21,16 +21,16 @@ to "await" them if they are not yet available.
 The main way to specify the criteria is the method parameter
 (always required) called ``predicate``, which is a callable
 that takes in input an event and returns a boolean. The predicate 
-is essentially a filter that is iterates over all the events
-(present and future) and selects the ones that match your rules
-(i.e. the ones that return ``True`` when passed to the predicate), so that's
-the right place to encode your criteria. In the simplest case, those criteria
+is essentially a filter that is iterated over all the events
+(present and future) and that selects the ones that match your criteria.
+In the simplest case, those criteria
 are expressed as a logic expression on
-:py:class:`~ska_tango_testing.integration.event.ReceivedEvent` attributes.
+:py:class:`~ska_tango_testing.integration.event.ReceivedEvent` properties.
 For example:
 
 .. code-block:: python
 
+    # you can define your predicate as a function and then pass it to the query
     def predicate(event: ReceivedEvent) -> bool:
         return (
             (
@@ -52,7 +52,7 @@ For example:
     # Query the events
     events = tracer.query_events(predicate)
 
-    # Alternatively, this can be done in one line
+    # Alternatively, this can be done in one line using a lambda expression
     events = tracer.query_events(
         lambda event: (
             event.has_device("device/name/1") or 
@@ -63,10 +63,11 @@ For example:
         event.reception_age() < 60
     )
 
-**NOTE**: as you noticed, in the predicate we often preferred to use the
+**NOTE**: in the predicate we often prefer to use the
 ``has_X`` methods of the 
 :py:class:`~ska_tango_testing.integration.event.ReceivedEvent` class
-instead of directly comparing attributes. This is because the ``has_X`` methods
+instead of directly accessing and comparing properties values. 
+This is because the ``has_X`` methods
 are more robust and can handle some tricky cases (like the case insensitive
 comparison of the attribute name; see
 :py:class:`ska_tango_testing.integration.event.ReceivedEvent`
@@ -85,15 +86,16 @@ For example:
         """Check if the event is not the first one from its device
         and attribute. 
         """
-
+        # to evaluate the predicate you can use not only the event data
+        # but also all the other events that have been received so far
         for evt in tracer.events:
             if (
                 evt.has_device(event.device_name) and
                 evt.has_attribute(event.attribute_name) and
                 evt.reception_time < event.reception_time
             ):
-                return True
-        
+                return True # stop when a "previous" event is found
+
         return False        
 
     # Query the events
@@ -142,7 +144,10 @@ is a timeout, because if there isn't the call will return immediately
 so that criterion is not relevant.
 
 **NOTE**: using assertion code that use a timeout can be a good alternative
-to using a sleep in your test code, or writing explicit "wait" functions.
+to using a ``sleep`` command in your test code, or writing explicit custom 
+"wait" functions for things. Since the timeout is costumizable foreach call,
+you can have a fine-grained control on how long you want to wait for the
+events to arrive, and so for a certain condition to be satisfied.
 
 Custom assertions
 ~~~~~~~~~~~~~~~~~
@@ -167,7 +172,7 @@ if you are an end-user, if you import the module somewhere in your tests
 you already have access to the assertions. Sometimes your IDE may not
 recognize the custom assertions, but they are there.
 
-If you want to define a custom assertion, we suggest you read
+If you want to define a custom assertion, we suggest you to read
 `assertpy documentation <https://assertpy.github.io/docs.html>`_ 
 to understand the structure which is expected for your code and also to
 look at the already defined assertions in

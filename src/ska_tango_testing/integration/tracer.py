@@ -109,11 +109,11 @@ class TangoEventTracer:
     This class allows you to:
 
     - subscribe to change events for a specific attribute of a Tango device
-      (see :py:meth:`subscribe_event`),
+      (see :py:meth:`subscribe_event`);
     - store and access the events in a thread-safe way
-      (see :py:attr:`events`),
+      (see :py:attr:`events`);
     - query the stored events based on a predicate function that
-      selects which events match a desired criteria and a timeout,
+      selects which events satisfy some criteria and a timeout,
       which permits you to wait for that criteria to be satisfied
       (see :py:meth:`query_events`).
 
@@ -426,7 +426,8 @@ class TangoEventTracer:
         :param timeout: The time span in seconds to wait for a matching event
             (optional). If not specified, the method returns immediately.
         :param target_n_events: How many events do you expect to find with this
-            query? If in past events you don't reach the target number, the
+            query? If in past events you don't reach the target number
+            (*and you specified a timeout*), the
             method will wait till you reach the target number or you reach
             the timeout. Defaults to 1 so in case of waiting, the method
             will return the first event.
