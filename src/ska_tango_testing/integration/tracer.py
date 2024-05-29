@@ -139,12 +139,12 @@ class TangoEventTracer:
                 timeout=10)) == 1
 
     Queries are a powerful tool to make assertions on specific complex
-    behaviours of a device. For example, you may want to check that
+    behaviors of a device. For example, you may want to check that
     a certain event is sent after another event, or that a certain
     event is sent only when a certain condition is satisfied.
 
     **IMPORTANT NOTE**: If you are an end-user of this module, you will
-    probably use the tracer toghether with the already provided
+    probably use the tracer together with the already provided
     `assertpy <https://assertpy.github.io/index.html>`_
     custom assertions, which are implemented in
     :py:mod:`ska_tango_testing.integration.assertions`.
@@ -285,7 +285,7 @@ class TangoEventTracer:
             )
 
         # subscribe to the change event
-        subid = device_proxy.subscribe_event(
+        sub_id = device_proxy.subscribe_event(
             attribute_name,
             tango.EventType.CHANGE_EVENT,
             self._event_callback,
@@ -295,7 +295,7 @@ class TangoEventTracer:
         with self._subscriptions_lock:
             if device_proxy not in self._subscription_ids:
                 self._subscription_ids[device_proxy] = []
-            self._subscription_ids[device_proxy].append(subid)
+            self._subscription_ids[device_proxy].append(sub_id)
 
     def _event_callback(self, event: tango.EventData) -> None:
         """Capture the received events and store them.

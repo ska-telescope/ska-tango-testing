@@ -223,7 +223,7 @@ class TangoEventLogger:
             self._log_event(event_data, filtering_rule, message_builder)
 
         # subscribe to the change event
-        subid = device_proxy.subscribe_event(
+        sub_id = device_proxy.subscribe_event(
             attribute_name, tango.EventType.CHANGE_EVENT, _callback
         )
 
@@ -231,7 +231,7 @@ class TangoEventLogger:
         with self.lock:
             if device_proxy not in self._subscription_ids:
                 self._subscription_ids[device_proxy] = []
-            self._subscription_ids[device_proxy].append(subid)
+            self._subscription_ids[device_proxy].append(sub_id)
 
     @staticmethod
     def _log_event(
@@ -265,7 +265,7 @@ class TangoEventLogger:
     def unsubscribe_all(self) -> None:
         """Unsubscribe from all events."""
         with self.lock:
-            for device_proxy, subids in self._subscription_ids.items():
-                for subid in subids:
-                    device_proxy.unsubscribe_event(subid)
+            for device_proxy, sub_ids in self._subscription_ids.items():
+                for sub_id in sub_ids:
+                    device_proxy.unsubscribe_event(sub_id)
             self._subscription_ids.clear()

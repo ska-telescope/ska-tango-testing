@@ -182,7 +182,7 @@ def within_timeout(self: Any, timeout: Union[int, float]) -> Any:
 
     **NOTE**: Using a (small) timeout is a good practice even in not so long
     operations, because it makes the test more robust and less prone to
-    flakyness and false positives.
+    flakiness and false positives.
 
     .. code-block:: python
 
@@ -228,7 +228,7 @@ def has_change_event_occurred(
     Custom `assertpy` assertion to verify that an event matching a given
     predicate occurs, eventually within a specified timeout. When it fails,
     it provides a detailed error message with the events captured by the
-    tracer, the passed paramenters and some timing information.
+    tracer, the passed parameters and some timing information.
 
     Usage example:
 
@@ -336,7 +336,7 @@ def hasnt_change_event_occurred(
     that no event matching the given predicate occurs, eventually within a
     specified timeout. When it fails,
     it provides a detailed error message with the events captured by the
-    tracer, the passed paramenters and some timing information.
+    tracer, the passed parameters and some timing information.
 
     Usage example:
 

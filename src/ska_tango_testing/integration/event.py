@@ -108,7 +108,7 @@ class ReceivedEvent:
         )
         # TODO: Why if instead we use the following line, it occasionally
         # fails with a segmentation fault? Is event_data not a copy?
-        # returnself.event_data.attr_value.name
+        # return self.event_data.attr_value.name
 
     @property
     def attribute_value(self) -> Any:
@@ -197,7 +197,7 @@ class ReceivedEvent:
     # def attribute(self) -> str:
     #     """The full name of the attribute that sent the event.
 
-    #     NOTE: This full name conainst the whole path to device, e.g.:
+    #     NOTE: This full name contains the whole path to device, e.g.:
     #     'http://sys/tg_test/1/attribute1'.
 
     #     If you need to access only the short name of the attribute 4

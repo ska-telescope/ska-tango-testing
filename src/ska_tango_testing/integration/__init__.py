@@ -3,7 +3,7 @@
 This module provides a set of utility tools for integration testing
 of SKA Tango devices. In particular, it provides tools to subscribe to
 events, query them (within a timeout), log them in real-time, and build
-complex queries and assertions to verify the behaviour of a complex
+complex queries and assertions to verify the behavior of a complex
 set of devices.
 
 For a quick start, you can use the :py:class:`TangoEventTracer` class
@@ -126,7 +126,7 @@ def log_events(
 
     For more advanced usage, you can see
     :py:mod:`ska_tango_testing.integration.logger.TangoEventLogger`
-    class directly, which allows you to customise the logging policy
+    class directly, which allows you to customize the logging policy
     (filtering some messages) and the message builder (formatting the
     messages in a custom way).
 
@@ -136,7 +136,7 @@ def log_events(
         :py:class:`tango.DeviceProxy` instance.
     :param dev_factory: An optional factory function that can be used instead
         of the default :py:class:`tango.DeviceProxy` constructor
-        (if you need to customise the device proxy creation).
+        (if you need to customize the device proxy creation).
 
     :return: The `TangoEventLogger` instance that is used to log
         the given events.
