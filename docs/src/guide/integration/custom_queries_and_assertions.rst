@@ -4,8 +4,8 @@
 Custom queries and assertions using TangoEventTracer
 ----------------------------------------------------
 
-In :ref:`Getting Started <getting_started_tracer>` we have seen how to use the
-:py:class:`~ska_tango_testing.integration.TangoEventTracer` to trace events
+In :ref:`Getting Started <getting_started_tracer>` we saw how to use the
+:py:class:`~ska_tango_testing.integration.TangoEventTracer` to capture events
 and then use `assertpy <https://assertpy.github.io/index.html>`_ (custom)
 assertions to verify the events. But how are they implemented?
 
@@ -21,8 +21,8 @@ to "await" them if they are not yet available.
 The main way to specify the criteria is the method parameter
 (always required) called ``predicate``, which is a callable
 that takes in input an event and returns a boolean. The predicate 
-is essentially a filter that is iterated over all the events
-(present and future) and that selects the ones that match your criteria.
+is essentially a filter that iterates over all the events
+and selects the ones that match your criteria.
 In the simplest case, those criteria
 are expressed as a logic expression on
 :py:class:`~ska_tango_testing.integration.event.ReceivedEvent` properties.
@@ -31,7 +31,11 @@ For example:
 .. code-block:: python
 
     # you can define your predicate as a function and then pass it to the query
-    def predicate(event: ReceivedEvent) -> bool:
+    def my_predicate(event: ReceivedEvent) -> bool:
+        """Return true if a event is from one of two devices (...),
+        is not related to a specific attribute called "notThisAttr",
+        has a value less than 5 or greater than 50, and has been received
+        less than 60 seconds ago."""
         return (
             (
                 # The event can be from one of those two devices
@@ -50,10 +54,10 @@ For example:
         )
     
     # Query the events
-    events = tracer.query_events(predicate)
+    matching_events = tracer.query_events(my_predicate)
 
     # Alternatively, this can be done in one line using a lambda expression
-    events = tracer.query_events(
+    matching_events = tracer.query_events(
         lambda event: (
             event.has_device("device/name/1") or 
             event.has_device("device/name/2")
@@ -82,9 +86,8 @@ For example:
 
 .. code-block:: python
 
-    def event_has_previous(event: ReceivedEvent) -> bool:
-        """Check if the event is not the first one from its device
-        and attribute. 
+    def event_is_first(event: ReceivedEvent) -> bool:
+        """Check if the event is the first one from its device and attribute. 
         """
         # to evaluate the predicate you can use not only the event data
         # but also all the other events that have been received so far
@@ -94,12 +97,17 @@ For example:
                 evt.has_attribute(event.attribute_name) and
                 evt.reception_time < event.reception_time
             ):
-                return True # stop when a "previous" event is found
+                # stop when any precedent event is found
+                # (event has at least a previous one => not the first
+                # from the this device and attribute)
+                return False 
 
-        return False        
+        # no event from the same device and attribute found
+        # before the current event => event is the first
+        return True  
 
-    # Query the events
-    events = tracer.query_events(predicate)
+    # Get all events that are the first from each device and attribute
+    matching_events = tracer.query_events(event_is_first)
 
 **NOTE**: if your query has a timeout, don't worry accessing ``tracer.events``.
 That property is thread-safe and, since the tracer will continue to collect
@@ -118,41 +126,44 @@ Timeout in queries
 The second most important element of
 :py:meth:`~ska_tango_testing.integration.TangoEventTracer.query_events`
 is the ``timeout`` parameter, which is the maximum time to wait for the
-events (in seconds) to arrive, if they are not already present. 
+events (in seconds) to arrive, if they are not already present.
 
 .. code-block:: python
 
     # Query the events and wait for 10 seconds
-    events = tracer.query_events(predicate, timeout=10)
+    matching_events = tracer.query_events(my_predicate, timeout=10)
 
-Other than the predicate, a second (usually hidden) parameter to specify
-the criteria is the ``target_n_events`` parameter, which is the number of
-events that you expect to match the predicate. If you pass a timeout, the query
-will not be satisfied until the number of events that match the predicate is
+Other than the predicate and the timeout, a third (usually hidden)
+parameter used to specify the criteria is the ``target_n_events``, 
+which is the number of
+events that you expect to match the predicate. ``target_n_events`` works
+together with ``timeout`` in the following way: when you specify both of them,
+the query will not be satisfied until the number of events that match the predicate is
 equal or greater to ``target_n_events``. If you don't reach that number at
 call time, the process that called the query will wait. While that process is
 waiting, the tracer will continue to collect events, and eventually if it
 collects enough events to satisfy the query, the process will be unblocked.
-Alternatively, if the timeout is reached, the query will return the events
-that have been collected so far and the process will continue. 
-``target_n_events`` defaults to 1, so if you don't specify it, the query will
+Alternatively, if the timeout is reached before the target is reached,
+the query will return the events that have been collected so far and the
+process will continue. Since you can wait for events only when specifying
+a timeout, the wait cannot be infinite. When you don't specify 
+``target_n_events`` it defaults to 1, so the query will
 return when there is at least one event that matches the predicate.
 
-An important note is that ``target_n_events`` is meaningful only when there
-is a timeout, because if there isn't the call will return immediately
-(regardless of the number of events that match the predicate), and
-so that criterion is not relevant.
+Essentially, ``target_n_events`` is meaningful only when there
+is a timeout, because if there isn't the call will always return immediately
+regardless of the number of events that match the predicate.
 
 **NOTE**: using assertion code that use a timeout can be a good alternative
 to using a ``sleep`` command in your test code, or writing explicit custom 
-"wait" functions for things. Since the timeout is costumizable foreach call,
+"wait" functions for things. Since the timeout is customizable foreach call,
 you can have a fine-grained control on how long you want to wait for the
 events to arrive, and so for a certain condition to be satisfied.
 
 Custom assertions
 ~~~~~~~~~~~~~~~~~
 
-To mantain test code clean, readable and in a certain measure reusable, if
+To maintain test code clean, readable and in a certain measure reusable, if
 you have a complex assertion based on a query (even better if you need to
 reuse it in multiple tests), you can define a custom `assertpy` assertion.
 
@@ -161,14 +172,14 @@ new functions like the ones that are made available on
 :py:mod:`ska_tango_testing.integration.assertions` and then export them
 using the `assertpy` API method call ``add_extension(function)``. So given
 a your query (maybe with one or more complex predicates already
-defined separately), you can define a custom assertion which calles the query
+defined separately), you can define a custom assertion which calls the query
 (using the tracer and the timeout present in the test context), assert on the
 result and if the assertion fails, personalize the error message
 adding meaningful information.
 
 **NOTE**: Custom assertions of this module are already exported
 to the `assertpy` context in :py:mod:`ska_tango_testing.integration`, so
-if you are an end-user, if you import the module somewhere in your tests
+if you are an end-user, when you import the module somewhere in your tests
 you already have access to the assertions. Sometimes your IDE may not
 recognize the custom assertions, but they are there.
 
@@ -179,8 +190,9 @@ look at the already defined assertions in
 :py:mod:`ska_tango_testing.integration.assertions` (and to the predicates used
 in the same module) to understand how to use the tracer for queries.
 
-If your custom assertion seem to be generic enough to be useful in other
-contexts, please consider to contribute it to the library by opening a MR.
+If your custom assertion seems to be generic enough to be useful in other
+contexts, please consider to contribute it to the library by opening a
+merge request.
 
 
 

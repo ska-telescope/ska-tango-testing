@@ -4,25 +4,26 @@ Getting started with TangoEventTracer
 -------------------------------------
 
 Testing tango devices and systems can be a challenging task. One of the
-most common problems is to verify that in the SUT certain events happens
+most common problems is to verify that in the SUT certain events
 and that they happen in the right order. This is particularly true when
 you are dealing with integration tests, where you have multiple devices
 and potentially multiple sub-systems that interact with each other.
 To address that challenge, in
-:py:mod:`ska_tango_testing.integration` we provide a set of (relatively
-simple) tools to help you with that. 
+:py:mod:`ska_tango_testing.integration` we provide a set of
+tools to help you with that. 
 
 The main tool is a class called
 :py:class:`~ska_tango_testing.integration.TangoEventTracer`
 that permits you to:
 
 - subscribe to change events on Tango devices attributes;
-- automatically collect the events in background, and store them in a 
-  thread-safe way;
+- automatically collect the events in background, and store them, handling
+  them in a thread-safe way;
 - query them, using a predicate to filter the
   events you are interested in and a timeout mechanism to eventually wait
   for them to happen if they are not already there;
-- make assertions over them, with the support of the assertion library
+- make assertions over them, with the support of the customizable
+  assertion library
   `assertpy <https://assertpy.github.io/index.html>`_ and some additional
   assertions methods provided by
   :py:mod:`ska_tango_testing.integration.assertions`.
@@ -81,10 +82,11 @@ you expected.
 
             # all parameters are optional, so this assertion will match
             # events both from "otherAttribute" and "otherAttribute2"
+            # (i.e., the two attributes that the tracer is subscribed to)
             # and with any previous value
         )
 
-To comment the code above.
+**Comments to the code**
 
 1. We create an instance of
    :py:class:`~ska_tango_testing.integration.TangoEventTracer` (which is the
@@ -99,30 +101,33 @@ To comment the code above.
 4. We use the assertion method
    :py:func:`~ska_tango_testing.integration.assertions.has_change_event_occurred`
    to check that the
-   event happened as expected. The method takes the device name,
+   event happened as expected. The method takes the device name or a device
+   proxy, 
    the attribute name, the expected value, and the previous value. 
    The method will first verify if such an event is already in the tracer,
    and if not, it will wait for it to happen, up to a timeout of 10 seconds
    (optionally specified with the method
    :py:func:`~ska_tango_testing.integration.assertions.within_timeout`
-   ).
+   ). If it fails, it will raise an assertion error with a detailed message
+   which include a description of the context (provided with ``described_as``)
+   and of the state of the tracer at the moment of the assertion. More on
+   this in the next section.
 
-Quick explaination of the assertion
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Quick explanation of the assertion
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Since not everyone is familiar with it, let's spend a few words on how
 we make an assertion on the code above.
 
 `assertpy <https://assertpy.github.io/index.html>`_ is a powerful assertion
-library that permits you to write expressive assertions on your code.
-Essentially:
+library that permits you to write expressive assertions. Essentially:
 
 - through the entry point ``assert_that`` (the only thing you need to import),
   you point to the object of your assertion (the thing you want to check);
 - through the method ``described_as`` you can optionally specify a custom
-  message to describe the assertion (usually to describe the expected behavior,
-  the context and the motivation of the assertion);
-- after that construct, you can chain the assertion methods, each of which
+  message be printed when the assertion fails (usually to describe the
+  expected behavior, the context and the motivation of the assertion);
+- after that construct, you can chain other assertions, each of which
   will check a specific condition on the object of the assertion.
 
 As you can see in the `documentation <https://assertpy.github.io/index.html>`_,
@@ -133,12 +138,13 @@ In the code above, we used two custom methods:
 - :py:func:`~ska_tango_testing.integration.assertions.within_timeout`
   is used to (optionally) specify a timeout for the assertion, which is a
   maximum time limit to wait for the event to happen (if it is not already).
-  Timeout may be a good tool to avoid explicit sleep times or "await" calls
-  for asynchronous events. If not specified, the default timeout is 0 seconds,
+  Timeout are a good tool to avoid explicit ``sleep`` instructions or 
+  custom `syncronization` calls to "await" asynchronous conditions to happen. 
+  If not specified, the default timeout is 0 seconds,
   so the assertion will fail immediately if the event is not already in the
   tracer.
 - :py:func:`~ska_tango_testing.integration.assertions.has_change_event_occurred`
-  is an elastic assertion method that checks if a change event has occurred
+  is an assertion method that checks if a change event has occurred
 
   - on a specific device and attribute,
   - with a specific current value,
@@ -146,8 +152,8 @@ In the code above, we used two custom methods:
     event on the same attribute and on the same device).
   
   **NOTE**: all those parameters are optional, so you can use the method to
-  make more elastic checks (e.g., any previous value, any device, any attribute,
-  etc.).
+  make more generic checks (e.g., assert presence of events with
+  any previous value, any device, any attribute name, etc.).
 
 We choose this approach for the assertions because of its intuitive
 and expressive syntax, which is very close to the natural language
@@ -167,7 +173,7 @@ is possibility to provide very detailed, evocative and context-rich
 error messages in case of failure.
 
 As we already seen, ``described_as`` method permits you to specify
-a custom message to describe the assertion, it's meaning and the
+a custom message to describe the assertion, its meaning and the
 expected behavior on an high level. Our custom assertions instead
 permits to create very detailed error messages, that will include
 all the detail of the passed parameters and the state of the tracer. 
@@ -229,17 +235,19 @@ or for a too short timeout). The error message will be something like this:
 
 As you can see, it contains:
 
-- your custom message with the description of the expected behavior,
-- the list of all the events captured by the tracer (with the device name,
-  the attribute name, the attribute value, and the reception time),
-- the query arguments used to search for the event in the tracer,
+- your custom message with the description of the expected behavior;
+- the list of all the events captured by the tracer (with the device name;
+  the attribute name, the attribute value, and the reception time);
+- the query arguments used to search for the event in the tracer (the
+  custom assertion runs a query to find out existing events, so query arguments
+  - i.e., assertion parameters - are printed in the error message);
 - the query start and end time (which are the time limits of the search).
 
 Reading this message you can conclude that the event you were expecting
-was not found. Inspecting the list of events, you can see that the exepected
+was not found. Inspecting the list of events, you can see that the expected
 transition to ``IDLE`` (value 2) didn't happen on the device
 ``ska_mid/tm_subarray_node/1``, but happen on ``mid-csp/subarray/01``.
-Moreover, if there are any previous "suspicous" events, we can also
+Moreover, if there are any previous "suspicious" events, we can also
 inspect them to try to understand what happened (e.g., that
 ``longrunningcommandresult`` event on ``ska_mid/tm_central/central_node``
 with a very long error message as a value is expected or not?).
@@ -253,7 +261,7 @@ also a simple event logging utility, based on a
 :py:class:`~ska_tango_testing.integration.logger.TangoEventLogger`
 class.
 
-The most basic usage of the logger is the quick utility method
+The most basic usage of the logger is through the quick utility method
 :py:func:`~ska_tango_testing.integration.log_events`, which permits you
 to specify with a few lines which events you want to log in the console.
 
@@ -285,7 +293,8 @@ For example, let's take the initial example and add some logging:
 
         # etc.
 
-This will print in the console messages in this format:
+Whenever an event is received, the logger will print a message in the console
+with the following format:
 
 .. code-block:: text
 
