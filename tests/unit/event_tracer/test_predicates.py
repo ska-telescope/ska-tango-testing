@@ -14,12 +14,14 @@ import tango
 from assertpy import assert_that  # type: ignore
 from pytest import fixture
 
-from ska_tango_testing.integration.event import ReceivedEvent
-from ska_tango_testing.integration.predicates import (  # pylint: disable=line-too-long # noqa: E501
+from ska_tango_testing.integration.predicates import (
     event_has_previous_value,
     event_matches_parameters,
 )
 from ska_tango_testing.integration.tracer import TangoEventTracer
+from tests.unit.event_tracer.testing_utils.received_event_mock import (
+    create_dummy_event
+)
 
 
 @pytest.mark.Tracer
@@ -29,36 +31,6 @@ class TestCustomPredicates:
     Ensure that the custom predicates for the :py:class:`TangoEventTracer` work
     as expected, matching the correct events and values.
     """
-
-    @staticmethod
-    def create_dummy_event(
-        device_name: str,
-        attribute_name: str,
-        attribute_value: Any,
-        seconds_ago: float = 0,
-    ) -> MagicMock:
-        """Create a dummy :py:class:`ReceivedEvent` with the specified params.
-
-        :param device_name: The device name.
-        :param attribute_name: The attribute name.
-        :param attribute_value: The attribute value.
-        :param seconds_ago: The time in seconds since the event was received.
-
-        :return: A dummy :py:class:`ReceivedEvent`.
-        """
-        event = MagicMock(spec=ReceivedEvent)
-        event.device_name = device_name
-        event.attribute_name = attribute_name
-        event.attribute_value = attribute_value
-        event.reception_time = datetime.now() - timedelta(seconds=seconds_ago)
-        event.has_device = (
-            lambda target_device_name: event.device_name == target_device_name
-        )
-        event.has_attribute = (
-            lambda target_attribute_name: event.attribute_name
-            == target_attribute_name
-        )
-        return event
 
     @fixture
     @staticmethod
@@ -76,7 +48,7 @@ class TestCustomPredicates:
 
     def test_predicate_event_predicate_mock_matches(self) -> None:
         """An event should match the predicate if all fields match."""
-        event = self.create_dummy_event("test/device/1", "attr1", 10)
+        event = create_dummy_event("test/device/1", "attr1", 10)
 
         assert_that(
             event_matches_parameters(
@@ -91,7 +63,7 @@ class TestCustomPredicates:
 
     def test_predicate_event_predicate_soft_match(self) -> None:
         """An event matches the predicate if specified fields match."""
-        event = self.create_dummy_event("test/device/1", "attr1", 10)
+        event = create_dummy_event("test/device/1", "attr1", 10)
 
         assert_that(
             event_matches_parameters(target_event=event, attribute_value=10)
@@ -102,7 +74,7 @@ class TestCustomPredicates:
 
     def test_predicate_tango_state_matches(self) -> None:
         """An event match when attribute is a :py:class:`tango.DevState`."""
-        event = self.create_dummy_event(
+        event = create_dummy_event(
             "test/device/1", "state", tango.DevState.ON
         )
 
@@ -120,7 +92,7 @@ class TestCustomPredicates:
 
     def test_predicate_event_predicate_does_not_match(self) -> None:
         """An event matches the predicate if any field does not match."""
-        event = self.create_dummy_event("test/device/1", "attr1", 10)
+        event = create_dummy_event("test/device/1", "attr1", 10)
 
         assert_that(
             event_matches_parameters(
@@ -144,8 +116,8 @@ class TestCustomPredicates:
 
         :param tracer: A mock TangoEventTracer.
         """
-        event = self.create_dummy_event("test/device/1", "attr1", 10)
-        prev_event = self.create_dummy_event(
+        event = create_dummy_event("test/device/1", "attr1", 10)
+        prev_event = create_dummy_event(
             "test/device/1", "attr1", 5, seconds_ago=2
         )
         tracer.events = [prev_event, event]
@@ -166,8 +138,8 @@ class TestCustomPredicates:
 
         :param tracer: A mock TangoEventTracer.
         """
-        event = self.create_dummy_event("test/device/1", "attr1", 10)
-        prev_event = self.create_dummy_event(
+        event = create_dummy_event("test/device/1", "attr1", 10)
+        prev_event = create_dummy_event(
             "test/device/1", "attr1", 5, seconds_ago=2
         )
         tracer.events = [prev_event, event]
@@ -188,7 +160,7 @@ class TestCustomPredicates:
 
         :param tracer: A mock TangoEventTracer.
         """
-        event = self.create_dummy_event("test/device/1", "attr1", 10)
+        event = create_dummy_event("test/device/1", "attr1", 10)
 
         tracer.events = [event]
 
@@ -209,13 +181,13 @@ class TestCustomPredicates:
 
         :param tracer: A mock TangoEventTracer.
         """
-        event = self.create_dummy_event("test/device/1", "attr1", 10)
+        event = create_dummy_event("test/device/1", "attr1", 10)
 
         tracer.events = [
-            self.create_dummy_event(
+            create_dummy_event(
                 "test/device/1", "attr1", 5, seconds_ago=10
             ),
-            self.create_dummy_event(
+            create_dummy_event(
                 "test/device/1", "attr1", 7, seconds_ago=8
             ),
             event,
@@ -237,11 +209,11 @@ class TestCustomPredicates:
 
         :param tracer: A mock TangoEventTracer.
         """
-        event = self.create_dummy_event("test/device/1", "attr1", 10)
+        event = create_dummy_event("test/device/1", "attr1", 10)
 
         tracer.events = [
             event,
-            self.create_dummy_event(
+            create_dummy_event(
                 "test/device/1", "attr1", 5, seconds_ago=-1
             ),
         ]
@@ -261,10 +233,10 @@ class TestCustomPredicates:
 
         :param tracer: A mock TangoEventTracer.
         """
-        event = self.create_dummy_event("test/device/1", "attr1", 10)
+        event = create_dummy_event("test/device/1", "attr1", 10)
 
         tracer.events = [
-            self.create_dummy_event(
+            create_dummy_event(
                 "test/device/2", "attr1", 5, seconds_ago=1
             ),
             event,
@@ -285,10 +257,10 @@ class TestCustomPredicates:
 
         :param tracer: A mock TangoEventTracer.
         """
-        event = self.create_dummy_event("test/device/1", "attr1", 10)
+        event = create_dummy_event("test/device/1", "attr1", 10)
 
         tracer.events = [
-            self.create_dummy_event(
+            create_dummy_event(
                 "test/device/1", "attr2", 5, seconds_ago=1
             ),
             event,
