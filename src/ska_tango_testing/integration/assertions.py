@@ -403,8 +403,8 @@ def hasnt_change_event_occurred(
     # if any event is found, raise an error
     if len(result) > 0:
         event_list = "\n".join([str(event) for event in tracer.events])
-        msg = "Expected to not find an event matching the predicate"
-        if self.event_timeout is not None:
+        msg = "Expected to NOT find an event matching the predicate"
+        if getattr(self, "event_timeout", None) is not None:
             msg += f" within {self.event_timeout} seconds"
         else:
             msg += " in already existing events"

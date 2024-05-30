@@ -3,10 +3,6 @@
 Ensure that the custom predicates for the :py:class:`TangoEventTracer` work
 as expected, matching the correct events and values.
 """
-
-
-from datetime import datetime, timedelta
-from typing import Any
 from unittest.mock import MagicMock
 
 import pytest
@@ -20,7 +16,7 @@ from ska_tango_testing.integration.predicates import (
 )
 from ska_tango_testing.integration.tracer import TangoEventTracer
 from tests.unit.event_tracer.testing_utils.received_event_mock import (
-    create_dummy_event
+    create_dummy_event,
 )
 
 
@@ -37,7 +33,8 @@ class TestCustomPredicates:
     def tracer() -> MagicMock:
         """Mock a tracer with an empty and accessible list of events.
 
-        :return: A mock TangoEventTracer.
+        :return: A mocked `TangoEventTracer` with a writable empty
+            list of events.
         """
         tracer = MagicMock(spec=TangoEventTracer)
         tracer.events = []
@@ -46,7 +43,8 @@ class TestCustomPredicates:
     # #######################################################
     # Tests for the build_previous_value_predicate function
 
-    def test_predicate_event_predicate_mock_matches(self) -> None:
+    @staticmethod
+    def test_predicate_event_predicate_matches() -> None:
         """An event should match the predicate if all fields match."""
         event = create_dummy_event("test/device/1", "attr1", 10)
 
@@ -61,7 +59,8 @@ class TestCustomPredicates:
             "The event should match the predicate if all fields match."
         ).is_true()
 
-    def test_predicate_event_predicate_soft_match(self) -> None:
+    @staticmethod
+    def test_predicate_event_predicate_soft_match() -> None:
         """An event matches the predicate if specified fields match."""
         event = create_dummy_event("test/device/1", "attr1", 10)
 
@@ -72,11 +71,10 @@ class TestCustomPredicates:
             " if the specified fields match."
         ).is_true()
 
-    def test_predicate_tango_state_matches(self) -> None:
+    @staticmethod
+    def test_predicate_tango_state_matches() -> None:
         """An event match when attribute is a :py:class:`tango.DevState`."""
-        event = create_dummy_event(
-            "test/device/1", "state", tango.DevState.ON
-        )
+        event = create_dummy_event("test/device/1", "state", tango.DevState.ON)
 
         assert_that(
             event_matches_parameters(
@@ -90,7 +88,8 @@ class TestCustomPredicates:
             " if the specified fields match."
         ).is_true()
 
-    def test_predicate_event_predicate_does_not_match(self) -> None:
+    @staticmethod
+    def test_predicate_event_predicate_does_not_match() -> None:
         """An event matches the predicate if any field does not match."""
         event = create_dummy_event("test/device/1", "attr1", 10)
 
@@ -109,8 +108,9 @@ class TestCustomPredicates:
     # #######################################################
     # Tests for the build_previous_value_predicate function
 
+    @staticmethod
     def test_predicate_previous_value_predicate_matches(
-        self, tracer: MagicMock
+        tracer: MagicMock,
     ) -> None:
         """An event matches the predicate if the previous value matches.
 
@@ -131,8 +131,9 @@ class TestCustomPredicates:
             " if the previous value matches."
         ).is_true()
 
+    @staticmethod
     def test_predicate_previous_value_predicate_does_not_match(
-        self, tracer: MagicMock
+        tracer: MagicMock,
     ) -> None:
         """An event matches the predicate if the previous value does not match.
 
@@ -153,8 +154,9 @@ class TestCustomPredicates:
             "does not match."
         ).is_false()
 
+    @staticmethod
     def test_predicate_previous_value_predicate_no_previous_event(
-        self, tracer: MagicMock
+        tracer: MagicMock,
     ) -> None:
         """An event doesn't match the predicate if there is no previous event.
 
@@ -174,9 +176,8 @@ class TestCustomPredicates:
             "itself."
         ).is_false()
 
-    def test_predicate_previous_uses_most_recent(
-        self, tracer: MagicMock
-    ) -> None:
+    @staticmethod
+    def test_predicate_previous_uses_most_recent(tracer: MagicMock) -> None:
         """An event previous value is the most recent of the past events.
 
         :param tracer: A mock TangoEventTracer.
@@ -184,12 +185,8 @@ class TestCustomPredicates:
         event = create_dummy_event("test/device/1", "attr1", 10)
 
         tracer.events = [
-            create_dummy_event(
-                "test/device/1", "attr1", 5, seconds_ago=10
-            ),
-            create_dummy_event(
-                "test/device/1", "attr1", 7, seconds_ago=8
-            ),
+            create_dummy_event("test/device/1", "attr1", 5, seconds_ago=10),
+            create_dummy_event("test/device/1", "attr1", 7, seconds_ago=8),
             event,
         ]
 
@@ -199,11 +196,12 @@ class TestCustomPredicates:
             )
         ).described_as(
             "The predicate should check the most recent previous event, not "
-            "just one of the previous events or just one which mathces"
+            "just one of the previous events or just one which matches"
         ).is_false()
 
+    @staticmethod
     def test_predicate_previous_doesnt_use_future_events(
-        self, tracer: MagicMock
+        tracer: MagicMock,
     ) -> None:
         """An event previous value should not be from future events.
 
@@ -213,9 +211,7 @@ class TestCustomPredicates:
 
         tracer.events = [
             event,
-            create_dummy_event(
-                "test/device/1", "attr1", 5, seconds_ago=-1
-            ),
+            create_dummy_event("test/device/1", "attr1", 5, seconds_ago=-1),
         ]
 
         assert_that(
@@ -226,8 +222,9 @@ class TestCustomPredicates:
             "The predicate should not consider future events."
         ).is_false()
 
+    @staticmethod
     def test_predicate_previous_doesnt_use_other_devices(
-        self, tracer: MagicMock
+        tracer: MagicMock,
     ) -> None:
         """An event previous value should not be from other devices.
 
@@ -236,9 +233,7 @@ class TestCustomPredicates:
         event = create_dummy_event("test/device/1", "attr1", 10)
 
         tracer.events = [
-            create_dummy_event(
-                "test/device/2", "attr1", 5, seconds_ago=1
-            ),
+            create_dummy_event("test/device/2", "attr1", 5, seconds_ago=1),
             event,
         ]
 
@@ -250,8 +245,9 @@ class TestCustomPredicates:
             "The predicate should not consider events from other devices."
         ).is_false()
 
+    @staticmethod
     def test_predicate_previous_doesnt_use_other_attributes(
-        self, tracer: MagicMock
+        tracer: MagicMock,
     ) -> None:
         """An event previous value should not be from other attributes.
 
@@ -260,9 +256,7 @@ class TestCustomPredicates:
         event = create_dummy_event("test/device/1", "attr1", 10)
 
         tracer.events = [
-            create_dummy_event(
-                "test/device/1", "attr2", 5, seconds_ago=1
-            ),
+            create_dummy_event("test/device/1", "attr2", 5, seconds_ago=1),
             event,
         ]
 
