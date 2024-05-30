@@ -179,6 +179,15 @@ class TangoEventLogger:
                     f"B STATE CHANGED INTO {e.attribute_value}"
             )
 
+            # subscribe specifying a custom device factory
+            def custom_factory(device_name: str) -> tango.DeviceProxy:
+                return tango.DeviceProxy(device_name)
+
+            logger.log_events_from_device(
+                "A", "attr",
+                dev_factory=custom_factory
+            )
+
         :param device_name: The name of the Tango target device (e.g.,
             "sys/tg_test/1") or a :py:class:`tango.DeviceProxy` instance.
         :param attribute_name: The name of the attribute to subscribe to.
@@ -216,7 +225,7 @@ class TangoEventLogger:
             )
 
         def _callback(event_data: tango.EventData) -> None:
-            """Log the received event using the filtering rule and mex builder.
+            """Log an event using a filtering rule and a message builder.
 
             :param event_data: The received event data.
             """
@@ -252,14 +261,15 @@ class TangoEventLogger:
         """
         event = ReceivedEvent(event_data)
 
-        # if event passes the filter, log it using the message builder
+        # if the filter check fails, the message is not logged
         if not filtering_rule(event):
             return
 
-        # log as error or info depending on the event
+        # if the event has an error, log it as an error
         if event.is_error:
             logging.error(message_builder(event))
 
+        # otherwise, log it normally
         logging.info(message_builder(event))
 
     def unsubscribe_all(self) -> None:

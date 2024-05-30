@@ -32,7 +32,7 @@ def event_matches_parameters(
 ) -> bool:
     """Check if an event matches the provided criteria.
 
-    If a criterion is not provided, it will match any value.
+    If a criterion is not given, the predicate will always return True.
 
     :param target_event: The event to check.
     :param device_name: The device name to match. If not provided, it will

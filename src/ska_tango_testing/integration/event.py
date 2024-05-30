@@ -1,4 +1,4 @@
-"""A Tango event received by some device to notify a change."""
+"""A Tango change event received by some device to notify a change."""
 
 from datetime import datetime
 from typing import Any, Union
@@ -7,9 +7,9 @@ import tango
 
 
 class ReceivedEvent:
-    """A Tango event received by some device to notify a change.
+    """A Tango change event received by some device to notify a change.
 
-    This class represents a received event from a Tango device
+    This class represents a received change event from a Tango device
     :py:attr:`device_name`, regarding an attribute :py:attr:`attribute_name`
     which contains a new value :py:attr:`attribute_value`. The event
     has been received at :py:attr:`reception_time` in this testing

@@ -15,7 +15,7 @@ Compared to the other tools that this library offers, like "event recorders"
 or :py:mod:`ska_tango_testing.mock`, this module's tools provide a more
 simplified, concise and high-level way to capture and assert events especially
 useful for integration tests where mocks are not needed.
-If you look for a more low-level and flexible
+If you are looking for a more low-level and flexible
 approach to test asynchronous behaviors, you may want to look at the
 :py:mod:`ska_tango_testing.mock` module. If instead you are writing integration
 tests and you need to verify *from outside* that a *SUT* produces
