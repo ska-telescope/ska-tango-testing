@@ -4,7 +4,7 @@ Integration tests with TangoEventTracer
 The module :py:mod:`ska_tango_testing.integration` provides a set of tools
 to write integration tests for Tango devices using an event-driven approach.
 Essentially this module gives you a relatively
-simple tested code to capture events from Tango devices and then make
+simple and well tested code to capture events from Tango devices and then make
 assertions on them, without the need to re-write the ``subscribe_event`` logic
 or to rely to ``while ... sleep`` loops to wait for events. 
 
@@ -14,10 +14,12 @@ or to rely to ``while ... sleep`` loops to wait for events.
 Compared to the other tools that this library offers, like "event recorders"
 or :py:mod:`ska_tango_testing.mock`, this module's tools provide a more
 simplified, concise and high-level way to capture and assert events especially
-useful for integration tests. If you look for a more low-level and flexible
-approach to test asynchronous behavior, you may want to look at the
+useful for integration tests where mocks are not needed.
+If you look for a more low-level and flexible
+approach to test asynchronous behaviors, you may want to look at the
 :py:mod:`ska_tango_testing.mock` module. If instead you are writing integration
-tests and you need to verify from outside that a *SUT* produces certain events,
+tests and you need to verify *from outside* that a *SUT* produces
+certain events,
 then :py:mod:`ska_tango_testing.integration` probably is the right choice.
 
 Being encapsulated in a library this tool has also the advantage of being
