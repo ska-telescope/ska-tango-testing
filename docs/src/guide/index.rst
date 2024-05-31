@@ -7,7 +7,8 @@ three groups.
 1. Support for setting up test harnesses.
 2. Support for asserting on asynchronous behavior, such as the receipt
    of Tango change events.
-3. Support for capturing events in a integration test environment, and then
+3. Support for capturing change events from tango devices
+   in a integration test environment, and then
    asserting on them.
 
 .. toctree::

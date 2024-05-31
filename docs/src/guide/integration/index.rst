@@ -19,7 +19,7 @@ If you are looking for a more low-level and flexible
 approach to test asynchronous behaviors, you may want to look at the
 :py:mod:`ska_tango_testing.mock` module. If instead you are writing integration
 tests and you need to verify *from outside* that a *SUT* produces
-certain events,
+certain change events,
 then :py:mod:`ska_tango_testing.integration` probably is the right choice.
 
 Being encapsulated in a library this tool has also the advantage of being

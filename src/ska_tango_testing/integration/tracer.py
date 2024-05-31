@@ -319,9 +319,15 @@ class TangoEventTracer:
 
             # if you have the name of the device, but for some reason
             # you don't want us to create the device proxy using the
-            # default constructor, you can provide a factory method
-            tracer.subscribe_event("sys/tg_test/1", "State",
-                                      dev_factory=my_custom_dev_factory)
+            # default constructor DeviceProxy, you can provide a factory method
+
+            def custom_factory(device_name: str) -> tango.DeviceProxy:
+                return tango.DeviceProxy(device_name)
+
+            tracer.subscribe_event(
+                "sys/tg_test/1", "State",
+                dev_factory=custom_factory
+            )
 
 
         :param device_name: The name of the Tango target device. Alternatively,

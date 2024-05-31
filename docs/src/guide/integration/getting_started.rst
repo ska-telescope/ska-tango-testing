@@ -43,7 +43,7 @@ you expected.
     # (no need to import all the assertion methods you use) 
     from assertpy import assert_that
 
-    # tool to trace events from tango devices
+    # tool to trace change events from tango devices
     from ska_tango_testing.integration import TangoEventTracer
 
     def test_a_device_changes_state_when_triggered(other_device_proxy):
@@ -51,10 +51,10 @@ you expected.
         # 1. create a tracer instance
         tracer = TangoEventTracer()
 
-        # 2. subscribe to events from a device
+        # 2. subscribe to change events from a device and an attribute
         tracer.subscribe_event("sys/tg_test/1", "obsState")
 
-        # (or alternatively, passing directly a device proxy)
+        # (or alternatively, do it passing directly a device proxy)
         tracer.subscribe_event(other_device_proxy, "otherAttribute")
         tracer.subscribe_event(other_device_proxy, "otherAttribute2")
 
