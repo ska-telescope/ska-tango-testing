@@ -230,6 +230,26 @@ class TangoEventTracer:
 
     See :py:mod:`ska_tango_testing.integration.predicates`
     for more details.
+
+    **NOTE**: just a note about how event handling and queries with
+    timeouts are implemented. The event collection is implemented through
+    the tango ``subscribe_event`` method, which activates a callback
+    that updates the internal list of events. Since the callback is
+    asynchronous,
+    the access to the events is protected by a lock (to avoid that
+    more different callbacks access the events at the same time, or indeed
+    that a query accesses the events while they are being updated).
+    The queries with timeouts are implemented by creating a sort of
+    "pending query" object and waiting for its conditions to be satisfied
+    through a signal. The pending queries are updated every time a new
+    event happens and, when the conditions are met, the signal is set
+    and the waiting thread is unlocked. Since the queries are accessed
+    asynchronously by the main test thread and by the various callbacks,
+    a further lock to protect them is added.
+    A third (not essential) lock is used to protect the
+    subscriptions, so they can potentially
+    be created and deleted from different
+    threads (it is not a primary use case, but it is technically possible).
     """
 
     def __init__(self) -> None:
@@ -265,10 +285,7 @@ class TangoEventTracer:
         self._query_lock = threading.Lock()
 
     def __del__(self) -> None:
-        """Teardown the object and unsubscribe from all subscriptions.
-
-        (else they will be kept alive and they may cause segfaults)
-        """
+        """Teardown the object and unsubscribe from all subscriptions."""
         self.unsubscribe_all()
         self.clear_events()
 
