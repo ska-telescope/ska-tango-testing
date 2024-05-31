@@ -237,7 +237,7 @@ class TangoEventTracer:
     that updates the internal list of events. Since the callback is
     asynchronous,
     the access to the events is protected by a lock (to avoid that
-    more different callbacks access the events at the same time, or indeed
+    different callbacks access the events at the same time, or indeed
     that a query accesses the events while they are being updated).
     The queries with timeouts are implemented by creating a sort of
     "pending query" object and waiting for its conditions to be satisfied
