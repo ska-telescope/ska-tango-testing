@@ -165,7 +165,7 @@ def within_timeout(self: Any, timeout: Union[int, float]) -> Any:
     This method when called inside an assertion context permits
     you to specify that timeout.
 
-    **NOTE**: this assertion always passes, it's only purpose is to
+    **NOTE**: this assertion always passes, its only purpose is to
     set the timeout for the following assertions.
 
     Usage example:
