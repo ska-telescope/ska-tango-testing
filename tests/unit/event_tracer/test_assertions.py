@@ -11,7 +11,7 @@ from tests.unit.event_tracer.testing_utils.populate_tracer import (
     delayed_add_event,
 )
 
-@pytest.mark.Tracer
+
 class TestCustomAssertions:
     """Test the custom assertions for the :py:class:`TangoEventTracer`.
 

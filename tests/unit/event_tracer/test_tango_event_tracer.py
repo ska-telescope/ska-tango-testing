@@ -14,7 +14,6 @@ from datetime import datetime
 from typing import Any
 from unittest.mock import patch
 
-import pytest
 import tango
 from assertpy import assert_that  # type: ignore
 
@@ -30,7 +29,6 @@ from tests.unit.event_tracer.testing_utils.populate_tracer import (
 )
 
 
-@pytest.mark.Tracer
 class TestTangoEventTracer:
     """Unit tests for the `TangoEventTracer` class."""
 

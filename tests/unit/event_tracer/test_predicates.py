@@ -5,7 +5,6 @@ as expected, matching the correct events and values.
 """
 from unittest.mock import MagicMock
 
-import pytest
 import tango
 from assertpy import assert_that  # type: ignore
 from pytest import fixture
@@ -20,7 +19,6 @@ from tests.unit.event_tracer.testing_utils.received_event_mock import (
 )
 
 
-@pytest.mark.Tracer
 class TestCustomPredicates:
     """Test the custom predicates for the :py:class:`TangoEventTracer`.
 
