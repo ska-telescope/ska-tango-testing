@@ -26,27 +26,32 @@ import tango
 from .event import ReceivedEvent
 
 
-class _EventQuery:
-    """Class to keep track of queries on events and their status.
+class _QueryEvaluator:
+    """Tool to evaluate events and wait for a condition to be met.
 
     This is a support class used by
     :py:class:`~ska_tango_testing.integration.TangoEventTracer`
-    to keep track of queries on collected events and their status.
-
+    to keep track of received queries on their status.
     An instance of this class is created each time
     :py:meth:`ska_tango_testing.integration.TangoEventTracer.query_events`
-    is called. It keeps track of the predicate, the target number of events
-    and the timeout. Through its methods, it permits to:
+    is called.
 
-    - check if the query is satisfied (:py:meth:`is_satisfied`);
-    - wait for it to be satisfied, and so keep your thread locked until
-      the query conditions are satisfied or the timeout is reached
-      (:py:meth:`wait`).
-    - update the query with new events, that eventually will match the
-      predicate and be added to the query results
-      (:py:meth:`update_with_events`);
-    - try to unlock it (:py:meth:`try_unlock`);
-    - access the results of the query (:py:attr:`matching_events`).
+    Since this class encodes the query criteria (n events that satisfy a
+    predicate), it permits to:
+
+    - see if and when the query conditions are met
+      (:py:meth:`are_conditions_met`);
+    - wait for the query to be satisfied, so keep your thread locked until
+      the target conditions are met or the timeout is reached
+      (:py:meth:`wait_until_conditions_met`);
+    - evaluate events incrementally, update the query results and unlock
+      those who are waiting when the conditions are met
+      (:py:meth:`evaluate_events`);
+    - access the query result (:py:attr:`matching_events`).
+
+    **IMPORTANT NOTE:** this class is not thread-safe by itself, but it
+    can be if your calls to :py:meth:`evaluate_events` are protected by
+    a lock. The class is used by the tracer, which does that.
     """
 
     def __init__(
@@ -55,7 +60,12 @@ class _EventQuery:
         target_n_events: int = 1,
         timeout: Optional[int] = None,
     ) -> None:
-        """Create query object with a predicate and a target number of events.
+        """Create the object specifying the query conditions.
+
+        The query conditions are specified by a predicate function
+        that selects which events satisfy some criteria, a target number
+        of events that must satisfy the predicate, and an optional timeout
+        that permits you to wait for that criteria to be satisfied.
 
         :param predicate: A function that takes an event as input and returns
             True if the event matches the desired criteria.
@@ -82,57 +92,66 @@ class _EventQuery:
         self.timeout = timeout
 
         # list of events that match the predicate, collected so far
-        # they are updated by the update_with_events method by
+        # they are updated by the evaluate_events method by
         # the callback of the tracer
-        self.query_result: List[ReceivedEvent] = []
+        self.matching_events: List[ReceivedEvent] = []
 
         # tool to signal that the query is satisfied, it is used to make
         # pending query_events calls wait for the query to be satisfied
+        # and then unlock them when conditions are met
         self._query_satisfied_signal = threading.Event()
 
-    def update_with_events(self, events: List[ReceivedEvent]) -> None:
-        """Update the list of matching events with new events.
+    def evaluate_events(self, events: List[ReceivedEvent]) -> None:
+        """Evaluate events incrementally and update the query results.
 
-        Between the new events, only the ones that match the predicate
-        and are not already in the list of matching events are added.
+        **IMPORTANT NOTE**: every time a new event is received,
+        if it matches the predicate
+        (and is not already in the query results), it is added to the
+        query results. If the query is satisfied, who is waiting is unlocked.
+
+        **IMPORTANT NOTE**: this method is not thread-safe by itself,
+        but it can be if protected by the caller with a lock.
 
         :param events: The list of new events to check.
         """
-        self.query_result = [e for e in events if self.predicate(e)]
+        # update query results with new events that match the predicate
+        for event in events:
+            if self.predicate(event) and event not in self.matching_events:
+                self.matching_events.append(event)
 
-        # for e in events:
-        #     if self.predicate(e) and e not in self.matching_events:
-        #         self.matching_events.append(e)
-        # (some events that are already in the list may became invalid because
-        # of new conditions... for safety, we remove all and re-add them)
+        # if the query is satisfied, unlock who is waiting
+        if self.are_conditions_met():
+            self._query_satisfied_signal.set()
 
-    def is_satisfied(self) -> bool:
-        """Check if the query criteria are satisfied.
+    def are_conditions_met(self) -> bool:
+        """Check if it's reached the target number of matching events.
 
         :return: True if the query is satisfied, False otherwise.
         """
-        return len(self.query_result) >= self.target_n_events
+        return len(self.matching_events) >= self.target_n_events
 
-    def try_unlock(self) -> None:
-        """Try to unlock the query if it is satisfied.
+    def wait_until_conditions_met(self) -> None:
+        """Wait for the query conditions to be met (or the timeout).
 
-        If the query is satisfied, the thread event is set to unlock the
-        waiting threads.
+        This call will lock your thread until the query conditions are met
+        or the timeout is reached. If the query is already satisfied,
+        it will return immediately, else it will wait to reach the
+        specified :py:attr:`target_n_events` to be reached.
+
+        Events are evaluated incrementally by the
+        :py:meth:`evaluate_events` method, which is called by the tracer
+        every time a new event is received. When the conditions are met,
+        who called this method is unlocked.
         """
-        if self.is_satisfied():
-            # logging.info("Query satisfied! Unlocking the thread.")
-            self._query_satisfied_signal.set()
+        # if no timeout is specified, or the query is already satisfied,
+        # return immediately (no need to wait)
+        if (
+            self.timeout is None
+            or self.timeout == 0
+            or self.are_conditions_met()
+        ):
             return
-        # logging.info("Query not yet satisfied. Waiting..")
 
-    def wait(self) -> None:
-        """Wait for the query to be satisfied.
-
-        This call will lock your thread until the query is satisfied or
-        the timeout is reached.
-        """
-        if self.timeout is None or self.is_satisfied():
-            return
         self._query_satisfied_signal.wait(self.timeout)
 
 
@@ -236,7 +255,7 @@ class TangoEventTracer:
         self._subscriptions_lock = threading.Lock()
 
         # list of pending queries
-        self._pending_queries: List[_EventQuery] = []
+        self._pending_queries: List[_QueryEvaluator] = []
 
         # lock for pending queries
         # (the query list and the queries are accessed by the main
@@ -379,8 +398,16 @@ class TangoEventTracer:
         # update all pending queries
         with self._query_lock:
             for query in self._pending_queries:
-                query.update_with_events(self.events)
-                query.try_unlock()
+                # NOTE: since some old not matching events potentially
+                # can become matching when new events are added (e.g.,
+                # if the predicate includes a condition like "has this other
+                # event as next") we re-evaluate all the events. We could
+                # choose as policy that each event is evaluated only once,
+                # but currently we are not doing that.
+
+                # NOTE: queries that reach the target number of events
+                # are unlocked as a side effect of the evaluation
+                query.evaluate_events(self.events)
 
     def unsubscribe_all(self) -> None:
         """Unsubscribe from all subscriptions."""
@@ -516,37 +543,38 @@ class TangoEventTracer:
         # we aim to get a certain target number of events
         # that match a predicate
         # within a certain timeout
-        query = _EventQuery(predicate, target_n_events, timeout)
-        query.update_with_events(self.events)
+        query_evaluator = _QueryEvaluator(predicate, target_n_events, timeout)
+        query_evaluator.evaluate_events(self.events)
 
         # if the query is already satisfied, return the matching events
-        if query.is_satisfied():
-            return query.query_result
+        if query_evaluator.are_conditions_met():
+            return query_evaluator.matching_events
 
         # logging.info("Waiting for query to be satisfied.")
 
         # wait for the query to be satisfied
-        self._wait_query(query)
+        # (add it to the list of pending queries)
+        self._wait_query(query_evaluator)
 
         # return the result (whatever it is)
-        return query.query_result
+        return query_evaluator.matching_events
 
-    def _wait_query(self, query: _EventQuery) -> None:
+    def _wait_query(self, query_evaluator: _QueryEvaluator) -> None:
         """Wait for a query to be satisfied in a thread-safe way.
 
         The query is marked as pending and then waited for. When the query
         is satisfied or a timeout is reached, the query is unlocked
         and the process continues.
 
-        :param query: The query object to wait for.
+        :param query_evaluator: The query object to wait for.
         """
         # add the query to the list of pending queries
         with self._query_lock:
-            self._pending_queries.append(query)
+            self._pending_queries.append(query_evaluator)
 
         # wait for the query to be satisfied (or the timeout to be reached)
-        query.wait()
+        query_evaluator.wait_until_conditions_met()
 
         # remove the query from the list of pending queries
         with self._query_lock:
-            self._pending_queries.remove(query)
+            self._pending_queries.remove(query_evaluator)
