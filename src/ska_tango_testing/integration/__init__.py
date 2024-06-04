@@ -3,7 +3,7 @@
 This module provides a set of utility tools for integration testing
 of SKA Tango devices. In particular, it provides tools to subscribe to
 events, query them (within a timeout), log them in real-time, and build
-complex queries and assertions to verify the behavior of a complex
+complex queries and assertions to verify the behaviour of a complex
 set of devices.
 
 For a quick start, you can use the :py:class:`TangoEventTracer` class

@@ -54,7 +54,7 @@ Usage example:
   :py:meth:`~ska_tango_testing.integration.log_events` function, but just for
   one device and one attribute;
 - the second and the third calls show how to use the ``filtering_rule`` and
-  the ``message_builder`` parameters to customize the logging behavior on
+  the ``message_builder`` parameters to customize the logging behaviour on
   the specified subscription;
 - both ``filtering_rule`` and ``message_builder`` are optional parameters,
   the first essentially defaults to "no filter" 

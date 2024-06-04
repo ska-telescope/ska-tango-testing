@@ -5,7 +5,7 @@ The functionality provided by :py:mod:`ska_tango_testing` falls into
 three groups.
 
 1. Support for setting up test harnesses.
-2. Support for asserting on asynchronous behavior, such as the receipt
+2. Support for asserting on asynchronous behaviour, such as the receipt
    of Tango change events.
 3. Support for capturing change events from tango devices
    in a integration test environment, and then

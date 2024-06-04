@@ -16,7 +16,7 @@ or :py:mod:`ska_tango_testing.mock`, this module's tools provide a more
 simplified, concise and high-level way to capture and assert events especially
 useful for integration tests where mocks are not needed.
 If you are looking for a more low-level and flexible
-approach to test asynchronous behaviors, you may want to look at the
+approach to test asynchronous behaviours, you may want to look at the
 :py:mod:`ska_tango_testing.mock` module. If instead you are writing integration
 tests and you need to verify *from outside* that an *SUT* produces
 certain change events,

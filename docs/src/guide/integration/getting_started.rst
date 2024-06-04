@@ -126,7 +126,7 @@ library that permits you to write expressive assertions. Essentially:
   you point to the object of your assertion (the thing you want to check);
 - through the method ``described_as`` you can optionally specify a custom
   message be printed when the assertion fails (usually to describe the
-  expected behavior, the context and the motivation of the assertion);
+  expected behaviour, the context and the motivation of the assertion);
 - after that construct, you can chain other assertions, each of which
   will check a specific condition on the object of the assertion.
 
@@ -137,7 +137,8 @@ In the code above, we used two custom methods:
 
 - :py:func:`~ska_tango_testing.integration.assertions.within_timeout`
   is used to (optionally) specify a timeout for the assertion, which is a
-  maximum time limit to wait for the event to happen (if it is not already).
+  maximum time limit to wait for the event to happen
+  (if it has not already happened).
   Timeouts are a good tool to avoid explicit ``sleep`` instructions or 
   custom `synchronization` calls to "await" asynchronous conditions happening. 
   If not specified, the default timeout is 0 seconds,
@@ -174,7 +175,7 @@ error messages in case of failure.
 
 As we have already seen, ``described_as`` method permits you to specify
 a custom message to describe the assertion, its meaning and the
-expected behavior on an high level. Our custom assertions instead
+expected behaviour on an high level. Our custom assertions instead
 permit creating very detailed error messages, that will include
 all the detail of the passed parameters and the state of the tracer. 
 
@@ -235,7 +236,7 @@ or a too short timeout). The error message will be something like this:
 
 As you can see, it contains:
 
-- your custom message with the description of the expected behavior;
+- your custom message with the description of the expected behaviour;
 - the list of all the events captured by the tracer (with the device name;
   the attribute name, the attribute value, and the reception time);
 - the query arguments used to search for the event in the tracer (the

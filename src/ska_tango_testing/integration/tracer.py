@@ -197,7 +197,7 @@ class TangoEventTracer:
                 timeout=10)) == 1
 
     Queries are a powerful tool to make assertions on specific complex
-    behaviors of a device. For example, you may want to check that
+    behaviours of a device. For example, you may want to check that
     a certain event is sent after another event, or that a certain
     event is sent only when a certain condition is satisfied.
 
