@@ -20,7 +20,7 @@ to "await" them if they are not yet available.
 
 The main way to specify the criteria is the method parameter
 (always required) called ``predicate``, which is a callable
-that takes in input an event and returns a boolean. The predicate 
+that takes as input an event and returns a boolean. The predicate 
 is essentially a filter that iterates over all the events
 and selects the ones that match your criteria.
 In the simplest case, those criteria
@@ -156,14 +156,14 @@ regardless of the number of events that match the predicate.
 
 **NOTE**: using assertion code that use a timeout can be a good alternative
 to using a ``sleep`` command in your test code, or writing explicit custom 
-"wait" functions for things. Since the timeout is customizable foreach call,
+"wait" functions for things. Since the timeout is customizable for each call,
 you can have a fine-grained control on how long you want to wait for the
 events to arrive, and so for a certain condition to be satisfied.
 
 Custom assertions
 ~~~~~~~~~~~~~~~~~
 
-To maintain test code clean, readable and in a certain measure reusable, if
+To keep test code clean, readable and in a certain measure reusable, if
 you have a complex assertion based on a query (even better if you need to
 reuse it in multiple tests), you can define a custom `assertpy` assertion.
 
@@ -171,7 +171,7 @@ reuse it in multiple tests), you can define a custom `assertpy` assertion.
 new functions like the ones that are made available on
 :py:mod:`ska_tango_testing.integration.assertions` and then export them
 using the `assertpy` API method call ``add_extension(function)``. So given
-a your query (maybe with one or more complex predicates already
+your query (maybe with one or more complex predicates already
 defined separately), you can define a custom assertion which calls the query
 (using the tracer and the timeout present in the test context), assert on the
 result and if the assertion fails, personalize the error message
@@ -183,7 +183,7 @@ if you are an end-user, when you import the module somewhere in your tests
 you already have access to the assertions. Sometimes your IDE may not
 recognize the custom assertions, but they are there.
 
-If you want to define a custom assertion, we suggest you to read
+If you want to define a custom assertion, we recommend you read
 `assertpy documentation <https://assertpy.github.io/docs.html>`_ 
 to understand the structure which is expected for your code and also to
 look at the already defined assertions in
@@ -191,7 +191,7 @@ look at the already defined assertions in
 in the same module) to understand how to use the tracer for queries.
 
 If your custom assertion seems to be generic enough to be useful in other
-contexts, please consider to contribute it to the library by opening a
+contexts, please consider contributing it to the library by opening a
 merge request.
 
 

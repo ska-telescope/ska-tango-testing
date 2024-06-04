@@ -18,13 +18,13 @@ useful for integration tests where mocks are not needed.
 If you are looking for a more low-level and flexible
 approach to test asynchronous behaviors, you may want to look at the
 :py:mod:`ska_tango_testing.mock` module. If instead you are writing integration
-tests and you need to verify *from outside* that a *SUT* produces
+tests and you need to verify *from outside* that an *SUT* produces
 certain change events,
 then :py:mod:`ska_tango_testing.integration` probably is the right choice.
 
 Being encapsulated in a library this tool has also the advantage of being
 already unit tested and potentially shared among different projects,
-without code duplications.
+without code duplication.
 
 **Module content overview**
 
@@ -40,8 +40,8 @@ custom assertions provided by the module itself (see
 This module provides also some additional event live-logging utilities, to help
 you debugging your tests.
 
-To begin using :py:mod:`ska_tango_testing.integration` we recommend to
-start with the :ref:`getting_started_tracer` guide, to learn about
+To begin using :py:mod:`ska_tango_testing.integration` we recommend starting
+with the :ref:`getting_started_tracer` guide, to learn about
 :py:class:`~ska_tango_testing.integration.TangoEventTracer` and the already
 available assertions and then, only if needed, to move to the more advanced
 features described in :ref:`custom_queries_and_assertions` and

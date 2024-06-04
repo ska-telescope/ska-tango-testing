@@ -4,7 +4,7 @@ Getting started with TangoEventTracer
 -------------------------------------
 
 Testing tango devices and systems can be a challenging task. One of the
-most common problems is to verify that in the SUT certain events
+most common problems is to verify that in the SUT certain events occur
 and that they happen in the right order. This is particularly true when
 you are dealing with integration tests, where you have multiple devices
 and potentially multiple sub-systems that interact with each other.
@@ -116,7 +116,7 @@ you expected.
 Quick explanation of the assertion
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Since not everyone is familiar with it, let's spend a few words on how
+Since not everyone is familiar with it, let's spend a few words to explain how
 we make an assertion on the code above.
 
 `assertpy <https://assertpy.github.io/index.html>`_ is a powerful assertion
@@ -138,8 +138,8 @@ In the code above, we used two custom methods:
 - :py:func:`~ska_tango_testing.integration.assertions.within_timeout`
   is used to (optionally) specify a timeout for the assertion, which is a
   maximum time limit to wait for the event to happen (if it is not already).
-  Timeout are a good tool to avoid explicit ``sleep`` instructions or 
-  custom `syncronization` calls to "await" asynchronous conditions to happen. 
+  Timeouts are a good tool to avoid explicit ``sleep`` instructions or 
+  custom `synchronization` calls to "await" asynchronous conditions happening. 
   If not specified, the default timeout is 0 seconds,
   so the assertion will fail immediately if the event is not already in the
   tracer.
@@ -155,8 +155,8 @@ In the code above, we used two custom methods:
   make more generic checks (e.g., assert presence of events with
   any previous value, any device, any attribute name, etc.).
 
-We choose this approach for the assertions because of its intuitive
-and expressive syntax, which is very close to the natural language
+We chose this approach for the assertions because of its intuitive
+and expressive syntax, which is very close to natural language
 and permits you to write very readable tests. Moreover, as we will see
 in the next section, it permits also to provide very detailed error messages
 in case of failure. 
@@ -169,13 +169,13 @@ Error messages and debugging
 
 An important advantage of the combination of `assertpy` assertions
 and :py:class:`~ska_tango_testing.integration.TangoEventTracer`
-is possibility to provide very detailed, evocative and context-rich
+is the possibility to provide very detailed, evocative and context-rich
 error messages in case of failure.
 
-As we already seen, ``described_as`` method permits you to specify
+As we have already seen, ``described_as`` method permits you to specify
 a custom message to describe the assertion, its meaning and the
 expected behavior on an high level. Our custom assertions instead
-permits to create very detailed error messages, that will include
+permit creating very detailed error messages, that will include
 all the detail of the passed parameters and the state of the tracer. 
 
 Let's see a real example of a failed assertion taken from
@@ -206,7 +206,7 @@ take this step:
 
 
 Let's say we miss an expected event (maybe because of a bug in the code under test
-or for a too short timeout). The error message will be something like this:
+or a too short timeout). The error message will be something like this:
 
 .. code-block:: text
 
@@ -246,7 +246,7 @@ As you can see, it contains:
 Reading this message you can conclude that the event you were expecting
 was not found. Inspecting the list of events, you can see that the expected
 transition to ``IDLE`` (value 2) didn't happen on the device
-``ska_mid/tm_subarray_node/1``, but happen on ``mid-csp/subarray/01``.
+``ska_mid/tm_subarray_node/1``, but happened on ``mid-csp/subarray/01``.
 Moreover, if there are any previous "suspicious" events, we can also
 inspect them to try to understand what happened (e.g., that
 ``longrunningcommandresult`` event on ``ska_mid/tm_central/central_node``
