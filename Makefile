@@ -12,10 +12,14 @@ docs-pre-build:
 
 .PHONY: python-post-lint docs-pre-build
 
-# Variable to specify the test
-# (it will be used when calling pytest, with the `-k` option)
-TEST_TARGET ?= TangoEventTracer or TangoEventLogger or TestCustomPredicates or TestCustomAssertions
+# #############################################
+# Variable to run just a subset of the tests
+# (it will be used when calling pytest, 
+# with the `-k` option)
 
-# Run a single test
-python-test-focused: PYTHON_VARS_AFTER_PYTEST := --tb=long -k '$(TEST_TARGET)' $(PYTHON_VARS_AFTER_PYTEST)
-python-test-focused: python-test
+PYTHON_TEST_NAME ?=## Name of your test target (it will be passed to pytest through -k) 
+PYTHON_VARS_AFTER_PYTEST := $(PYTHON_VARS_AFTER_PYTEST) -k '$(PYTHON_TEST_NAME)'
+
+# Example: make python-test
+#	PYTHON_TEST_NAME="TangoEventTracer or TangoEventLogger or TestCustomPredicates or TestCustomAssertions"
+# will run only the tests that match the given names
