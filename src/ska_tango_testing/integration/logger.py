@@ -88,7 +88,7 @@ def DEFAULT_LOG_MESSAGE_BUILDER(  # pylint: disable=invalid-name
     :return: The message that will be logged.
     """
     return (
-        f"    EVENT_LOGGER:\tAt {event.reception_time}, {event.device_name} "
+        f"    EVENT_LOGGER: At {event.reception_time}, {event.device_name} "
         + f"{event.attribute_name} changed to {event.attribute_value}."
     )
 
