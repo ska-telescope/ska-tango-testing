@@ -188,6 +188,10 @@ class TangoEventLogger:
                 dev_factory=custom_factory
             )
 
+        **NOTE**: when you subscribe to an event, you will automatically
+        receive the current attribute value as an event (or, in other words,
+        the last "change" that happened). Take this into account.
+
         :param device_name: The name of the Tango target device (e.g.,
             "sys/tg_test/1") or a :py:class:`tango.DeviceProxy` instance.
         :param attribute_name: The name of the attribute to subscribe to.

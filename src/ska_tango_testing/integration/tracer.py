@@ -250,6 +250,11 @@ class TangoEventTracer:
     subscriptions, so they can potentially
     be created and deleted from different
     threads (it is not a primary use case, but it is technically possible).
+
+    **ANOTHER NOTE**: when you subscribe to an event, you will automatically
+    receive the current attribute value as an event (or, in other words,
+    the last "change" that happened). Take this into account when you
+    write your queries.
     """
 
     def __init__(self) -> None:
@@ -322,7 +327,8 @@ class TangoEventTracer:
         device, but the received events are stored in the tracer instance
         (in a thread-safe way) and can be accessed later with
         :py:meth:`query_events`, with :py:attr:`events` or with
-        custom assertions.
+        custom assertions. Every time a change event will happen on
+        Tango device attribute, the tracer will receive it and store it.
 
         Usage example:
 
@@ -346,6 +352,10 @@ class TangoEventTracer:
                 dev_factory=custom_factory
             )
 
+        **NOTE**: when you subscribe to an event, you will automatically
+        receive the current attribute value as an event (or, in other words,
+        the last "change" that happened). Take this into account when you
+        write your queries.
 
         :param device_name: The name of the Tango target device. Alternatively,
             if you already have a device proxy, you can pass it directly.
