@@ -7,7 +7,7 @@ instances. These assertions can be
 used to verify properties about the events captured by the tracer.
 
 Essentially they are query calls to the tracer, within
-a timeout, to check if the are events which match an expected more or less
+a timeout, to check if there are events which match an expected more or less
 complex predicate.
 
 Usage example:

@@ -107,7 +107,7 @@ class _QueryEvaluator:
         **IMPORTANT NOTE**: every time a new event is received,
         if it matches the predicate
         (and is not already in the query results), it is added to the
-        query results. If the query is satisfied, who is waiting is unlocked.
+        query results. If the query is satisfied, anything that is waiting for this thread is unlocked.
 
         **IMPORTANT NOTE**: this method is not thread-safe by itself,
         but it can be if protected by the caller with a lock.

@@ -81,7 +81,7 @@ class TestTangoEventLogger:
         mock_logging: MagicMock,
         logger: TangoEventLogger,
     ) -> None:
-        """log_event does not write a message when the filtering fail.
+        """log_event does not write a message when the filtering fails.
 
         :param mock_logging: The mock logging module.
         :param logger: The TangoEventLogger instance.
