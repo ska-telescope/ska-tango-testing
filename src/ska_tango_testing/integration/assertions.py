@@ -89,9 +89,6 @@ import tango
 from .predicates import ANY, event_has_previous_value, event_matches_parameters
 from .tracer import TangoEventTracer
 
-# TODO: It would be nice to type those functions with the right
-# assertpy types, but it is not clear how to do that yet.
-
 
 def _get_tracer(self: Any) -> TangoEventTracer:
     """Get the `TangoEventTracer` instance from the `assertpy` context.

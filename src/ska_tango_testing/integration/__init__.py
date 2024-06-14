@@ -74,7 +74,7 @@ class.
 from typing import Callable, Dict, List, Optional, Union
 
 import tango
-from assertpy import add_extension  # type: ignore
+from assertpy import add_extension
 
 from .assertions import (
     has_change_event_occurred,

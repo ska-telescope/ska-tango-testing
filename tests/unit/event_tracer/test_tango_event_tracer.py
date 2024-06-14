@@ -15,7 +15,7 @@ from typing import Any
 from unittest.mock import patch
 
 import tango
-from assertpy import assert_that  # type: ignore
+from assertpy import assert_that
 
 from ska_tango_testing.integration.event import ReceivedEvent
 from ska_tango_testing.integration.tracer import TangoEventTracer

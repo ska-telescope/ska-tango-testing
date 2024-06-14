@@ -3,7 +3,7 @@
 from datetime import datetime
 
 import pytest
-from assertpy import assert_that  # type: ignore
+from assertpy import assert_that
 
 from ska_tango_testing.integration.tracer import TangoEventTracer
 from tests.unit.event_tracer.testing_utils.populate_tracer import (

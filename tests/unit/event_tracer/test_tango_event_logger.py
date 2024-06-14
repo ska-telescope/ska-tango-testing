@@ -13,7 +13,7 @@ from unittest.mock import ANY, MagicMock, patch
 
 import pytest
 import tango
-from assertpy import assert_that  # type: ignore
+from assertpy import assert_that
 
 from ska_tango_testing.integration import log_events
 from ska_tango_testing.integration.logger import (

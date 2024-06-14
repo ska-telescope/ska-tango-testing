@@ -6,7 +6,7 @@ as expected, matching the correct events and values.
 from unittest.mock import MagicMock
 
 import tango
-from assertpy import assert_that  # type: ignore
+from assertpy import assert_that
 from pytest import fixture
 
 from ska_tango_testing.integration.predicates import (
