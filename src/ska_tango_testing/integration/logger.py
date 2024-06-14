@@ -2,6 +2,7 @@
 
 import logging
 import threading
+from collections import defaultdict
 from typing import Callable
 
 import tango
@@ -131,7 +132,9 @@ class TangoEventLogger:
 
     def __init__(self) -> None:
         """Initialise the Tango event logger."""
-        self._subscription_ids: dict[tango.DeviceProxy, list[int]] = {}
+        self._subscription_ids: dict[
+            tango.DeviceProxy, list[int]
+        ] = defaultdict(list)
         self.lock = threading.Lock()
 
     def __del__(self) -> None:
@@ -240,8 +243,6 @@ class TangoEventLogger:
 
         # store the subscription id
         with self.lock:
-            if device_proxy not in self._subscription_ids:
-                self._subscription_ids[device_proxy] = []
             self._subscription_ids[device_proxy].append(sub_id)
 
     @staticmethod

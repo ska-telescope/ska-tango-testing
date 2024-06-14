@@ -16,6 +16,7 @@ assertions
 
 import logging
 import threading
+from collections import defaultdict
 from typing import Callable
 
 import tango
@@ -268,7 +269,9 @@ class TangoEventTracer:
 
         # dictionary of subscription ids (foreach device proxy
         # are stored the subscription ids of the subscribed attributes)
-        self._subscription_ids: dict[tango.DeviceProxy, list[int]] = {}
+        self._subscription_ids: dict[
+            tango.DeviceProxy, list[int]
+        ] = defaultdict(list)
 
         # lock for thread safety in subscription handling
         # (for current use case, the subscriptions are created and deleted
@@ -392,8 +395,6 @@ class TangoEventTracer:
 
         # store the subscription id
         with self._subscriptions_lock:
-            if device_proxy not in self._subscription_ids:
-                self._subscription_ids[device_proxy] = []
             self._subscription_ids[device_proxy].append(sub_id)
 
     def _event_callback(self, event: tango.EventData) -> None:
