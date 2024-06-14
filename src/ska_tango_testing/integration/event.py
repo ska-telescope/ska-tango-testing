@@ -184,23 +184,3 @@ class ReceivedEvent:
         :return: The age of the event in seconds.
         """
         return (datetime.now() - self.reception_time).total_seconds()
-
-    # @property
-    # def device(self) -> tango.DeviceProxy:
-    #     """The device proxy that sent the event.
-
-    #     :return: The device proxy.
-    #     """
-    #     return self.event_data.device
-
-    # @property
-    # def attribute(self) -> str:
-    #     """The full name of the attribute that sent the event.
-
-    #     NOTE: This full name contains the whole path to device, e.g.:
-    #     'http://sys/tg_test/1/attribute1'.
-
-    #     If you need to access only the short name of the attribute 4
-    #     (e.g. 'attribute1'), use the :py:meth:`attribute_name`.
-    #     """
-    #     return self.event_data.attr_name
