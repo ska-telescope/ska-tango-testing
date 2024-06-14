@@ -410,7 +410,7 @@ def hasnt_change_event_occurred(
     )
 
     # if any event is found, raise an error
-    if len(result) > 0:
+    if result:
         event_list = "\n".join([str(event) for event in tracer.events])
         msg = "Expected to NOT find an event matching the predicate"
         if getattr(assertpy_context, "event_timeout", None) is not None:

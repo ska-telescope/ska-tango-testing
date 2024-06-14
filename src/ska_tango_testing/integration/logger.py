@@ -215,10 +215,8 @@ class TangoEventLogger:
             :py:class:`tango.DeviceProxy` instance.
         """  # noqa: DAR402
         if isinstance(device_name, str):
-            if dev_factory is None:
-                device_proxy = tango.DeviceProxy(device_name)
-            else:
-                device_proxy = dev_factory(device_name)
+            dev_factory = dev_factory or tango.DeviceProxy
+            device_proxy = dev_factory(device_name)
         elif isinstance(device_name, tango.DeviceProxy):
             device_proxy = device_name
         else:
