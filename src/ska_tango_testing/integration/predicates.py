@@ -16,19 +16,19 @@ you wish to write custom predicates we still recommend to check the custom
 code for usage examples.
 """
 
-from typing import Any, Optional
+from typing import Any
 
 from .event import ReceivedEvent
 from .tracer import TangoEventTracer
 
-ANY = None
+ANY_VALUE = None
 
 
 def event_matches_parameters(
     target_event: ReceivedEvent,
-    device_name: Optional[str] = ANY,
-    attribute_name: Optional[str] = ANY,
-    attribute_value: Optional[Any] = ANY,
+    device_name: str | None = ANY_VALUE,
+    attribute_name: str | None = ANY_VALUE,
+    attribute_value: Any | None = ANY_VALUE,
 ) -> bool:
     """Check if an event matches the provided criteria.
 
@@ -44,14 +44,16 @@ def event_matches_parameters(
 
     :return: True if the event matches the provided criteria, False otherwise.
     """
-    if device_name is not ANY and not target_event.has_device(device_name):
+    if device_name is not ANY_VALUE and not target_event.has_device(
+        device_name
+    ):
         return False
-    if attribute_name is not ANY and not target_event.has_attribute(
+    if attribute_name is not ANY_VALUE and not target_event.has_attribute(
         attribute_name
     ):
         return False
     if (
-        attribute_value is not ANY
+        attribute_value is not ANY_VALUE
         and not target_event.attribute_value == attribute_value
     ):
         return False

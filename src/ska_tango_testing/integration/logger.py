@@ -2,7 +2,7 @@
 
 import logging
 import threading
-from typing import Callable, Dict, List, Optional, Union
+from typing import Callable
 
 import tango
 
@@ -131,7 +131,7 @@ class TangoEventLogger:
 
     def __init__(self) -> None:
         """Initialise the Tango event logger."""
-        self._subscription_ids: Dict[tango.DeviceProxy, List[int]] = {}
+        self._subscription_ids: dict[tango.DeviceProxy, list[int]] = {}
         self.lock = threading.Lock()
 
     def __del__(self) -> None:
@@ -140,7 +140,7 @@ class TangoEventLogger:
 
     def log_events_from_device(  # pylint: disable=too-many-arguments
         self,
-        device_name: Union[str, tango.DeviceProxy],
+        device_name: str | tango.DeviceProxy,
         attribute_name: str,
         filtering_rule: Callable[
             [ReceivedEvent], bool
@@ -148,7 +148,7 @@ class TangoEventLogger:
         message_builder: Callable[
             [ReceivedEvent], str
         ] = DEFAULT_LOG_MESSAGE_BUILDER,
-        dev_factory: Optional[Callable[[str], tango.DeviceProxy]] = None,
+        dev_factory: Callable[[str], tango.DeviceProxy] | None = None,
     ) -> None:
         """Log change events from a Tango device attribute.
 

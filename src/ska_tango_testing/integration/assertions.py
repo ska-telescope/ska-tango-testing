@@ -82,11 +82,15 @@ systems the devices' clocks may not be perfectly synchronized).
 """  # pylint: disable=line-too-long
 
 from datetime import datetime
-from typing import Any, Optional, Union
+from typing import Any
 
 import tango
 
-from .predicates import ANY, event_has_previous_value, event_matches_parameters
+from .predicates import (
+    ANY_VALUE,
+    event_has_previous_value,
+    event_matches_parameters,
+)
 from .tracer import TangoEventTracer
 
 
@@ -120,10 +124,10 @@ def _get_tracer(assertpy_context: Any) -> TangoEventTracer:
 
 
 def _print_passed_event_args(
-    device_name: Optional[str] = ANY,
-    attribute_name: Optional[str] = ANY,
-    attribute_value: Optional[Any] = ANY,
-    previous_value: Optional[Any] = ANY,
+    device_name: str | None = ANY_VALUE,
+    attribute_name: str | None = ANY_VALUE,
+    attribute_value: Any | None = ANY_VALUE,
+    previous_value: Any | None = ANY_VALUE,
 ) -> str:
     """Print the arguments passed to the event query.
 
@@ -142,19 +146,19 @@ def _print_passed_event_args(
     :return: The string representation of the passed arguments.
     """
     res = ""
-    if device_name is not ANY:
+    if device_name is not ANY_VALUE:
         res += f"device_name='{device_name}', "
-    if attribute_name is not ANY:
+    if attribute_name is not ANY_VALUE:
         res += f"attribute_name='{attribute_name}', "
-    if attribute_value is not ANY:
+    if attribute_value is not ANY_VALUE:
         res += f"attribute_value={attribute_value}, "
-    if previous_value is not ANY:
+    if previous_value is not ANY_VALUE:
         res += f"previous_value={previous_value}, "
 
     return res
 
 
-def within_timeout(assertpy_context: Any, timeout: Union[int, float]) -> Any:
+def within_timeout(assertpy_context: Any, timeout: int | float) -> Any:
     """Add a timeout to an event-based assertion function.
 
     :py:class:`~ska_tango_testing.integration.TangoEventTracer`
@@ -221,10 +225,10 @@ def within_timeout(assertpy_context: Any, timeout: Union[int, float]) -> Any:
 
 def has_change_event_occurred(
     assertpy_context: Any,
-    device_name: Optional[str] = ANY,
-    attribute_name: Optional[str] = ANY,
-    attribute_value: Optional[Any] = ANY,
-    previous_value: Optional[Any] = ANY,
+    device_name: str | None = ANY_VALUE,
+    attribute_name: str | None = ANY_VALUE,
+    attribute_value: Any | None = ANY_VALUE,
+    previous_value: Any | None = ANY_VALUE,
 ) -> Any:
     """Verify that an event matching a given predicate occurs.
 
@@ -298,7 +302,7 @@ def has_change_event_occurred(
             event_has_previous_value(
                 target_event=e, tracer=tracer, previous_value=previous_value
             )
-            if previous_value is not ANY
+            if previous_value is not ANY_VALUE
             else True
         ),
         # if given use the timeout, else None
@@ -329,10 +333,10 @@ def has_change_event_occurred(
 
 def hasnt_change_event_occurred(
     assertpy_context: Any,
-    device_name: Optional[str] = ANY,
-    attribute_name: Optional[str] = ANY,
-    attribute_value: Optional[Any] = ANY,
-    previous_value: Optional[Any] = ANY,
+    device_name: str | None = ANY_VALUE,
+    attribute_name: str | None = ANY_VALUE,
+    attribute_value: Any | None = ANY_VALUE,
+    previous_value: Any | None = ANY_VALUE,
 ) -> Any:
     """Verify that an event matching a given predicate does not occur.
 
@@ -398,7 +402,7 @@ def hasnt_change_event_occurred(
             event_has_previous_value(
                 target_event=e, tracer=tracer, previous_value=previous_value
             )
-            if previous_value is not ANY
+            if previous_value is not ANY_VALUE
             else True
         ),
         # if given use the timeout, else None

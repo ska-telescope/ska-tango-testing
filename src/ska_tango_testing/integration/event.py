@@ -1,7 +1,7 @@
 """A Tango change event received by some device to notify a change."""
 
 from datetime import datetime
-from typing import Any, Union
+from typing import Any
 
 import tango
 
@@ -133,9 +133,7 @@ class ReceivedEvent:
     # Additional properties
     # and methods
 
-    def has_device(
-        self, target_device_name: Union[str, tango.DeviceProxy]
-    ) -> bool:
+    def has_device(self, target_device_name: str | tango.DeviceProxy) -> bool:
         """Check if the event comes from a given device.
 
         :param target_device_name: The name of the device

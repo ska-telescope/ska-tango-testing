@@ -19,7 +19,7 @@ import threading
 
 # import time
 # from datetime import datetime, timedelta
-from typing import Callable, Dict, List, Optional, Union
+from typing import Callable
 
 import tango
 
@@ -58,7 +58,7 @@ class _QueryEvaluator:
         self,
         predicate: Callable[[ReceivedEvent], bool],
         target_n_events: int = 1,
-        timeout: Optional[int] = None,
+        timeout: int | float | None = None,
     ) -> None:
         """Create the object specifying the query conditions.
 
@@ -94,14 +94,14 @@ class _QueryEvaluator:
         # list of events that match the predicate, collected so far
         # they are updated by the evaluate_events method by
         # the callback of the tracer
-        self.matching_events: List[ReceivedEvent] = []
+        self.matching_events: list[ReceivedEvent] = []
 
         # tool to signal that the query is satisfied, it is used to make
         # pending query_events calls wait for the query to be satisfied
         # and then unlock them when conditions are met
         self._query_satisfied_signal = threading.Event()
 
-    def evaluate_events(self, events: List[ReceivedEvent]) -> None:
+    def evaluate_events(self, events: list[ReceivedEvent]) -> None:
         """Evaluate events incrementally and update the query results.
 
         **IMPORTANT NOTE**: every time a new event is received,
@@ -262,7 +262,7 @@ class TangoEventTracer:
     def __init__(self) -> None:
         """Initialize the event collection and the lock."""
         # set of received events
-        self._events: List[ReceivedEvent] = []
+        self._events: list[ReceivedEvent] = []
 
         # lock for thread safety in event handling
         # (events are read by queries and written by the event callback
@@ -271,7 +271,7 @@ class TangoEventTracer:
 
         # dictionary of subscription ids (foreach device proxy
         # are stored the subscription ids of the subscribed attributes)
-        self._subscription_ids: Dict[tango.DeviceProxy, List[int]] = {}
+        self._subscription_ids: dict[tango.DeviceProxy, list[int]] = {}
 
         # lock for thread safety in subscription handling
         # (for current use case, the subscriptions are created and deleted
@@ -282,7 +282,7 @@ class TangoEventTracer:
         self._subscriptions_lock = threading.Lock()
 
         # list of pending queries
-        self._pending_queries: List[_QueryEvaluator] = []
+        self._pending_queries: list[_QueryEvaluator] = []
 
         # lock for pending queries
         # (the query list and the queries are accessed by the main
@@ -300,7 +300,7 @@ class TangoEventTracer:
     # Access to stored events
 
     @property
-    def events(self) -> List[ReceivedEvent]:
+    def events(self) -> list[ReceivedEvent]:
         """A copy of the currently stored events (thread-safe).
 
         :return: A copy of the stored events.
@@ -319,9 +319,9 @@ class TangoEventTracer:
 
     def subscribe_event(
         self,
-        device_name: Union[str, tango.DeviceProxy],
+        device_name: str | tango.DeviceProxy,
         attribute_name: str,
-        dev_factory: Optional[Callable[[str], tango.DeviceProxy]] = None,
+        dev_factory: Callable[[str], tango.DeviceProxy] | None = None,
     ) -> None:
         """Subscribe to change events for a Tango device attribute.
 
@@ -465,9 +465,9 @@ class TangoEventTracer:
     def query_events(
         self,
         predicate: Callable[[ReceivedEvent], bool],
-        timeout: Optional[int] = None,
+        timeout: int | float | None = None,
         target_n_events: int = 1,
-    ) -> List[ReceivedEvent]:
+    ) -> list[ReceivedEvent]:
         """Query stored and future events with a predicate and a timeout.
 
         Queries are a tool to retrieve events that match a certain criteria
