@@ -78,7 +78,7 @@ which tells when the Tango server received the event. Maybe in the future
 it would be better to use that instead of the reception time as a way to
 compare events (if it comes from a centralized server and not from the
 device itself, because it is important to remember that in distributed
-systems the devices clocks may not be perfectly synchronized).
+systems the devices' clocks may not be perfectly synchronized).
 """  # pylint: disable=line-too-long
 
 from datetime import datetime
