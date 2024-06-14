@@ -133,7 +133,9 @@ class ReceivedEvent:
     # Additional properties
     # and methods
 
-    def has_device(self, target_device_name: str | tango.DeviceProxy) -> bool:
+    def has_device(
+        self, target_device_name: "str | tango.DeviceProxy"
+    ) -> bool:
         """Check if the event comes from a given device.
 
         :param target_device_name: The name of the device

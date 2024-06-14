@@ -140,7 +140,7 @@ class TangoEventLogger:
 
     def log_events_from_device(  # pylint: disable=too-many-arguments
         self,
-        device_name: str | tango.DeviceProxy,
+        device_name: "str | tango.DeviceProxy",
         attribute_name: str,
         filtering_rule: Callable[
             [ReceivedEvent], bool

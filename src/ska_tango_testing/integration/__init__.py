@@ -93,7 +93,7 @@ add_extension(within_timeout)
 # provide a quick utility function to log events
 # (instead of a full logger)
 def log_events(
-    device_attribute_map: dict[str | tango.DeviceProxy, list[str]],
+    device_attribute_map: dict["str | tango.DeviceProxy", list[str]],
     dev_factory: Callable[[str], tango.DeviceProxy] | None = None,
 ) -> TangoEventLogger:
     """Log events from a set of devices and attributes.

@@ -319,7 +319,7 @@ class TangoEventTracer:
 
     def subscribe_event(
         self,
-        device_name: str | tango.DeviceProxy,
+        device_name: "str | tango.DeviceProxy",
         attribute_name: str,
         dev_factory: Callable[[str], tango.DeviceProxy] | None = None,
     ) -> None:
