@@ -90,7 +90,7 @@ from .predicates import ANY, event_has_previous_value, event_matches_parameters
 from .tracer import TangoEventTracer
 
 
-def _get_tracer(self: Any) -> TangoEventTracer:
+def _get_tracer(assertpy_context: Any) -> TangoEventTracer:
     """Get the `TangoEventTracer` instance from the `assertpy` context.
 
     Helper method to get the
@@ -98,7 +98,7 @@ def _get_tracer(self: Any) -> TangoEventTracer:
     instance from the `assertpy` context which is stored in the 'val'.
     It fails if the instance is not found.
 
-    :param self: The `assertpy` context object.
+    :param assertpy_context: The `assertpy` context object.
 
     :return: The `TangoEventTracer` instance.
 
@@ -107,14 +107,16 @@ def _get_tracer(self: Any) -> TangoEventTracer:
         instance is not found (i.e., the assertion is not called with
         a tracer instance).
     """
-    if not hasattr(self, "val") or not isinstance(self.val, TangoEventTracer):
+    if not hasattr(assertpy_context, "val") or not isinstance(
+        assertpy_context.val, TangoEventTracer
+    ):
         raise ValueError(
             "The 'TangoEventTracer' instance must be stored in the 'val' "
             "attribute of the assertpy context. Try using the 'assert_that' "
             "method with the 'TangoEventTracer' instance as argument.\n"
             "Example: assert_that(tracer).has_change_event_occurred(...)"
         )
-    return self.val
+    return assertpy_context.val
 
 
 def _print_passed_event_args(
@@ -152,7 +154,7 @@ def _print_passed_event_args(
     return res
 
 
-def within_timeout(self: Any, timeout: Union[int, float]) -> Any:
+def within_timeout(assertpy_context: Any, timeout: Union[int, float]) -> Any:
     """Add a timeout to an event-based assertion function.
 
     :py:class:`~ska_tango_testing.integration.TangoEventTracer`
@@ -197,7 +199,8 @@ def within_timeout(self: Any, timeout: Union[int, float]) -> Any:
             attribute_value="DONE",
         )
 
-    :param self: The `assertpy` context object (It is passed automatically)
+    :param assertpy_context: The `assertpy` context object
+        (It is passed automatically)
     :param timeout: The time in seconds to wait for the event to occur.
 
     :return: The decorated assertion context.
@@ -208,16 +211,16 @@ def within_timeout(self: Any, timeout: Union[int, float]) -> Any:
         an ``assert_that(tracer)`` context).
     """  # noqa: DAR402
     # verify the tracer is stored in the assertpy context or raise an error
-    _get_tracer(self)
+    _get_tracer(assertpy_context)
 
     # add the timeout to the assertion
-    self.event_timeout = timeout
+    assertpy_context.event_timeout = timeout
 
-    return self
+    return assertpy_context
 
 
 def has_change_event_occurred(
-    self: Any,
+    assertpy_context: Any,
     device_name: Optional[str] = ANY,
     attribute_name: Optional[str] = ANY,
     attribute_value: Optional[Any] = ANY,
@@ -251,7 +254,8 @@ def has_change_event_occurred(
             attribute_value="new_value",
         )
 
-    :param self: The `assertpy` context object (It is passed automatically)
+    :param assertpy_context: The `assertpy` context object
+        (It is passed automatically)
     :param device_name: The device name to match. If not provided, it will
         match any device name.
     :param attribute_name: The attribute name to match. If not provided,
@@ -268,8 +272,8 @@ def has_change_event_occurred(
         instance is not found (i.e., the method is called outside
         an ``assert_that(tracer)`` context).
     """  # noqa: DAR402
-    # check self has a tracer object
-    tracer = _get_tracer(self)
+    # check assertpy_context has a tracer object
+    tracer = _get_tracer(assertpy_context)
 
     # quick trick: if device_name is a device proxy, get the name
     if isinstance(device_name, tango.DeviceProxy):
@@ -298,15 +302,15 @@ def has_change_event_occurred(
             else True
         ),
         # if given use the timeout, else None
-        timeout=getattr(self, "event_timeout", None),
+        timeout=getattr(assertpy_context, "event_timeout", None),
     )
 
     # if no event is found, raise an error
     if len(result) == 0:
         event_list = "\n".join([str(event) for event in tracer.events])
         msg = "Expected to find an event matching the predicate"
-        if hasattr(self, "event_timeout"):
-            msg += f" within {self.event_timeout} seconds"
+        if hasattr(assertpy_context, "event_timeout"):
+            msg += f" within {assertpy_context.event_timeout} seconds"
         else:
             msg += " in already existing events"
         msg += ", but none was found.\n\n"
@@ -318,13 +322,13 @@ def has_change_event_occurred(
         msg += "\nQuery start time: " + str(run_query_time)
         msg += "\nQuery end time: " + str(datetime.now())
 
-        return self.error(msg)
+        return assertpy_context.error(msg)
 
-    return self
+    return assertpy_context
 
 
 def hasnt_change_event_occurred(
-    self: Any,
+    assertpy_context: Any,
     device_name: Optional[str] = ANY,
     attribute_name: Optional[str] = ANY,
     attribute_value: Optional[Any] = ANY,
@@ -350,7 +354,8 @@ def hasnt_change_event_occurred(
         )
 
 
-    :param self: The assertpy context object (It is passed automatically)
+    :param assertpy_context: The assertpy context object
+        (It is passed automatically)
     :param device_name: The device name to match. If not provided, it will
         match any device name.
     :param attribute_name: The attribute name to match. If not provided,
@@ -367,8 +372,8 @@ def hasnt_change_event_occurred(
         instance is not found (i.e., the method is called outside
         an ``assert_that(tracer)`` context).
     """  # noqa: DAR402
-    # check self has a tracer object
-    tracer = _get_tracer(self)
+    # check assertpy_context has a tracer object
+    tracer = _get_tracer(assertpy_context)
 
     # quick trick: if device_name is a device proxy, get the name
     if isinstance(device_name, tango.DeviceProxy):
@@ -397,15 +402,15 @@ def hasnt_change_event_occurred(
             else True
         ),
         # if given use the timeout, else None
-        timeout=getattr(self, "event_timeout", None),
+        timeout=getattr(assertpy_context, "event_timeout", None),
     )
 
     # if any event is found, raise an error
     if len(result) > 0:
         event_list = "\n".join([str(event) for event in tracer.events])
         msg = "Expected to NOT find an event matching the predicate"
-        if getattr(self, "event_timeout", None) is not None:
-            msg += f" within {self.event_timeout} seconds"
+        if getattr(assertpy_context, "event_timeout", None) is not None:
+            msg += f" within {assertpy_context.event_timeout} seconds"
         else:
             msg += " in already existing events"
         msg += ", but some were found."
@@ -419,6 +424,6 @@ def hasnt_change_event_occurred(
         msg += "\n\nEvents that matched the predicate:\n"
         msg += "\n".join([str(event) for event in result])
 
-        self.error(msg)
+        assertpy_context.error(msg)
 
-    return self
+    return assertpy_context
