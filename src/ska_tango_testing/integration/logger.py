@@ -7,6 +7,8 @@ from typing import Callable
 
 import tango
 
+import ska_tango_testing.context
+
 from .event import ReceivedEvent
 
 
@@ -218,7 +220,9 @@ class TangoEventLogger:
             :py:class:`tango.DeviceProxy` instance.
         """  # noqa: DAR402
         if isinstance(device_name, str):
-            dev_factory = dev_factory or tango.DeviceProxy
+            dev_factory = (
+                dev_factory or ska_tango_testing.context.DeviceProxy
+            )  # tango.DeviceProxy
             device_proxy = dev_factory(device_name)
         elif isinstance(device_name, tango.DeviceProxy):
             device_proxy = device_name

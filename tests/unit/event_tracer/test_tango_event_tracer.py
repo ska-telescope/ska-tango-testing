@@ -17,11 +17,15 @@ from unittest.mock import patch
 import tango
 from assertpy import assert_that
 
+import ska_tango_testing.context
 from ska_tango_testing.integration.event import ReceivedEvent
 from ska_tango_testing.integration.tracer import TangoEventTracer
 from tests.unit.event_tracer.testing_utils import create_eventdata_mock
 from tests.unit.event_tracer.testing_utils.dev_proxy_mock import (
     DeviceProxyMock,
+)
+from tests.unit.event_tracer.testing_utils.patch_context_devproxy import (
+    patch_context_device_proxy,
 )
 from tests.unit.event_tracer.testing_utils.populate_tracer import (
     add_event,
@@ -105,6 +109,24 @@ class TestTangoEventTracer:
     # Test cases: subscribe method
 
     @staticmethod
+    def test_patching_device_proxy_work_as_expected() -> None:
+        """The patch of the DeviceProxy class works as expected (meta-test).
+
+        NOTE: currently, because of
+        https://gitlab.com/tango-controls/pytango/-/issues/459
+        ``tango.DeviceProxy`` internally is not used directly but instead
+        it is used ``ska_tango_testing.context.DeviceProxy``. That's why we
+        have also this patch instead of just patching ``tango.DeviceProxy``
+        in unit tests that delegate to the tracer the creation of the
+        instance of the device proxy.
+
+        This meta-test checks that the patch works as expected.
+        """
+        with patch_context_device_proxy() as mock_proxy:
+            ska_tango_testing.context.DeviceProxy("test_device")
+            mock_proxy.assert_called_with("test_device")
+
+    @staticmethod
     def test_subscribe_event(tracer: TangoEventTracer) -> None:
         """Subscribe to a device and attribute.
 
@@ -112,9 +134,7 @@ class TestTangoEventTracer:
         """
         device_name, attribute_name = "test_device", "test_attribute"
 
-        with patch(
-            "tango.DeviceProxy", new_callable=DeviceProxyMock
-        ) as mock_proxy:
+        with patch_context_device_proxy() as mock_proxy:
             tracer.subscribe_event(device_name, attribute_name)
 
             mock_proxy.assert_called_with(device_name)

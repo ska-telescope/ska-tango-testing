@@ -25,6 +25,9 @@ from tests.unit.event_tracer.testing_utils import create_eventdata_mock
 from tests.unit.event_tracer.testing_utils.dev_proxy_mock import (
     DeviceProxyMock,
 )
+from tests.unit.event_tracer.testing_utils.patch_context_devproxy import (
+    patch_context_device_proxy,
+)
 
 LOGGING_PATH = "ska_tango_testing.integration.logger.logging"
 
@@ -172,9 +175,7 @@ class TestTangoEventLogger:
         device_name = "test_device"
         attribute_name = "test_attribute"
 
-        with patch(
-            "tango.DeviceProxy", new_callable=DeviceProxyMock
-        ) as mock_proxy:
+        with patch_context_device_proxy() as mock_proxy:
             logger.log_events_from_device(device_name, attribute_name)
 
             mock_proxy.assert_called_with(device_name)
@@ -191,9 +192,7 @@ class TestTangoEventLogger:
         device_name = "test_device"
         attribute_name = "test_attribute"
 
-        with patch(
-            "tango.DeviceProxy", new_callable=DeviceProxyMock
-        ) as mock_proxy:
+        with patch_context_device_proxy() as mock_proxy:
             logger = log_events({device_name: [attribute_name]})
 
             mock_proxy.assert_called_with(device_name)
@@ -210,9 +209,7 @@ class TestTangoEventLogger:
         attribute_name_1 = "test_attribute_1"
         attribute_name_2 = "test_attribute_2"
 
-        with patch(
-            "tango.DeviceProxy", new_callable=DeviceProxyMock
-        ) as mock_proxy:
+        with patch_context_device_proxy() as mock_proxy:
             log_events(
                 {
                     device_name_1: [attribute_name_1, attribute_name_2],
@@ -232,9 +229,7 @@ class TestTangoEventLogger:
         attribute_name_1 = "test_attribute_1"
         attribute_name_2 = "test_attribute_2"
 
-        with patch(
-            "tango.DeviceProxy", new_callable=DeviceProxyMock
-        ) as mock_proxy:
+        with patch_context_device_proxy() as mock_proxy:
             log_events(
                 {
                     device_name_1: [attribute_name_1],
