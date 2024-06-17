@@ -147,7 +147,7 @@ class _QueryEvaluator:
         # return immediately (no need to wait)
         if (
             self.timeout is None
-            or self.timeout == 0
+            or self.timeout <= 0
             or self.are_conditions_met()
         ):
             return
@@ -231,7 +231,12 @@ class TangoEventTracer:
     See :py:mod:`ska_tango_testing.integration.predicates`
     for more details.
 
-    **NOTE**: just a note about how event handling and queries with
+    **NOTE**: when you subscribe to an event, you will automatically
+    receive the current attribute value as an event (or, in other words,
+    the last "change" that happened). Take this into account when you
+    write your queries.
+
+    **ANOTHER NOTE**: just a note about how event handling and queries with
     timeouts are implemented. The event collection is implemented through
     the tango ``subscribe_event`` method, which activates a callback
     that updates the internal list of events. Since the callback is
@@ -251,10 +256,12 @@ class TangoEventTracer:
     be created and deleted from different
     threads (it is not a primary use case, but it is technically possible).
 
-    **ANOTHER NOTE**: when you subscribe to an event, you will automatically
-    receive the current attribute value as an event (or, in other words,
-    the last "change" that happened). Take this into account when you
-    write your queries.
+    *To prevent the risk of deadlock we purposely avoided the acquiring of two
+    locks together (in each point of the code it is acquired at most one
+    of the three locks). To prevent the risk of infinite signal waits, when a
+    wait happen, it's ensured that it has been specified a timeout. Moreover,
+    waits don't ever keep locks. For now, locks aren't reentrant, so if you
+    modify this code be careful to not acquire a lock that you already have.*
     """
 
     def __init__(self) -> None:
@@ -422,6 +429,7 @@ class TangoEventTracer:
         """
         with self._events_lock:
             self._events.append(event)
+            events_now = self._events.copy()
 
         # logging.info("Trying unlocking %s pending queries.",
         #              str(len(self._pending_queries)))
@@ -438,7 +446,7 @@ class TangoEventTracer:
 
                 # NOTE: queries that reach the target number of events
                 # are unlocked as a side effect of the evaluation
-                query.evaluate_events(self.events)
+                query.evaluate_events(events_now)
 
     def unsubscribe_all(self) -> None:
         """Unsubscribe from all subscriptions."""
@@ -534,7 +542,7 @@ class TangoEventTracer:
         :param timeout: The time span in seconds to wait for a matching event
             (optional). If not specified, the method returns immediately.
 
-            It must be greater or equal to 0.
+            It must be greater or equal to 0. It must not be infinite.
 
         :param target_n_events: How many events do you expect to find with this
             query? If in past events (events which happens prior to the moment
@@ -563,6 +571,12 @@ class TangoEventTracer:
             raise ValueError(
                 "The timeout must be greater than 0. "
                 f"Instead, you provided {timeout}."
+            )
+
+        if timeout == float("inf"):
+            raise ValueError(
+                "The timeout must not be infinite. "
+                "Instead, you provided float('inf')."
             )
 
         if target_n_events < 1:
