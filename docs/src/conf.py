@@ -38,7 +38,7 @@ extensions = [
 ]
 
 
-autodoc_mock_imports = ["numpy", "tango"]
+autodoc_mock_imports = ["numpy", "tango", "assertpy"]
 
 
 # Add any paths that contain templates here, relative to this directory.

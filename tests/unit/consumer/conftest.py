@@ -45,7 +45,7 @@ class TestingProducerProtocol(Protocol):
     def __call__(
         self: TestingProducerProtocol,
         timeout: Optional[float],
-    ) -> ItemType:
+    ) -> ItemType:  # type: ignore
         """
         Get the next item.
 
@@ -106,7 +106,7 @@ class _QueueBasedProducer(TestingProducerProtocol):
 
     def __call__(
         self: _QueueBasedProducer, timeout: Optional[float]
-    ) -> ItemType:
+    ) -> ItemType:  # type: ignore
         """
         Return the next item produced.
 
@@ -153,7 +153,7 @@ class _PipeBasedProducer(TestingProducerProtocol):
     # TODO: Why are DAR401 and DAR402 raised here?
     def __call__(
         self: _PipeBasedProducer, timeout: Optional[float]
-    ) -> ItemType:  # noqa: DAR401
+    ) -> ItemType:  # type: ignore # noqa: DAR401
         """
         Return the next item produced.
 
