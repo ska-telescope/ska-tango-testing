@@ -1,5 +1,9 @@
 # Version History
 
+## 0.7.1
+
+* [OMCPT-38] Fix ReadTheDocs build and update Sphinx dependencies
+
 ## 0.7.0
 
 * [OMCPT-38] Add TangoEventTracer and TangoEventLogger (integration
