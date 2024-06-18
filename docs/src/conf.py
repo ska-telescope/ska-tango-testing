@@ -66,8 +66,8 @@ html_context = {}
 
 
 intersphinx_mapping = {
-    "https://docs.python.org/3.10/": None,
-    "https://docs.pytest.org/en/7.1.x/": None,
+    'python': ('https://docs.python.org/3.10', None), 
+    'pytest': ("https://docs.pytest.org/en/7.1.x/", None),
     "tango": ("https://pytango.readthedocs.io/en/v9.4.2/", None),
 }
 
