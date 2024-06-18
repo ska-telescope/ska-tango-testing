@@ -1,5 +1,10 @@
 # Version History
 
+## 0.7.0
+
+* [OMCPT-38] Add TangoEventTracer and TangoEventLogger (integration
+event-based testing tools)
+
 ## 0.6.2
 
 * [SP-4030] Fix poetry .toml file and dependencies
