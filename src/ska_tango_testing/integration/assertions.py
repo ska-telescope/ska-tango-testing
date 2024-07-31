@@ -128,6 +128,7 @@ def _print_passed_event_args(
     attribute_name: str | None = ANY_VALUE,
     attribute_value: Any | None = ANY_VALUE,
     previous_value: Any | None = ANY_VALUE,
+    target_n_events: int = 1,
 ) -> str:
     """Print the arguments passed to the event query.
 
@@ -142,6 +143,8 @@ def _print_passed_event_args(
         it will match any current value.
     :param previous_value: The previous value to match. If not provided,
         it will match any previous value.
+    :param target_n_events: The minimum number of events to match. If not provided, 
+        it defaults to 1.
 
     :return: The string representation of the passed arguments.
     """
@@ -154,6 +157,8 @@ def _print_passed_event_args(
         res += f"attribute_value={attribute_value}, "
     if previous_value is not ANY_VALUE:
         res += f"previous_value={previous_value}, "
+    if target_n_events != 1:
+        res += f"target_n_events={target_n_events}, "
 
     return res
 
@@ -229,6 +234,7 @@ def has_change_event_occurred(
     attribute_name: str | None = ANY_VALUE,
     attribute_value: Any | None = ANY_VALUE,
     previous_value: Any | None = ANY_VALUE,
+    target_n_events: int = 1,
 ) -> Any:
     """Verify that an event matching a given predicate occurs.
 
@@ -257,6 +263,13 @@ def has_change_event_occurred(
             attribute_name="attrname",
             attribute_value="new_value",
         )
+        
+        # Perform the same check, but look for 3 events with the value "new_value"
+        assert_that(tracer).has_change_event_occurred(
+            attribute_name="attrname",
+            attribute_value="new_value",
+            target_n_events=3,
+        )
 
     :param assertpy_context: The `assertpy` context object
         (It is passed automatically)
@@ -268,6 +281,9 @@ def has_change_event_occurred(
         it will match any current value.
     :param previous_value: The previous value to match. If not provided,
         it will match any previous value.
+    :param target_n_events: The minimum number of events to match. If not provided, 
+        it defaults to 1. If used without a timeout, the assertion will
+        be based only on events received up to the time of calling.
 
     :return: The `assertpy` context object.
 
@@ -305,23 +321,24 @@ def has_change_event_occurred(
             if previous_value is not ANY_VALUE
             else True
         ),
+        target_n_events=target_n_events,
         # if given use the timeout, else None
         timeout=getattr(assertpy_context, "event_timeout", None),
     )
 
-    # if no event is found, raise an error
-    if len(result) == 0:
+    # if not enough events are found, raise an error
+    if len(result) < target_n_events:
         event_list = "\n".join([str(event) for event in tracer.events])
-        msg = "Expected to find an event matching the predicate"
+        msg = f"Expected to find {target_n_events} event(s) matching the predicate"
         if hasattr(assertpy_context, "event_timeout"):
             msg += f" within {assertpy_context.event_timeout} seconds"
         else:
             msg += " in already existing events"
-        msg += ", but none was found.\n\n"
+        msg += ", but not all were found.\n\n"
         msg += f"Events captured by TANGO_TRACER:\n{event_list}"
         msg += "\n\nTANGO_TRACER Query arguments: "
         msg += _print_passed_event_args(
-            device_name, attribute_name, attribute_value, previous_value
+            device_name, attribute_name, attribute_value, previous_value, target_n_events
         )
         msg += "\nQuery start time: " + str(run_query_time)
         msg += "\nQuery end time: " + str(datetime.now())
@@ -337,6 +354,7 @@ def hasnt_change_event_occurred(
     attribute_name: str | None = ANY_VALUE,
     attribute_value: Any | None = ANY_VALUE,
     previous_value: Any | None = ANY_VALUE,
+    target_n_events: int = 1,
 ) -> Any:
     """Verify that an event matching a given predicate does not occur.
 
@@ -368,6 +386,9 @@ def hasnt_change_event_occurred(
         it will match any current value.
     :param previous_value: The previous value to match. If not provided,
         it will match any previous value.
+    :param target_n_events: The minimum number of events to match. If not provided, 
+        it defaults to 1. If used without a timeout, the assertion will
+        be based only on events received up to the time of calling.
 
     :return: The assertpy context object.
 
@@ -405,14 +426,15 @@ def hasnt_change_event_occurred(
             if previous_value is not ANY_VALUE
             else True
         ),
+        target_n_events=target_n_events,
         # if given use the timeout, else None
         timeout=getattr(assertpy_context, "event_timeout", None),
     )
 
-    # if any event is found, raise an error
-    if result:
+    # if enough events are found, raise an error
+    if len(result) >= target_n_events:
         event_list = "\n".join([str(event) for event in tracer.events])
-        msg = "Expected to NOT find an event matching the predicate"
+        msg = f"Expected to NOT find {target_n_events} event(s) matching the predicate"
         if getattr(assertpy_context, "event_timeout", None) is not None:
             msg += f" within {assertpy_context.event_timeout} seconds"
         else:
@@ -421,7 +443,7 @@ def hasnt_change_event_occurred(
         msg += f"Events captured by TANGO_TRACER:\n{event_list}"
         msg += "\n\nTANGO_TRACER Query arguments: "
         msg += _print_passed_event_args(
-            device_name, attribute_name, attribute_value, previous_value
+            device_name, attribute_name, attribute_value, previous_value, target_n_events
         )
         msg += "\nQuery start time: " + str(run_query_time)
         msg += "\nQuery end time: " + str(datetime.now())
