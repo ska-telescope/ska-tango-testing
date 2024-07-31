@@ -103,7 +103,6 @@ def event_has_previous_value(
             and evt.has_attribute(target_event.attribute_name)
             and evt.reception_time < target_event.reception_time
         ):
-
             if (
                 # if no previous event was found or the current one
                 # is more recent than the previous one

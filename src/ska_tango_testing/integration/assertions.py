@@ -143,7 +143,7 @@ def _print_passed_event_args(
         it will match any current value.
     :param previous_value: The previous value to match. If not provided,
         it will match any previous value.
-    :param target_n_events: The minimum number of events to match. If not provided, 
+    :param target_n_events: The minimum number of events to match. If not provided,
         it defaults to 1.
 
     :return: The string representation of the passed arguments.
@@ -263,7 +263,7 @@ def has_change_event_occurred(
             attribute_name="attrname",
             attribute_value="new_value",
         )
-        
+
         # Perform the same check, but look for 3 events with the value "new_value"
         assert_that(tracer).has_change_event_occurred(
             attribute_name="attrname",
@@ -281,7 +281,7 @@ def has_change_event_occurred(
         it will match any current value.
     :param previous_value: The previous value to match. If not provided,
         it will match any previous value.
-    :param target_n_events: The minimum number of events to match. If not provided, 
+    :param target_n_events: The minimum number of events to match. If not provided,
         it defaults to 1. If used without a timeout, the assertion will
         be based only on events received up to the time of calling.
 
@@ -338,7 +338,11 @@ def has_change_event_occurred(
         msg += f"Events captured by TANGO_TRACER:\n{event_list}"
         msg += "\n\nTANGO_TRACER Query arguments: "
         msg += _print_passed_event_args(
-            device_name, attribute_name, attribute_value, previous_value, target_n_events
+            device_name,
+            attribute_name,
+            attribute_value,
+            previous_value,
+            target_n_events,
         )
         msg += "\nQuery start time: " + str(run_query_time)
         msg += "\nQuery end time: " + str(datetime.now())
@@ -386,7 +390,7 @@ def hasnt_change_event_occurred(
         it will match any current value.
     :param previous_value: The previous value to match. If not provided,
         it will match any previous value.
-    :param target_n_events: The minimum number of events to match. If not provided, 
+    :param target_n_events: The minimum number of events to match. If not provided,
         it defaults to 1. If used without a timeout, the assertion will
         be based only on events received up to the time of calling.
 
@@ -443,7 +447,11 @@ def hasnt_change_event_occurred(
         msg += f"Events captured by TANGO_TRACER:\n{event_list}"
         msg += "\n\nTANGO_TRACER Query arguments: "
         msg += _print_passed_event_args(
-            device_name, attribute_name, attribute_value, previous_value, target_n_events
+            device_name,
+            attribute_name,
+            attribute_value,
+            previous_value,
+            target_n_events,
         )
         msg += "\nQuery start time: " + str(run_query_time)
         msg += "\nQuery end time: " + str(datetime.now())

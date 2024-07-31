@@ -248,7 +248,6 @@ class TestTangoEventLogger:
         attribute_name_1 = "test_attribute_1"
 
         with patch("tango.DeviceProxy", new_callable=DeviceProxyMock):
-
             device_1 = tango.DeviceProxy(device_name_1)
 
             log_events(
