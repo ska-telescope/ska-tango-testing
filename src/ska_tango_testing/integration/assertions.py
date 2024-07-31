@@ -143,8 +143,8 @@ def _print_passed_event_args(
         it will match any current value.
     :param previous_value: The previous value to match. If not provided,
         it will match any previous value.
-    :param target_n_events: The minimum number of events to match. If not provided,
-        it defaults to 1.
+    :param target_n_events: The minimum number of events to match.
+        If not provided, it defaults to 1.
 
     :return: The string representation of the passed arguments.
     """
@@ -264,7 +264,7 @@ def has_change_event_occurred(
             attribute_value="new_value",
         )
 
-        # Perform the same check, but look for 3 events with the value "new_value"
+        # Perform the same check, but look for 3 matching events.
         assert_that(tracer).has_change_event_occurred(
             attribute_name="attrname",
             attribute_value="new_value",
@@ -281,9 +281,9 @@ def has_change_event_occurred(
         it will match any current value.
     :param previous_value: The previous value to match. If not provided,
         it will match any previous value.
-    :param target_n_events: The minimum number of events to match. If not provided,
-        it defaults to 1. If used without a timeout, the assertion will
-        be based only on events received up to the time of calling.
+    :param target_n_events: The minimum number of events to match. If not
+        provided, it defaults to 1. If used without a timeout, the assertion
+        will be based only on events received up to the time of calling.
 
     :return: The `assertpy` context object.
 
@@ -329,7 +329,10 @@ def has_change_event_occurred(
     # if not enough events are found, raise an error
     if len(result) < target_n_events:
         event_list = "\n".join([str(event) for event in tracer.events])
-        msg = f"Expected to find {target_n_events} event(s) matching the predicate"
+        msg = (
+            f"Expected to find {target_n_events} event(s) "
+            + "matching the predicate"
+        )
         if hasattr(assertpy_context, "event_timeout"):
             msg += f" within {assertpy_context.event_timeout} seconds"
         else:
@@ -390,9 +393,9 @@ def hasnt_change_event_occurred(
         it will match any current value.
     :param previous_value: The previous value to match. If not provided,
         it will match any previous value.
-    :param target_n_events: The minimum number of events to match. If not provided,
-        it defaults to 1. If used without a timeout, the assertion will
-        be based only on events received up to the time of calling.
+    :param target_n_events: The minimum number of events to match. If not
+        provided, it defaults to 1. If used without a timeout, the assertion
+        will be based only on events received up to the time of calling.
 
     :return: The assertpy context object.
 
@@ -438,7 +441,10 @@ def hasnt_change_event_occurred(
     # if enough events are found, raise an error
     if len(result) >= target_n_events:
         event_list = "\n".join([str(event) for event in tracer.events])
-        msg = f"Expected to NOT find {target_n_events} event(s) matching the predicate"
+        msg = (
+            f"Expected to NOT find {target_n_events} event(s) "
+            + "matching the predicate"
+        )
         if getattr(assertpy_context, "event_timeout", None) is not None:
             msg += f" within {assertpy_context.event_timeout} seconds"
         else:
