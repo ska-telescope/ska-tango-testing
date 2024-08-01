@@ -17,11 +17,13 @@ assertions
 import logging
 import threading
 from collections import defaultdict
+from enum import Enum
 from typing import Callable
 
 import tango
 
 import ska_tango_testing.context
+from ska_tango_testing.integration.typed_event import EventEnumMapper
 
 from .event import ReceivedEvent
 
@@ -233,6 +235,16 @@ class TangoEventTracer:
     See :py:mod:`ska_tango_testing.integration.predicates`
     for more details.
 
+    **NOTE**: some events attributes even if technically they are
+    primitive types (like integers or strings), they can be
+    semantically typed with an ``Enum`` (e.g., a state machine attribute can be
+    represented as an integer, but it is semantically a state). To handle
+    those cases, when you create an instance of the tracer, you can
+    provide a mapping of attribute names to enums (see the
+    :py:class:`~ska_tango_testing.integration.typed_event.EventEnumMapper`
+    class). When you subscribe to an event, the tracer will automatically
+    convert the received event to the corresponding enum.
+
     **NOTE**: when you subscribe to an event, you will automatically
     receive the current attribute value as an event (or, in other words,
     the last "change" that happened). Take this into account when you
@@ -266,8 +278,14 @@ class TangoEventTracer:
     modify this code be careful to not acquire a lock that you already have.*
     """
 
-    def __init__(self) -> None:
-        """Initialize the event collection and the lock."""
+    def __init__(
+        self, event_enum_mapping: dict[str, type[Enum]] | None = None
+    ):
+        """Initialize the event collection and the lock.
+
+        :param event_enum_mapping: An optional mapping of attribute names
+            to enums (to handle typed events).
+        """
         # set of received events
         self._events: list[ReceivedEvent] = []
 
@@ -299,6 +317,11 @@ class TangoEventTracer:
         # queries - and by the event callback - to update the queries
         # and unlock them => they must be protected)
         self._query_lock = threading.Lock()
+
+        # mapping of attribute names to enums (to handle typed events)
+        self.attribute_enum_mapping: EventEnumMapper = EventEnumMapper(
+            event_enum_mapping
+        )
 
     def __del__(self) -> None:
         """Teardown the object and unsubscribe from all subscriptions."""
@@ -431,6 +454,10 @@ class TangoEventTracer:
 
         :param event: The event to add.
         """
+        # event may be typed
+        event = self.attribute_enum_mapping.get_typed_event(event)
+
+        # append the event to the list of stored events
         with self._events_lock:
             self._events.append(event)
             events_now = self._events.copy()

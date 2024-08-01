@@ -24,6 +24,9 @@ from tests.unit.event_tracer.testing_utils import create_eventdata_mock
 from tests.unit.event_tracer.testing_utils.dev_proxy_mock import (
     DeviceProxyMock,
 )
+from tests.unit.event_tracer.testing_utils.dummy_state_enum import (
+    DummyStateEnum,
+)
 from tests.unit.event_tracer.testing_utils.patch_context_devproxy import (
     patch_context_device_proxy,
 )
@@ -415,3 +418,33 @@ class TestTangoEventTracer:
             "Expected to find a matching event for 'TestAttr', "
             "but none was found."
         ).is_length(1)
+
+    # ########################################
+    # Test cases: typed events
+    # (some special events are typed with an Enum)
+
+    @staticmethod
+    def test_add_typed_event() -> None:
+        """A typed event is correctly created and added to the tracer."""
+        tracer = TangoEventTracer({"state": DummyStateEnum})
+        test_event = create_eventdata_mock(
+            "test_device", "state", DummyStateEnum.STATE_2
+        )
+
+        tracer._event_callback(test_event)  # pylint: disable=protected-access
+
+        assert_that(tracer.events).described_as(
+            "Event callback should add an event"
+        ).is_length(1)
+        assert_that(tracer.events[0]).described_as(
+            "First event should be a TypedEvent instance"
+        ).is_instance_of(ReceivedEvent)
+        assert_that(tracer.events[0].attribute_value).described_as(
+            "The attribute value should be a DummyStateEnum instance"
+        ).is_instance_of(DummyStateEnum)
+        assert_that(tracer.events[0].attribute_value).described_as(
+            "The attribute value should be DummyStateEnum.STATE2"
+        ).is_equal_to(DummyStateEnum.STATE_2)
+        assert_that(tracer.events[0].attribute_value_as_str).described_as(
+            "The attribute value as string should be 'STATE2'"
+        ).is_equal_to("DummyStateEnum.STATE_2")
