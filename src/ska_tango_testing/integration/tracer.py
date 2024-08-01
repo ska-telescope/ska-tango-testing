@@ -247,6 +247,51 @@ class TangoEventTracer:
     print the event as a string, you can see the state as a human readable
     label, instead of a raw value.
 
+    Usage example 2: test where you subscribe to a device with a typed event
+
+    .. code-block:: python
+
+        import pytest
+        from assertpy import assert_that
+        from enum import Enum
+
+        # define the enum (or import it from somewhere)
+        class MyEnum(Enum):
+            STATE1 = 1
+            STATE2 = 2
+
+
+        @pytest.fixture
+        def typed_tracer():
+            return TangoEventTracer(
+                event_enum_mapping={
+                    "State": MyEnum
+                }
+            )
+
+        def test_attribute_change(typed_tracer):
+
+            typed_tracer.subscribe_event("sys/tg_test/1", "State")
+
+            # do something that triggers the event
+
+            assert_that(tracer).described_as(
+                "There must be a state change from "
+                "STATE1 to STATE2 within 10 seconds."
+            ).within_timeout(10).has_change_event_occurred(
+                device_name="sys/tg_test/1",
+                attribute_name="State",
+                current_value=MyEnum.STATE2,
+                previous_value=MyEnum.STATE1,
+            )
+
+            # If there you have a failure, the error message will
+            # be more human readable:
+            # - without the enum mapping, you would see the raw values
+            #  of the states (e.g., "attribute_value=2")
+            # - with the enum mapping, you see the enum labels
+            #  (e.g., "attribute_value=MyEnum.STATE2")
+
     **NOTE**: when you subscribe to an event, you will automatically
     receive the current attribute value as an event (or, in other words,
     the last "change" that happened). Take this into account when you

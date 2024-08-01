@@ -211,27 +211,27 @@ or a too short timeout). The error message will be something like this:
 
 .. code-block:: text
 
-    E           AssertionError: [Subarray node device (ska_mid/tm_subarray_node/1) is expected to be in IDLE obsState] Expected to find an event matching the predicate within 10 seconds, but none was found.
+    E   AssertionError: [Subarray node device (ska_mid/tm_subarray_node/1) is expected to be in IDLE obsState] Expected to find an event matching the predicate within 10 seconds, but none was found.
     E           
-    E           Events captured by TANGO_TRACER:
-    E           ReceivedEvent(device_name='ska_mid/tm_central/central_node', attribute_name='telescopestate', attribute_value=OFF, reception_time=2024-05-15 10:38:10.896276)
-    E           ReceivedEvent(device_name='ska_mid/tm_central/central_node', attribute_name='longrunningcommandresult', attribute_value=('1715769334.990096_176823959159016_TelescopeOff', '0'), reception_time=2024-05-15 10:38:10.897194)
-    E           ReceivedEvent(device_name='mid-csp/control/0', attribute_name='state', attribute_value=ON, reception_time=2024-05-15 10:38:10.913552)
-    E           ReceivedEvent(device_name='mid-csp/control/0', attribute_name='state', attribute_value=ON, reception_time=2024-05-15 10:38:10.913874)
-    E           ReceivedEvent(device_name='mid-csp/subarray/01', attribute_name='state', attribute_value=ON, reception_time=2024-05-15 10:38:10.914714)
-    E           ReceivedEvent(device_name='ska_mid/tm_central/central_node', attribute_name='telescopestate', attribute_value=UNKNOWN, reception_time=2024-05-15 10:38:10.954448)
-    E           ReceivedEvent(device_name='ska_mid/tm_central/central_node', attribute_name='telescopestate', attribute_value=ON, reception_time=2024-05-15 10:38:10.954650)
-    E           ReceivedEvent(device_name='ska_mid/tm_central/central_node', attribute_name='longrunningcommandresult', attribute_value=('1715769490.9011297_193925981572059_TelescopeOn', 'Error in calling SetStandbyFPMode() command on [<ska_tmc_common.adapters.DishAdapter object at 0x732d42a1f400>, <ska_tmc_common.adapters.DishAdapter object at 0x732d42a1c550>, <ska_tmc_common.adapters.DishAdapter object at 0x732d42a1f340>, <ska_tmc_common.adapters.DishAdapter object at 0x732d42a1f7f0>] ska_mid/tm_leaf_node/d0001: DevFailed[\nDevError[\n    desc = ska_tmc_common.exceptions.CommandNotAllowed: The invocation of the SetStandbyFPMode command on this device is not allowed. Reason: The current dish mode is 3. The command has NOT been executed. This device will continue with normal operation.\n           \n  origin = Traceback (most recent call last):\n  File "/usr/local/lib/python3.10/dist-packages/tango/device_server.py", line 85, in wrapper\n    return get_worker().execute(fn, *args, **kwargs)\n  File "/usr/local/lib/python3.10/dist-packages/tango/green.py", line 101, in execute\n    return fn(*args, **kwargs)\n  File "/app/src/ska_tmc_dishleafnode/dish_leaf_node.py", line 327, in is_SetStandbyFPMode_allowed\n    return self.component_manager.is_setstandbyfpmode_allowed()\n  File "/app/src/ska_tmc_dishleafnode/manager/component_manager.py", line 899, in is_setstandbyfpmode_allowed\n    raise CommandNotAllowed(\nska_tmc_common.exceptions.CommandNotAllowed: The invocation of the SetStandbyFPMode command on this device is not allowed. Reason: The current dish mode is 3. The command has NOT been executed. This device will continue with normal operation.\n\n  reason = PyDs_PythonError\nseverity = ERR]\n\nDevError[\n    desc = Failed to execute command_inout on device ska_mid/tm_leaf_node/d0001, command SetStandbyFPMode\n  origin = virtual Tango::DeviceData Tango::Connection::command_inout(const string&, const Tango::DeviceData&) at (/src/cppTango/cppapi/client/devapi_base.cpp:1338)\n  reason = API_CommandFailed\nseverity = ERR]\n]'), reception_time=2024-05-15 10:38:10.958907)
-    E           ReceivedEvent(device_name='ska_mid/tm_central/central_node', attribute_name='longrunningcommandresult', attribute_value=('1715769490.9011297_193925981572059_TelescopeOn', '3'), reception_time=2024-05-15 10:38:10.959159)
-    E           ReceivedEvent(device_name='ska_mid/tm_subarray_node/1', attribute_name='obsstate', attribute_value=0, reception_time=2024-05-15 10:38:11.047595)
-    E           ReceivedEvent(device_name='mid-csp/subarray/01', attribute_name='obsstate', attribute_value=0, reception_time=2024-05-15 10:38:11.088411)
-    E           ReceivedEvent(device_name='ska_mid/tm_subarray_node/1', attribute_name='obsstate', attribute_value=1, reception_time=2024-05-15 10:38:11.103342)
-    E           ReceivedEvent(device_name='mid-csp/subarray/01', attribute_name='obsstate', attribute_value=1, reception_time=2024-05-15 10:38:11.135468)
-    E           ReceivedEvent(device_name='mid-csp/subarray/01', attribute_name='obsstate', attribute_value=2, reception_time=2024-05-15 10:38:13.136576)
+    E   Events captured by TANGO_TRACER:
+    E   ReceivedEvent(device_name='ska_mid/tm_central/central_node', attribute_name='telescopestate', attribute_value=OFF, reception_time=2024-05-15 10:38:10.896276)
+    E   ReceivedEvent(device_name='ska_mid/tm_central/central_node', attribute_name='longrunningcommandresult', attribute_value=('1715769334.990096_176823959159016_TelescopeOff', '0'), reception_time=2024-05-15 10:38:10.897194)
+    E   ReceivedEvent(device_name='mid-csp/control/0', attribute_name='state', attribute_value=ON, reception_time=2024-05-15 10:38:10.913552)
+    E   ReceivedEvent(device_name='mid-csp/control/0', attribute_name='state', attribute_value=ON, reception_time=2024-05-15 10:38:10.913874)
+    E   ReceivedEvent(device_name='mid-csp/subarray/01', attribute_name='state', attribute_value=ON, reception_time=2024-05-15 10:38:10.914714)
+    E   ReceivedEvent(device_name='ska_mid/tm_central/central_node', attribute_name='telescopestate', attribute_value=UNKNOWN, reception_time=2024-05-15 10:38:10.954448)
+    E   ReceivedEvent(device_name='ska_mid/tm_central/central_node', attribute_name='telescopestate', attribute_value=ON, reception_time=2024-05-15 10:38:10.954650)
+    E   ReceivedEvent(device_name='ska_mid/tm_central/central_node', attribute_name='longrunningcommandresult', attribute_value=('1715769490.9011297_193925981572059_TelescopeOn', 'Error in calling SetStandbyFPMode() command on [<ska_tmc_common.adapters.DishAdapter object at 0x732d42a1f400>, <ska_tmc_common.adapters.DishAdapter object at 0x732d42a1c550>, <ska_tmc_common.adapters.DishAdapter object at 0x732d42a1f340>, <ska_tmc_common.adapters.DishAdapter object at 0x732d42a1f7f0>] ska_mid/tm_leaf_node/d0001: DevFailed[\nDevError[\n    desc = ska_tmc_common.exceptions.CommandNotAllowed: The invocation of the SetStandbyFPMode command on this device is not allowed. Reason: The current dish mode is 3. The command has NOT been executed. This device will continue with normal operation.\n           \n  origin = Traceback (most recent call last):\n  File "/usr/local/lib/python3.10/dist-packages/tango/device_server.py", line 85, in wrapper\n    return get_worker().execute(fn, *args, **kwargs)\n  File "/usr/local/lib/python3.10/dist-packages/tango/green.py", line 101, in execute\n    return fn(*args, **kwargs)\n  File "/app/src/ska_tmc_dishleafnode/dish_leaf_node.py", line 327, in is_SetStandbyFPMode_allowed\n    return self.component_manager.is_setstandbyfpmode_allowed()\n  File "/app/src/ska_tmc_dishleafnode/manager/component_manager.py", line 899, in is_setstandbyfpmode_allowed\n    raise CommandNotAllowed(\nska_tmc_common.exceptions.CommandNotAllowed: The invocation of the SetStandbyFPMode command on this device is not allowed. Reason: The current dish mode is 3. The command has NOT been executed. This device will continue with normal operation.\n\n  reason = PyDs_PythonError\nseverity = ERR]\n\nDevError[\n    desc = Failed to execute command_inout on device ska_mid/tm_leaf_node/d0001, command SetStandbyFPMode\n  origin = virtual Tango::DeviceData Tango::Connection::command_inout(const string&, const Tango::DeviceData&) at (/src/cppTango/cppapi/client/devapi_base.cpp:1338)\n  reason = API_CommandFailed\nseverity = ERR]\n]'), reception_time=2024-05-15 10:38:10.958907)
+    E   ReceivedEvent(device_name='ska_mid/tm_central/central_node', attribute_name='longrunningcommandresult', attribute_value=('1715769490.9011297_193925981572059_TelescopeOn', '3'), reception_time=2024-05-15 10:38:10.959159)
+    E   ReceivedEvent(device_name='ska_mid/tm_subarray_node/1', attribute_name='obsstate', attribute_value=0, reception_time=2024-05-15 10:38:11.047595)
+    E   ReceivedEvent(device_name='mid-csp/subarray/01', attribute_name='obsstate', attribute_value=0, reception_time=2024-05-15 10:38:11.088411)
+    E   ReceivedEvent(device_name='ska_mid/tm_subarray_node/1', attribute_name='obsstate', attribute_value=1, reception_time=2024-05-15 10:38:11.103342)
+    E   ReceivedEvent(device_name='mid-csp/subarray/01', attribute_name='obsstate', attribute_value=1, reception_time=2024-05-15 10:38:11.135468)
+    E   ReceivedEvent(device_name='mid-csp/subarray/01', attribute_name='obsstate', attribute_value=2, reception_time=2024-05-15 10:38:13.136576)
     E           
-    E           TANGO_TRACER Query arguments: device_name='ska_mid/tm_subarray_node/1', attribute_name='obsstate', attribute_value=2, 
-    E           Query start time: 2024-05-15 10:38:13.140957
-    E           Query end time: 2024-05-15 10:38:23.141256
+    E   TANGO_TRACER Query arguments: device_name='ska_mid/tm_subarray_node/1', attribute_name='obsstate', attribute_value=2, 
+    E   Query start time: 2024-05-15 10:38:13.140957
+    E   Query end time: 2024-05-15 10:38:23.141256
 
 
 As you can see, it contains:
@@ -253,6 +253,59 @@ inspect them to try to understand what happened (e.g., that
 ``longrunningcommandresult`` event on ``ska_mid/tm_central/central_node``
 with a very long error message as a value is expected or not?).
 
+Typed events
+~~~~~~~~~~~~
+
+In SKAO projects, we often use *enums* to represent the state of the
+devices. For example, in the `ska-tmc-mid-integration` project, we use
+the ``ObsState`` integer enum to represent the state of the subarray nodes.
+Unfortunately, by default Tango event data are not typed,
+so the attribute value
+when printed as a string is just a number, 
+and it is not very informative.
+
+To address this issue, we provide a mechanism to associate a type to the
+events, so that when you print them, you can see the value as a human-readable
+label instead of a number. This is done by passing the a mapping when
+creating the tracer instance, so that the tracer can use it to convert
+the attribute values to the corresponding labels. The mapping associates
+*attribute names* to enums.
+
+The typed subscription will look like this:
+
+.. code-block:: python
+
+  import pytest
+
+  from ska_control_model import ObsState
+  from ska_tango_testing.integration import TangoEventTracer
+
+  @pytest.fixture
+  def event_tracer():
+      return TangoEventTracer(
+          event_enum_mapping={
+              "obsState": ObsState
+          }
+      )
+
+  # (rest of the test code)
+
+When an assertion will fail, the error message will contain the human-readable
+label instead of the number. For example:
+
+.. code-block:: text
+
+  E   AssertionError: [Subarray node device (ska_mid/tm_subarray_node/1) is expected to be in IDLE obsState] Expected to find an event matching the predicate within 10 seconds, but none was found.
+  E          
+  E   Events captured by TANGO_TRACER:
+  E     ...
+  E   ReceivedEvent(device_name='mid-csp/subarray/01', attribute_name='obsstate', attribute_value=ObsState.RESOURCING, reception_time=2024-05-15 10:38:11.135468)
+  E   ReceivedEvent(device_name='mid-csp/subarray/01', attribute_name='obsstate', attribute_value=ObsState.IDLE, reception_time=2024-05-15 10:38:13.136576)
+  E           
+  E   TANGO_TRACER Query arguments: device_name='ska_mid/tm_subarray_node/1', attribute_name='obsstate', attribute_value=ObsState.IDLE, 
+  E   Query start time: 2024-05-15 10:38:13.140957
+  E   Query end time: 2024-05-15 10:38:23.141256
+
 Logging
 ~~~~~~~
 
@@ -273,6 +326,7 @@ For example, let's take the initial example and add some logging:
     # import assertion library entry point
     # (no need to import all the assertion methods you use) 
     from assertpy import assert_that
+    from ska_control_model import ObsState # (NEW: import the enum)
 
     # tool to trace events from tango devices
     from ska_tango_testing.integration import TangoEventTracer
@@ -282,15 +336,21 @@ For example, let's take the initial example and add some logging:
 
     def test_a_device_changes_state_when_triggered(other_device_proxy):
 
-        # NEW: specify what events you want to log 
-        log_events({
-            # map device o a list of attributes you want to subscribe
-            "sys/tg_test/1": ["obsState"],
-            other_device_proxy: ["otherAttribute", "otherAttribute2"]
-        })
+        # NEW: specify what events you want to log from which devices
+        # and attributes
+        log_events(
+            {
+              # map device o a list of attributes you want to subscribe
+              "sys/tg_test/1": ["obsState"],
+              other_device_proxy: ["otherAttribute", "otherAttribute2"]
+            },
+            # NOTE: you can optionally specify the mapping for typed events
+            # also in the logger
+            event_enum_mapping={"obsState": ObsState}
+        )
         
         # 1. create a tracer instance
-        tracer = TangoEventTracer()
+        tracer = TangoEventTracer({"obsState": ObsState})
 
         # etc.
 
@@ -302,3 +362,6 @@ with the following format:
     EVENT_LOGGER:	At 2024-05-15 10:38:10.874175, DEVICE_NAME ATTR_NAME changed to VALUE.
 
 
+**NOTE**: you can specify the mapping for typed events also in the logger,
+so that the events will be printed with the human-readable labels. Otherwise,
+the original primitive raw values received from Tango will be printed.
