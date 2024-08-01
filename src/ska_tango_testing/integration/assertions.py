@@ -234,7 +234,7 @@ def has_change_event_occurred(
     attribute_name: str | None = ANY_VALUE,
     attribute_value: Any | None = ANY_VALUE,
     previous_value: Any | None = ANY_VALUE,
-    target_n_events: int = 1,
+    min_n_events: int = 1,
 ) -> Any:
     """Verify that an event matching a given predicate occurs.
 
@@ -281,9 +281,10 @@ def has_change_event_occurred(
         it will match any current value.
     :param previous_value: The previous value to match. If not provided,
         it will match any previous value.
-    :param target_n_events: The minimum number of events to match. If not
-        provided, it defaults to 1. If used without a timeout, the assertion
-        will be based only on events received up to the time of calling.
+    :param min_n_events: The minimum number of events to match for the 
+        assertion to pass; verifies that at least n events have occurred. 
+        If not provided, it defaults to 1. If used without a timeout, the 
+        assertion will only check events received up to the time of calling.
 
     :return: The `assertpy` context object.
 
@@ -321,16 +322,16 @@ def has_change_event_occurred(
             if previous_value is not ANY_VALUE
             else True
         ),
-        target_n_events=target_n_events,
+        target_n_events=min_n_events,
         # if given use the timeout, else None
         timeout=getattr(assertpy_context, "event_timeout", None),
     )
 
     # if not enough events are found, raise an error
-    if len(result) < target_n_events:
+    if len(result) < min_n_events:
         event_list = "\n".join([str(event) for event in tracer.events])
         msg = (
-            f"Expected to find {target_n_events} event(s) "
+            f"Expected to find {min_n_events} event(s) "
             + "matching the predicate"
         )
         if hasattr(assertpy_context, "event_timeout"):
@@ -345,7 +346,7 @@ def has_change_event_occurred(
             attribute_name,
             attribute_value,
             previous_value,
-            target_n_events,
+            min_n_events,
         )
         msg += "\nQuery start time: " + str(run_query_time)
         msg += "\nQuery end time: " + str(datetime.now())
@@ -361,15 +362,15 @@ def hasnt_change_event_occurred(
     attribute_name: str | None = ANY_VALUE,
     attribute_value: Any | None = ANY_VALUE,
     previous_value: Any | None = ANY_VALUE,
-    target_n_events: int = 1,
+    max_n_events: int = 1,
 ) -> Any:
     """Verify that an event matching a given predicate does not occur.
 
     It is the opposite of :py:func:`has_change_event_occurred`. It verifies
-    that no event matching the given predicate occurs, eventually within a
-    specified timeout. When it fails,
-    it provides a detailed error message with the events captured by the
-    tracer, the passed parameters and some timing information.
+    that no event(s) matching the given predicate occurs, eventually within a
+    specified timeout. When it fails, it provides a detailed 
+    error message with the events captured by the tracer, 
+    the passed parameters and some timing information.
 
     Usage example:
 
@@ -393,9 +394,10 @@ def hasnt_change_event_occurred(
         it will match any current value.
     :param previous_value: The previous value to match. If not provided,
         it will match any previous value.
-    :param target_n_events: The minimum number of events to match. If not
-        provided, it defaults to 1. If used without a timeout, the assertion
-        will be based only on events received up to the time of calling.
+    :param max_n_events: The maximum number of events to match before the 
+        assertion fails; verifies that no more than n events have occurred. 
+        If not provided, it defaults to 1. If used without a timeout, the 
+        assertion will only check events received up to the time of calling.
 
     :return: The assertpy context object.
 
@@ -433,16 +435,16 @@ def hasnt_change_event_occurred(
             if previous_value is not ANY_VALUE
             else True
         ),
-        target_n_events=target_n_events,
+        target_n_events=max_n_events,
         # if given use the timeout, else None
         timeout=getattr(assertpy_context, "event_timeout", None),
     )
 
     # if enough events are found, raise an error
-    if len(result) >= target_n_events:
+    if len(result) >= max_n_events:
         event_list = "\n".join([str(event) for event in tracer.events])
         msg = (
-            f"Expected to NOT find {target_n_events} event(s) "
+            f"Expected to NOT find {max_n_events} event(s) "
             + "matching the predicate"
         )
         if getattr(assertpy_context, "event_timeout", None) is not None:
@@ -457,7 +459,7 @@ def hasnt_change_event_occurred(
             attribute_name,
             attribute_value,
             previous_value,
-            target_n_events,
+            max_n_events,
         )
         msg += "\nQuery start time: " + str(run_query_time)
         msg += "\nQuery end time: " + str(datetime.now())

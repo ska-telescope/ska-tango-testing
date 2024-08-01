@@ -96,6 +96,48 @@ class TestCustomAssertions:
             device_name="device1",
             attribute_value=100,
         )
+        
+    @staticmethod
+    def test_assert_that_n_events_occurred_captures_n_events(
+        tracer: TangoEventTracer,
+    ) -> None:
+        """The custom assertion for n events captured.
+
+        :param tracer: The `TangoEventTracer` instance.
+        """
+        add_event(tracer, "device1", 100, 3)
+        add_event(tracer, "device1", 5, 2)
+        add_event(tracer, "device1", 100, 1)
+
+        assert_that(tracer).described_as(
+            "The event should match the predicate"
+            " if the future value matches within the timeout."
+        ).has_change_event_occurred(
+            device_name="device1",
+            attribute_value=100,
+            min_n_events=2,
+        )
+    
+    @staticmethod
+    def test_assert_that_n_events_occurred_captures_n_events_within_timeout(
+        tracer: TangoEventTracer,
+    ) -> None:
+        """The custom assertion for n events captured within timeout.
+
+        :param tracer: The `TangoEventTracer` instance.
+        """
+        add_event(tracer, "device1", 100, 3)
+        add_event(tracer, "device1", 5, 2)
+        delayed_add_event(tracer, "device1", 100, 2)
+
+        assert_that(tracer).described_as(
+            "The event should match the predicate"
+            " if the future value matches within the timeout."
+        ).within_timeout(3).has_change_event_occurred(
+            device_name="device1",
+            attribute_value=100,
+            min_n_events=2,
+        )
 
     @staticmethod
     def test_assert_that_event_occurred_fails_when_no_event(
@@ -214,6 +256,74 @@ class TestCustomAssertions:
         ).is_less_than(
             3
         )
+        
+    @staticmethod
+    def test_assert_that_n_events_havent_occurred(
+        tracer: TangoEventTracer,
+    ) -> None:
+        """The custom assertion for n events NOT captured.
+
+        :param tracer: The `TangoEventTracer` instance.
+        """
+        add_event(tracer, "device1", 100, 3)
+        add_event(tracer, "device1", 5, 2)
+        add_event(tracer, "device1", 100, 1)
+
+        assert_that(tracer).described_as(
+            "The event should match the predicate"
+            " if the future value matches within the timeout."
+        ).hasnt_change_event_occurred(
+            device_name="device1",
+            attribute_value=100,
+            max_n_events=3,
+        )
+        
+    @staticmethod
+    def test_assert_that_n_events_havent_occurred_within_timeout(
+        tracer: TangoEventTracer,
+    ) -> None:
+        """The custom assertion for n events NOT captured within timeout.
+
+        :param tracer: The `TangoEventTracer` instance.
+        """
+        add_event(tracer, "device1", 100, 3)
+        add_event(tracer, "device1", 5, 2)
+        add_event(tracer, "device1", 100, 1)
+        add_event(tracer, "device1", 200)
+        delayed_add_event(tracer, "device1", 100, 5)
+
+        assert_that(tracer).described_as(
+            "The event should match the predicate"
+            " if the future value matches within the timeout."
+        ).within_timeout(3).hasnt_change_event_occurred(
+            device_name="device1",
+            attribute_value=100,
+            max_n_events=3,
+        )
+        
+    @staticmethod
+    def test_assert_that_n_events_havent_occurred_captures_n_events_within_timeout(
+        tracer: TangoEventTracer,
+    ) -> None:
+        """The custom assertion for n events NOT captured within timeout.
+
+        :param tracer: The `TangoEventTracer` instance.
+        """
+        add_event(tracer, "device1", 100, 3)
+        add_event(tracer, "device1", 5, 2)
+        add_event(tracer, "device1", 100, 1)
+        add_event(tracer, "device1", 200)
+        delayed_add_event(tracer, "device1", 100, 5)
+
+        with pytest.raises(AssertionError):
+            assert_that(tracer).described_as(
+                "The event should match the predicate"
+                " if the future value matches within the timeout."
+            ).within_timeout(6).hasnt_change_event_occurred(
+                device_name="device1",
+                attribute_value=100,
+                max_n_events=3,
+            )
 
     @staticmethod
     def test_assert_that_event_occurred_handles_previous(
