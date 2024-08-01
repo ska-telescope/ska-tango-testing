@@ -243,6 +243,9 @@ def has_change_event_occurred(
     it provides a detailed error message with the events captured by the
     tracer, the passed parameters and some timing information.
 
+    If you wish, you can also specify the minimum number of events
+    that must match the predicate (through the `target_n_events` parameter).
+
     Usage example:
 
     .. code-block:: python
@@ -264,7 +267,7 @@ def has_change_event_occurred(
             attribute_value="new_value",
         )
 
-        # Perform the same check, but look for 3 matching events.
+        # Perform the same check, but look for AT LEAST 3 matching events.
         assert_that(tracer).has_change_event_occurred(
             attribute_name="attrname",
             attribute_value="new_value",
@@ -283,7 +286,9 @@ def has_change_event_occurred(
         it will match any previous value.
     :param target_n_events: The minimum number of events to match. If not
         provided, it defaults to 1. If used without a timeout, the assertion
-        will be based only on events received up to the time of calling.
+        will be based only on events received up to the time of calling,
+        otherwise if there aren't enough events matching the predicate
+        the predicate will wait for the timeout.
 
     :return: The `assertpy` context object.
 
