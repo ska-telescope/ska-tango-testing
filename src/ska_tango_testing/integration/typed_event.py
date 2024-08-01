@@ -39,7 +39,9 @@ def _fail_if_type_not_enum(enum_class: type) -> None:
 class TypedEvent(ReceivedEvent):
     """A ReceivedEvent that is typed with an Enum.
 
-    This class is a subclass of :py:class:`ReceivedEvent` that adds the
+    This class is a subclass of
+    :py:class:`ska_tango_testing.integration.event.ReceivedEvent`
+    that adds the
     possibility to associate an Enum with an attribute name. This is useful
     for state machine attributes, so when the event is received, the state
     is automatically converted to the corresponding Enum. This is useful

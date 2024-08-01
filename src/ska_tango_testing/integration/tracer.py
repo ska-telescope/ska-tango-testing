@@ -241,7 +241,7 @@ class TangoEventTracer:
     represented as an integer, but it is semantically a state). To handle
     those cases, when you create an instance of the tracer, you can
     provide a mapping of attribute names to enums (see the
-    :py:class:`~ska_tango_testing.integration.typed_event.EventEnumMapper`
+    :py:class:`ska_tango_testing.integration.typed_event.EventEnumMapper`
     class). When you subscribe to an event, the tracer will automatically
     convert the received event to the corresponding enum.
 
