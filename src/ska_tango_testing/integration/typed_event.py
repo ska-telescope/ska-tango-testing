@@ -21,7 +21,7 @@ from enum import Enum
 
 import tango
 
-from ska_tango_testing.integration.event import ReceivedEvent
+from .event import ReceivedEvent
 
 
 def _fail_if_type_not_enum(enum_class: type) -> None:

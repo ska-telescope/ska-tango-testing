@@ -9,9 +9,9 @@ from typing import Callable
 import tango
 
 import ska_tango_testing.context
-from ska_tango_testing.integration.typed_event import EventEnumMapper
 
 from .event import ReceivedEvent
+from .typed_event import EventEnumMapper
 
 
 # pylint: disable=duplicate-code
