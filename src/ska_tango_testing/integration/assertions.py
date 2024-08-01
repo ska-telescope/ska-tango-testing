@@ -243,6 +243,12 @@ def has_change_event_occurred(
     it provides a detailed error message with the events captured by the
     tracer, the passed parameters and some timing information.
 
+    If you wish, you can also specify a minimum number of events
+    that must match the predicate (through the `target_n_events` parameter),
+    to verify that **at least** a certain number of events occurred [within the
+    timeout]. By default, it checks that at least **one event** matches the
+    predicate.
+
     Usage example:
 
     .. code-block:: python
@@ -264,7 +270,7 @@ def has_change_event_occurred(
             attribute_value="new_value",
         )
 
-        # Perform the same check, but look for 3 matching events.
+        # Perform the same check, but look for AT LEAST 3 matching events.
         assert_that(tracer).has_change_event_occurred(
             attribute_name="attrname",
             attribute_value="new_value",
@@ -293,6 +299,8 @@ def has_change_event_occurred(
         instance is not found (i.e., the method is called outside
         an ``assert_that(tracer)`` context).
     """  # noqa: DAR402
+    # pylint: disable=too-many-arguments
+
     # check assertpy_context has a tracer object
     tracer = _get_tracer(assertpy_context)
 
@@ -406,6 +414,8 @@ def hasnt_change_event_occurred(
         instance is not found (i.e., the method is called outside
         an ``assert_that(tracer)`` context).
     """  # noqa: DAR402
+    # pylint: disable=too-many-arguments
+
     # check assertpy_context has a tracer object
     tracer = _get_tracer(assertpy_context)
 
