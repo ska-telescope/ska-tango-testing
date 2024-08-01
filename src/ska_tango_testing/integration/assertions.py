@@ -243,8 +243,11 @@ def has_change_event_occurred(
     it provides a detailed error message with the events captured by the
     tracer, the passed parameters and some timing information.
 
-    If you wish, you can also specify the minimum number of events
-    that must match the predicate (through the `target_n_events` parameter).
+    If you wish, you can also specify a minimum number of events
+    that must match the predicate (through the `target_n_events` parameter),
+    to verify that **at least** a certain number of events occurred [within the
+    timeout]. By default, it checks that at least **one event** matches the
+    predicate.
 
     Usage example:
 
