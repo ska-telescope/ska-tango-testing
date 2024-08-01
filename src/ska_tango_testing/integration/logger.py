@@ -3,11 +3,13 @@
 import logging
 import threading
 from collections import defaultdict
+from enum import Enum
 from typing import Callable
 
 import tango
 
 import ska_tango_testing.context
+from ska_tango_testing.integration.typed_event import EventEnumMapper
 
 from .event import ReceivedEvent
 
@@ -128,16 +130,40 @@ class TangoEventLogger:
                 f"B STATE CHANGED INTO {e.attribute_value}"
         )
 
+    **NOTE**: some events attributes even if technically they are
+    primitive types (like integers or strings), they can be
+    semantically typed with an ``Enum`` (e.g., a state machine attribute can be
+    represented as an integer, but it is semantically a state). To handle
+    those cases, when you create an instance of the logger, you can
+    provide a mapping of attribute names to enums (see the
+    :py:class:`ska_tango_testing.integration.typed_event.EventEnumMapper`
+    class). When you subscribe to an event, the tracer will automatically
+    convert the received event to the corresponding enum.
+
     All messages are displayed with the `INFO` logging level, except the events
     containing errors that are displayed with the `ERROR` level.
     """
 
-    def __init__(self) -> None:
-        """Initialise the Tango event logger."""
+    def __init__(
+        self, event_enum_mapping: dict[str, type[Enum]] | None = None
+    ) -> None:
+        """Initialize the Tango event logger.
+
+        :param event_enum_mapping: An optional mapping of attribute names
+            to enums (to handle typed events).
+        """
+        # subscription ids for each device
         self._subscription_ids: dict[
             tango.DeviceProxy, list[int]
         ] = defaultdict(list)
+
+        # lock to protect the subscription ids
         self.lock = threading.Lock()
+
+        # mapping of attribute names to enums (to handle typed events)
+        self.attribute_enum_mapping: EventEnumMapper = EventEnumMapper(
+            event_enum_mapping
+        )
 
     def __del__(self) -> None:
         """Unsubscribe from all events when the logger is deleted."""
@@ -249,9 +275,9 @@ class TangoEventLogger:
         with self.lock:
             self._subscription_ids[device_proxy].append(sub_id)
 
-    @staticmethod
+    # @staticmethod
     def _log_event(
-        # self,
+        self,
         event_data: tango.EventData,
         filtering_rule: Callable[[ReceivedEvent], bool],
         message_builder: Callable[[ReceivedEvent], str],
@@ -267,6 +293,9 @@ class TangoEventLogger:
         :param message_builder: The message builder to use.
         """
         event = ReceivedEvent(event_data)
+
+        # the event may be typed with an Enum
+        event = self.attribute_enum_mapping.get_typed_event(event)
 
         # if the filter check fails, the message is not logged
         if not filtering_rule(event):
