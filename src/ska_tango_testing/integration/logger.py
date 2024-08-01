@@ -92,7 +92,7 @@ def DEFAULT_LOG_MESSAGE_BUILDER(  # pylint: disable=invalid-name
     """
     return (
         f"    EVENT_LOGGER: At {event.reception_time}, {event.device_name} "
-        + f"{event.attribute_name} changed to {event.attribute_value}."
+        + f"{event.attribute_name} changed to {event.attribute_value_as_str}."
     )
 
 

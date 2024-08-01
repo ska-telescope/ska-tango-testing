@@ -55,7 +55,7 @@ class ReceivedEvent:
             f"ReceivedEvent("
             f"device_name='{self.device_name}', "
             f"attribute_name='{self.attribute_name}', "
-            f"attribute_value={self.attribute_value}, "
+            f"attribute_value={self.attribute_value_as_str}, "
             f"reception_time={self.reception_time})"
         )
 
@@ -118,6 +118,14 @@ class ReceivedEvent:
             depends on the attribute type.
         """
         return self.event_data.attr_value.value
+
+    @property
+    def attribute_value_as_str(self) -> str:
+        """String representation of the new value of the attribute.
+
+        :return: The new value of the attribute as a string.
+        """
+        return str(self.attribute_value)
 
     @property
     def is_error(self) -> bool:

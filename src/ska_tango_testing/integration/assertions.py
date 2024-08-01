@@ -151,9 +151,9 @@ def _print_passed_event_args(
     if attribute_name is not ANY_VALUE:
         res += f"attribute_name='{attribute_name}', "
     if attribute_value is not ANY_VALUE:
-        res += f"attribute_value={attribute_value}, "
+        res += f"attribute_value={str(attribute_value)}, "
     if previous_value is not ANY_VALUE:
-        res += f"previous_value={previous_value}, "
+        res += f"previous_value={str(previous_value)}, "
 
     return res
 
