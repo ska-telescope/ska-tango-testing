@@ -292,6 +292,8 @@ def has_change_event_occurred(
         instance is not found (i.e., the method is called outside
         an ``assert_that(tracer)`` context).
     """  # noqa: DAR402
+    # pylint: disable=too-many-arguments
+
     # check assertpy_context has a tracer object
     tracer = _get_tracer(assertpy_context)
 
@@ -404,6 +406,8 @@ def hasnt_change_event_occurred(
         instance is not found (i.e., the method is called outside
         an ``assert_that(tracer)`` context).
     """  # noqa: DAR402
+    # pylint: disable=too-many-arguments
+
     # check assertpy_context has a tracer object
     tracer = _get_tracer(assertpy_context)
 
