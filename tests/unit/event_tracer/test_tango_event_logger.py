@@ -36,7 +36,10 @@ LOGGING_PATH = "ska_tango_testing.integration.logger.logging"
 
 
 class TestTangoEventLogger:
-    """Basic unit tests for the :py:class:`TangoEventLogger`."""
+    """Basic unit tests for the :py:class:`TangoEventLogger`.
+
+    + also some tests for the quick utility function :py:func:`log_events`.
+    """
 
     @pytest.fixture
     @staticmethod
@@ -186,8 +189,8 @@ class TestTangoEventLogger:
                 attribute_name, tango.EventType.CHANGE_EVENT, ANY
             )
 
-    # ########################################
-    # Quick log utility function shortcut
+    # ##########################################
+    # Test: quick log utility function shortcut
 
     @staticmethod
     def test_log_utility_function_subscribe_event() -> None:
@@ -267,8 +270,8 @@ class TestTangoEventLogger:
             assert_that(args[0]).is_equal_to(attribute_name_1)
             assert_that(args[1]).is_equal_to(tango.EventType.CHANGE_EVENT)
 
-    # ----------------------------------------
-    # test: log typed events
+    # ##########################################
+    # Test: typed events
 
     @staticmethod
     @patch(LOGGING_PATH)
@@ -300,6 +303,46 @@ class TestTangoEventLogger:
         ).contains("state")
         assert_that(mock_logging.info.call_args[0][0]).described_as(
             "The log_event method should write"
+            " the right message to the logger "
+            "(the human readable value should be used)."
+        ).contains("DummyStateEnum.STATE_1")
+
+    @staticmethod
+    @patch(LOGGING_PATH)
+    def test_log_typed_events_with_log_utility(
+        mock_logging: MagicMock,
+    ) -> None:
+        """The quick log utility passes the typed events mapping to the logger.
+
+        :param mock_logging: The mock logging module.
+        """
+        with patch_context_device_proxy():
+            logger = log_events(
+                {"test/device/1": ["State"]},
+                event_enum_mapping={"State": DummyStateEnum},
+            )
+
+        mock_event = create_eventdata_mock(
+            "test/device/1", "state", DummyStateEnum.STATE_1
+        )
+        logger._log_event(  # pylint: disable=protected-access
+            event_data=mock_event,
+            filtering_rule=DEFAULT_LOG_ALL_EVENTS,
+            message_builder=DEFAULT_LOG_MESSAGE_BUILDER,
+        )
+
+        # Assert that content of the last message
+        # printed includes device name, attribute name and current value
+        assert_that(mock_logging.info.call_args[0][0]).described_as(
+            "The logging utility should write"
+            " the right message to the logger."
+        ).contains("test/device/1")
+        assert_that(mock_logging.info.call_args[0][0]).described_as(
+            "The logging utility should write"
+            " the right message to the logger."
+        ).contains("state")
+        assert_that(mock_logging.info.call_args[0][0]).described_as(
+            "The logging utility should write"
             " the right message to the logger "
             "(the human readable value should be used)."
         ).contains("DummyStateEnum.STATE_1")

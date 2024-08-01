@@ -137,8 +137,8 @@ class TangoEventLogger:
     those cases, when you create an instance of the logger, you can
     provide a mapping of attribute names to enums (see the
     :py:class:`ska_tango_testing.integration.typed_event.EventEnumMapper`
-    class). When you subscribe to an event, the tracer will automatically
-    convert the received event to the corresponding enum.
+    class). Typed events attribute values will be logged using the
+    corresponding Enum labels instead of the raw values.
 
     All messages are displayed with the `INFO` logging level, except the events
     containing errors that are displayed with the `ERROR` level.

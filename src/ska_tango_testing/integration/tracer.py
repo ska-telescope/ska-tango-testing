@@ -243,7 +243,9 @@ class TangoEventTracer:
     provide a mapping of attribute names to enums (see the
     :py:class:`ska_tango_testing.integration.typed_event.EventEnumMapper`
     class). When you subscribe to an event, the tracer will automatically
-    convert the received event to the corresponding enum.
+    convert the received event to the corresponding enum, so when you
+    print the event as a string, you can see the state as a human readable
+    label, instead of a raw value.
 
     **NOTE**: when you subscribe to an event, you will automatically
     receive the current attribute value as an event (or, in other words,
