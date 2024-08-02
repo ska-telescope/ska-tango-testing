@@ -410,7 +410,7 @@ def hasnt_change_event_occurred(
     :param previous_value: The previous value to match. If not provided,
         it will match any previous value.
     :param max_n_events: The maximum number of events to match before the
-        assertion fails; verifies that no more than n events have occurred.
+        assertion fails; verifies that no more than n-1 events have occurred.
         If not provided, it defaults to 1. If used without a timeout, the
         assertion will only check events received up to the time of calling.
         If specified, it must be a positive integer >= 1.
