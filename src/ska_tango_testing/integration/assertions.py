@@ -347,7 +347,7 @@ def has_change_event_occurred(
             msg += f" within {assertpy_context.event_timeout} seconds"
         else:
             msg += " in already existing events"
-        msg += ", but not all were found.\n\n"
+        msg += f", but only {len(result)} found.\n\n"
         msg += f"Events captured by TANGO_TRACER:\n{event_list}"
         msg += "\n\nTANGO_TRACER Query arguments: "
         msg += _print_passed_event_args(
