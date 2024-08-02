@@ -244,9 +244,9 @@ def has_change_event_occurred(
     tracer, the passed parameters and some timing information.
 
     If you wish, you can also specify a minimum number of events
-    that must match the predicate (through the `target_n_events` parameter),
+    that must match the predicate (through the ``min_n_events`` parameter),
     to verify that **at least** a certain number of events occurred [within the
-    timeout]. By default, it checks that at least **one event** matches the
+    timeout]. By default, it checks that  **at least one event** matches the
     predicate.
 
     Usage example:
@@ -274,7 +274,7 @@ def has_change_event_occurred(
         assert_that(tracer).has_change_event_occurred(
             attribute_name="attrname",
             attribute_value="new_value",
-            target_n_events=3,
+            min_n_events=3,
         )
 
     :param assertpy_context: The `assertpy` context object
@@ -287,10 +287,11 @@ def has_change_event_occurred(
         it will match any current value.
     :param previous_value: The previous value to match. If not provided,
         it will match any previous value.
-    :param min_n_events: The minimum number of events to match for the 
-        assertion to pass; verifies that at least n events have occurred. 
-        If not provided, it defaults to 1. If used without a timeout, the 
+    :param min_n_events: The minimum number of events to match for the
+        assertion to pass; verifies that at least n events have occurred.
+        If not provided, it defaults to 1. If used without a timeout, the
         assertion will only check events received up to the time of calling.
+        If specified, it must be a positive integer >= 1.
 
     :return: The `assertpy` context object.
 
@@ -376,9 +377,15 @@ def hasnt_change_event_occurred(
 
     It is the opposite of :py:func:`has_change_event_occurred`. It verifies
     that no event(s) matching the given predicate occurs, eventually within a
-    specified timeout. When it fails, it provides a detailed 
-    error message with the events captured by the tracer, 
+    specified timeout. When it fails, it provides a detailed
+    error message with the events captured by the tracer,
     the passed parameters and some timing information.
+
+    If you wish, you can also specify a maximum number of events
+    that must match the predicate (through the ``max_n_events`` parameter),
+    to verify that **no more than** a certain number of events occurred
+    [within the timeout]. By default, it checks that
+    **no more than one event** matches the predicate.
 
     Usage example:
 
@@ -402,10 +409,11 @@ def hasnt_change_event_occurred(
         it will match any current value.
     :param previous_value: The previous value to match. If not provided,
         it will match any previous value.
-    :param max_n_events: The maximum number of events to match before the 
-        assertion fails; verifies that no more than n events have occurred. 
-        If not provided, it defaults to 1. If used without a timeout, the 
+    :param max_n_events: The maximum number of events to match before the
+        assertion fails; verifies that no more than n events have occurred.
+        If not provided, it defaults to 1. If used without a timeout, the
         assertion will only check events received up to the time of calling.
+        If specified, it must be a positive integer >= 1.
 
     :return: The assertpy context object.
 

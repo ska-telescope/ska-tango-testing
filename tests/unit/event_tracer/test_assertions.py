@@ -52,6 +52,9 @@ class TestCustomAssertions:
         self._assert_exposes(tracer, "hasnt_change_event_occurred")
         self._assert_exposes(tracer, "within_timeout")
 
+    # ##########################################################
+    # Tests: assert has change events occurred
+
     @staticmethod
     def test_assert_that_event_occurred_captures_past_event(
         tracer: TangoEventTracer,
@@ -96,12 +99,15 @@ class TestCustomAssertions:
             device_name="device1",
             attribute_value=100,
         )
-        
+
+    # ##########################################################
+    # Tests: assert has change events occurred (n events)
+
     @staticmethod
     def test_assert_that_n_events_occurred_captures_n_events(
         tracer: TangoEventTracer,
     ) -> None:
-        """The custom assertion for n events captured.
+        """The custom assertion checks that at least N events occurred.
 
         :param tracer: The `TangoEventTracer` instance.
         """
@@ -117,12 +123,12 @@ class TestCustomAssertions:
             attribute_value=100,
             min_n_events=2,
         )
-    
+
     @staticmethod
     def test_assert_that_n_events_occurred_captures_n_events_within_timeout(
         tracer: TangoEventTracer,
     ) -> None:
-        """The custom assertion for n events captured within timeout.
+        """The custom assertion waits for N events within the timeout.
 
         :param tracer: The `TangoEventTracer` instance.
         """
@@ -138,6 +144,9 @@ class TestCustomAssertions:
             attribute_value=100,
             min_n_events=2,
         )
+
+    # ##########################################################
+    # Tests: assert has change events occurred fails
 
     @staticmethod
     def test_assert_that_event_occurred_fails_when_no_event(
@@ -184,6 +193,31 @@ class TestCustomAssertions:
         ).is_less_than(
             3
         )
+
+    @staticmethod
+    def test_assert_that_n_events_occurred_fails_when_less_than_n_events(
+        tracer: TangoEventTracer,
+    ) -> None:
+        """The custom assertion fails if less than N events occurs.
+
+        :param tracer: The `TangoEventTracer` instance.
+        """
+        add_event(tracer, "device1", 100, 3)
+        add_event(tracer, "device1", 5, 2)
+        delayed_add_event(tracer, "device1", 100, 2)
+
+        with pytest.raises(AssertionError):
+            assert_that(tracer).described_as(
+                "The event should match the predicate"
+                " if the future value matches within the timeout."
+            ).within_timeout(3).has_change_event_occurred(
+                device_name="device1",
+                attribute_value=100,
+                min_n_events=3,
+            )
+
+    # ##########################################################
+    # Tests: assert hasnt change events occurred
 
     @staticmethod
     def test_assert_that_event_hasnt_occurred_pass_when_no_matching(
@@ -256,12 +290,15 @@ class TestCustomAssertions:
         ).is_less_than(
             3
         )
-        
+
+    # ##########################################################
+    # Tests: assert hasnt change events occurred (n events)
+
     @staticmethod
     def test_assert_that_n_events_havent_occurred(
         tracer: TangoEventTracer,
     ) -> None:
-        """The custom assertion for n events NOT captured.
+        """The custom assertion checks that N events didn't occur.
 
         :param tracer: The `TangoEventTracer` instance.
         """
@@ -277,12 +314,12 @@ class TestCustomAssertions:
             attribute_value=100,
             max_n_events=3,
         )
-        
+
     @staticmethod
     def test_assert_that_n_events_havent_occurred_within_timeout(
         tracer: TangoEventTracer,
     ) -> None:
-        """The custom assertion for n events NOT captured within timeout.
+        """The custom assertion waits to checks that N events don't occur.
 
         :param tracer: The `TangoEventTracer` instance.
         """
@@ -300,12 +337,12 @@ class TestCustomAssertions:
             attribute_value=100,
             max_n_events=3,
         )
-        
+
     @staticmethod
-    def test_assert_that_n_events_havent_occurred_captures_n_events_within_timeout(
+    def test_assert_that_n_events_havent_occurred_captures_n_events_within_timeout(  # pylint: disable=line-too-long # noqa: E501
         tracer: TangoEventTracer,
     ) -> None:
-        """The custom assertion for n events NOT captured within timeout.
+        """The custom assertion fails when more than N events occur.
 
         :param tracer: The `TangoEventTracer` instance.
         """
@@ -324,6 +361,9 @@ class TestCustomAssertions:
                 attribute_value=100,
                 max_n_events=3,
             )
+
+    # ##########################################################
+    # Tests: assert has/hasnt events with previous value
 
     @staticmethod
     def test_assert_that_event_occurred_handles_previous(
