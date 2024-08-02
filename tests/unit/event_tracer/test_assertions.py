@@ -206,7 +206,10 @@ class TestCustomAssertions:
         add_event(tracer, "device1", 5, 2)
         delayed_add_event(tracer, "device1", 100, 2)
 
-        with pytest.raises(AssertionError):
+        with pytest.raises(
+            AssertionError,
+            match="Expected to find 3 event(s) matching the predicate",
+        ):
             assert_that(tracer).described_as(
                 "The event should match the predicate"
                 " if the future value matches within the timeout."
