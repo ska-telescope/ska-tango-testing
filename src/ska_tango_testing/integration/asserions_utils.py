@@ -61,7 +61,7 @@ class ChainedAssertionsTimeout:
             )
     """
 
-    def __init__(self, timeout: float | int) -> None:
+    def __init__(self, timeout: float) -> None:
         """Initialize a new timeout for chained assertions.
 
         :param timeout: The initial timeout value in seconds.

@@ -86,6 +86,10 @@ from typing import Any
 
 import tango
 
+from ska_tango_testing.integration.asserions_utils import (
+    ChainedAssertionsTimeout,
+)
+
 from .predicates import (
     ANY_VALUE,
     event_has_previous_value,
@@ -159,17 +163,21 @@ def _print_passed_event_args(
 
 
 def within_timeout(assertpy_context: Any, timeout: int | float) -> Any:
-    """Add a timeout to an event-based assertion function.
+    """Add a timeout for the next chain of tracer assertions.
 
     :py:class:`~ska_tango_testing.integration.TangoEventTracer`
     allows to query events within a timeout. In other words, you can
     make assertions about events that will occur in the future within
     a certain time frame and "await" for them (if they didn't occur yet).
     This method when called inside an assertion context permits
-    you to specify that timeout.
+    you to set a timeout for the next chain of assertions.
 
-    **NOTE**: this assertion always passes, its only purpose is to
-    set the timeout for the following assertions.
+    **IMPORTANT NOTE**: The timeout, like one may intuitively expect, is
+    shared between all the chained assertions. This means that if you set
+    a timeout of 10 seconds and you have 3 chained assertions, the total
+    time to wait for all the events to occur is 10 seconds, not 30 seconds.
+    Concretely, each assertion will consume some time from the timeout, until
+    it reaches zero.
 
     Usage example:
 
@@ -186,39 +194,50 @@ def within_timeout(assertpy_context: Any, timeout: int | float) -> Any:
             attribute_value="DONE",
         )
 
-    **NOTE**: Using a (small) timeout is a good practice even in not so long
-    operations, because it makes the test more robust and less prone to
-    flakiness and false positives.
+    Alteratively, when you want to verify a set of events occurring
+    within a certain shared timeout:
 
     .. code-block:: python
 
-        # (given a subscribed tracer)
-
-        # non-blocking long operation that triggers an event at the end
-        sut.quick_operation()
-
-        # Check that the operation is done within 5 seconds
-        assert_that(tracer).within_timeout(5).has_change_event_occurred(
+        # Check that the 3 events occur within 30 seconds
+        assert_that(tracer).within_timeout(30).has_change_event_occurred(
+            attribute_name="operation_state",
+            attribute_value="INITIAL_STATE",
+        ).has_change_event_occurred(
+            attribute_name="operation_state",
+            attribute_value="PROCESSING",
+        ).has_change_event_occurred(
             attribute_name="operation_state",
             attribute_value="DONE",
         )
+
+        # IMPORTANT NOTE: this will NOT verify that the events occur in the
+        # given order, just that they occur within the same timeout!
+
+    **NOTE**: this assertion always passes, its only purpose is to
+    set the timeout for the following assertions.
+
+    **NOTE**: Using a (small) timeout is a good practice even in not so long
+    operations, because it makes the test more robust and less prone to
+    flakiness and false positives.
 
     :param assertpy_context: The `assertpy` context object
         (It is passed automatically)
     :param timeout: The time in seconds to wait for the event to occur.
 
-    :return: The decorated assertion context.
+    :return: The decorated assertion context, with a
+        :py:class:`~ska_tango_testing.integration.assertions_utils.ChainedAssertionsTimeout`
 
     :raises ValueError: If the
         :py:class:`~ska_tango_testing.integration.TangoEventTracer`
         instance is not found (i.e., the method is called outside
         an ``assert_that(tracer)`` context).
-    """  # noqa: DAR402
+    """  # pylint: disable=line-too-long # noqa: E501 DAR402
     # verify the tracer is stored in the assertpy context or raise an error
     _get_tracer(assertpy_context)
 
     # add the timeout to the assertion
-    assertpy_context.event_timeout = timeout
+    assertpy_context.event_timeout = ChainedAssertionsTimeout(timeout)
 
     return assertpy_context
 
@@ -283,8 +302,12 @@ def has_change_event_occurred(
     if isinstance(device_name, tango.DeviceProxy):
         device_name = device_name.dev_name()
 
-    # start time is needed in case of error
-    run_query_time = datetime.now()
+    timeout_util: ChainedAssertionsTimeout | None = getattr(
+        assertpy_context, "event_timeout", None
+    )
+    run_query_time = (
+        timeout_util.start_time if timeout_util else datetime.now()
+    )
 
     # query and check if any event matches the predicate
     result = tracer.query_events(
@@ -306,15 +329,15 @@ def has_change_event_occurred(
             else True
         ),
         # if given use the timeout, else None
-        timeout=getattr(assertpy_context, "event_timeout", None),
+        timeout=timeout_util.get_remaining_timeout() if timeout_util else None,
     )
 
     # if no event is found, raise an error
     if len(result) == 0:
         event_list = "\n".join([str(event) for event in tracer.events])
         msg = "Expected to find an event matching the predicate"
-        if hasattr(assertpy_context, "event_timeout"):
-            msg += f" within {assertpy_context.event_timeout} seconds"
+        if timeout_util:
+            msg += f" within {timeout_util.initial_timeout} seconds"
         else:
             msg += " in already existing events"
         msg += ", but none was found.\n\n"
@@ -383,8 +406,12 @@ def hasnt_change_event_occurred(
     if isinstance(device_name, tango.DeviceProxy):
         device_name = device_name.dev_name()
 
-    # start time is needed in case of error
-    run_query_time = datetime.now()
+    timeout_util: ChainedAssertionsTimeout | None = getattr(
+        assertpy_context, "event_timeout", None
+    )
+    run_query_time = (
+        timeout_util.start_time if timeout_util else datetime.now()
+    )
 
     # query and check if any event matches the predicate
     result = tracer.query_events(
@@ -406,15 +433,15 @@ def hasnt_change_event_occurred(
             else True
         ),
         # if given use the timeout, else None
-        timeout=getattr(assertpy_context, "event_timeout", None),
+        timeout=timeout_util.get_remaining_timeout() if timeout_util else None,
     )
 
     # if any event is found, raise an error
     if result:
         event_list = "\n".join([str(event) for event in tracer.events])
         msg = "Expected to NOT find an event matching the predicate"
-        if getattr(assertpy_context, "event_timeout", None) is not None:
-            msg += f" within {assertpy_context.event_timeout} seconds"
+        if timeout_util:
+            msg += f" within {timeout_util.initial_timeout} seconds"
         else:
             msg += " in already existing events"
         msg += ", but some were found."

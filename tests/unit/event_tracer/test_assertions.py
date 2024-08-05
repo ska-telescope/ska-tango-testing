@@ -98,6 +98,33 @@ class TestCustomAssertions:
         )
 
     @staticmethod
+    def test_assert_that_has_change_event_occurred_chain_under_same_timeout(
+        tracer: TangoEventTracer,
+    ) -> None:
+        """The custom assertions can be chained under the same timeout.
+
+        :param tracer: The `TangoEventTracer` instance.
+        """
+        add_event(tracer, "device1", 100, 5)
+        delayed_add_event(tracer, "device1", 300, 1)
+        delayed_add_event(tracer, "device1", 200, 2)
+
+        assert_that(tracer).within_timeout(10).described_as(
+            "The events should match the predicates"
+            " if they occur within the same timeout."
+        ).within_timeout(3).has_change_event_occurred(
+            device_name="device1",
+            attribute_value=100,
+            # NOTE: here we show that order is clearly not important
+        ).has_change_event_occurred(
+            device_name="device1",
+            attribute_value=200,
+        ).has_change_event_occurred(
+            device_name="device1",
+            attribute_value=300,
+        )
+
+    @staticmethod
     def test_assert_that_event_occurred_fails_when_no_event(
         tracer: TangoEventTracer,
     ) -> None:
@@ -141,6 +168,45 @@ class TestCustomAssertions:
             2
         ).is_less_than(
             3
+        )
+
+    @staticmethod
+    def test_assert_that_evt_occurred_fails_when_not_all_events_within_timeout(
+        tracer: TangoEventTracer,
+    ) -> None:
+        """The a. fails when one of the events doesn't occur within a timeout.
+
+        When there is a set of events, asserted within the same timeout,
+        all of them must occur within that timeout. If one of them doesn't
+        occur, the assertion should fail.
+
+        :param tracer: The `TangoEventTracer` instance.
+        """
+        delayed_add_event(tracer, "device1", 100, 1)
+        delayed_add_event(tracer, "device1", 200, 2)
+        delayed_add_event(tracer, "device1", 400, 4)
+
+        start_time = datetime.now()
+        with pytest.raises(AssertionError):
+            assert_that(tracer).within_timeout(3).has_change_event_occurred(
+                device_name="device1",
+                attribute_value=100,
+            ).has_change_event_occurred(
+                device_name="device1",
+                attribute_value=200,
+            ).has_change_event_occurred(
+                device_name="device1",
+                attribute_value=400,  # TODO: verify this is the one that fails
+            )
+
+        assert_that(
+            (datetime.now() - start_time).total_seconds()
+        ).described_as(
+            "Expected wait time to be >=3s and <4s"
+        ).is_greater_than_or_equal_to(
+            3
+        ).is_less_than(
+            4
         )
 
     @staticmethod
@@ -203,6 +269,41 @@ class TestCustomAssertions:
         ).within_timeout(2).hasnt_change_event_occurred(
             device_name="device1",
             attribute_value=100,
+        )
+
+        assert_that(
+            (datetime.now() - start_time).total_seconds()
+        ).described_as(
+            "Expected wait time to be >=2 and <3"
+        ).is_greater_than_or_equal_to(
+            2
+        ).is_less_than(
+            3
+        )
+
+    @staticmethod
+    def test_assert_that_event_set_havent_occurred_waits_for_timeout(
+        tracer: TangoEventTracer,
+    ) -> None:
+        """The custom assertion verifies that no event occurs within timeout.
+
+        When a certain set of event doesn't occur within a timeout,
+        the assertion should pass.
+
+        :param tracer: The `TangoEventTracer` instance.
+        """
+        delayed_add_event(tracer, "device1", 300, 3)
+        delayed_add_event(tracer, "device1", 400, 4)
+
+        start_time = datetime.now()
+        assert_that(tracer).within_timeout(2).described_as(
+            "Expected no matching event to occur within 3 seconds"
+        ).hasnt_change_event_occurred(
+            device_name="device1",
+            attribute_value=400,
+        ).hasnt_change_event_occurred(
+            device_name="device1",
+            attribute_value=300,
         )
 
         assert_that(
