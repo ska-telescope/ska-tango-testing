@@ -208,7 +208,7 @@ class TestCustomAssertions:
 
         with pytest.raises(
             AssertionError,
-            match="Expected to find 3 event(s) matching the predicate",
+            match=('(?:Expected to find 3 event\(s\) matching the predicate within 3 seconds, but only 2 found.)'),
         ):
             assert_that(tracer).described_as(
                 "The event should match the predicate"
