@@ -21,5 +21,5 @@ PYTHON_TEST_NAME ?=## Name of your test target (it will be passed to pytest thro
 PYTHON_VARS_AFTER_PYTEST := $(PYTHON_VARS_AFTER_PYTEST) -k '$(PYTHON_TEST_NAME)'
 
 # Example: make python-test
-#	PYTHON_TEST_NAME="TangoEventTracer or TangoEventLogger or TestCustomPredicates or TestCustomAssertions"
+#	PYTHON_TEST_NAME="TangoEventTracer or TangoEventLogger or TestCustomPredicates or TestCustomAssertions or TestTypedEvents or TestChainedAssertionsTimeout"
 # will run only the tests that match the given names

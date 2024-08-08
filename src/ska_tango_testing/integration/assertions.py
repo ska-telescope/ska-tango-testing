@@ -82,13 +82,14 @@ systems the devices' clocks may not be perfectly synchronized).
 """  # pylint: disable=line-too-long
 
 from datetime import datetime
-from typing import Any
+from typing import Any, Callable
 
 import tango
 
 from ska_tango_testing.integration.asserions_utils import (
     ChainedAssertionsTimeout,
 )
+from ska_tango_testing.integration.event import ReceivedEvent
 
 from .predicates import (
     ANY_VALUE,
@@ -132,6 +133,7 @@ def _print_passed_event_args(
     attribute_name: str | None = ANY_VALUE,
     attribute_value: Any | None = ANY_VALUE,
     previous_value: Any | None = ANY_VALUE,
+    further_matching_rules: Callable[[ReceivedEvent], bool] | None = None,
 ) -> str:
     """Print the arguments passed to the event query.
 
@@ -146,6 +148,9 @@ def _print_passed_event_args(
         it will match any current value.
     :param previous_value: The previous value to match. If not provided,
         it will match any previous value.
+    :param further_matching_rules: An arbitrary predicate over the event. It is
+        essentially a function or a lambda that takes an event and returns
+        ``True`` if it satisfies your condition.
 
     :return: The string representation of the passed arguments.
     """
@@ -158,6 +163,8 @@ def _print_passed_event_args(
         res += f"attribute_value={str(attribute_value)}, "
     if previous_value is not ANY_VALUE:
         res += f"previous_value={str(previous_value)}, "
+    if further_matching_rules is not None:
+        res += "further_matching_rules=<custom predicate>, "
 
     return res
 
@@ -248,13 +255,27 @@ def has_change_event_occurred(
     attribute_name: str | None = ANY_VALUE,
     attribute_value: Any | None = ANY_VALUE,
     previous_value: Any | None = ANY_VALUE,
+    further_matching_rules: Callable[[ReceivedEvent], bool] | None = None,
 ) -> Any:
     """Verify that an event matching a given predicate occurs.
 
-    Custom `assertpy` assertion to verify that an event matching a given
-    predicate occurs, eventually within a specified timeout. When it fails,
+    Custom `assertpy` assertion to verify that a certain event occurs,
+    eventually within a specified timeout. When it fails,
     it provides a detailed error message with the events captured by the
     tracer, the passed parameters and some timing information.
+
+    To describe the event to match, you can pass the following parameters
+    (all optional):
+
+    - the name of the device you are interested in
+    - the name of the attribute you are interested in
+    - the current value of the attribute (the value that the attribute
+      has when the event is captured)
+    - the previous value of the attribute (the value that the attribute
+      had before the event is captured - pretty useful to catch state
+      transitions from a value to another)
+    - an arbitrary predicate over the event (to deal tricky cases where
+      a simple value comparison is not enough or is not possible)
 
     Usage example:
 
@@ -277,6 +298,13 @@ def has_change_event_occurred(
             attribute_value="new_value",
         )
 
+        # Add an arbitrary condition
+        assert_that(tracer).has_change_event_occurred(
+            attribute_name="other_attrname",
+            further_matching_rules=lambda e: e.attribute_value > 5,
+        )
+
+
     :param assertpy_context: The `assertpy` context object
         (It is passed automatically)
     :param device_name: The device name to match. If not provided, it will
@@ -287,6 +315,10 @@ def has_change_event_occurred(
         it will match any current value.
     :param previous_value: The previous value to match. If not provided,
         it will match any previous value.
+    :param further_matching_rules: An arbitrary predicate over the event. It is
+        essentially a function or a lambda that takes an event and returns
+        ``True`` if it satisfies your condition. NOTE: it is put in ``and``
+        with the other specified parameters.
 
     :return: The `assertpy` context object.
 
@@ -295,6 +327,8 @@ def has_change_event_occurred(
         instance is not found (i.e., the method is called outside
         an ``assert_that(tracer)`` context).
     """  # noqa: DAR402
+    # pylint: disable=too-many-arguments
+
     # check assertpy_context has a tracer object
     tracer = _get_tracer(assertpy_context)
 
@@ -308,6 +342,10 @@ def has_change_event_occurred(
     run_query_time = (
         timeout_util.start_time if timeout_util else datetime.now()
     )
+
+    # if not provided, set the further_matching_rules to a lambda that
+    # always returns True
+    further_matching_rules = further_matching_rules or (lambda _: True)
 
     # query and check if any event matches the predicate
     result = tracer.query_events(
@@ -360,14 +398,17 @@ def hasnt_change_event_occurred(
     attribute_name: str | None = ANY_VALUE,
     attribute_value: Any | None = ANY_VALUE,
     previous_value: Any | None = ANY_VALUE,
+    further_matching_rules: Callable[[ReceivedEvent], bool] | None = None,
 ) -> Any:
     """Verify that an event matching a given predicate does not occur.
 
     It is the opposite of :py:func:`has_change_event_occurred`. It verifies
-    that no event matching the given predicate occurs, eventually within a
+    that no event matching the given conditions occurs, eventually within a
     specified timeout. When it fails,
     it provides a detailed error message with the events captured by the
     tracer, the passed parameters and some timing information.
+
+    The parameters are the same as :py:func:`has_change_event_occurred`.
 
     Usage example:
 
@@ -391,6 +432,10 @@ def hasnt_change_event_occurred(
         it will match any current value.
     :param previous_value: The previous value to match. If not provided,
         it will match any previous value.
+    :param further_matching_rules: An arbitrary predicate over the event. It is
+        essentially a function or a lambda that takes an event and returns
+        ``True`` if it satisfies your condition. NOTE: it is put in ``and``
+        with the other specified parameters.
 
     :return: The assertpy context object.
 
@@ -399,6 +444,8 @@ def hasnt_change_event_occurred(
         instance is not found (i.e., the method is called outside
         an ``assert_that(tracer)`` context).
     """  # noqa: DAR402
+    # pylint: disable=too-many-arguments
+
     # check assertpy_context has a tracer object
     tracer = _get_tracer(assertpy_context)
 
@@ -412,6 +459,10 @@ def hasnt_change_event_occurred(
     run_query_time = (
         timeout_util.start_time if timeout_util else datetime.now()
     )
+
+    # if not provided, set the further_matching_rules to a lambda that
+    # always returns True
+    further_matching_rules = further_matching_rules or (lambda _: True)
 
     # query and check if any event matches the predicate
     result = tracer.query_events(
@@ -431,7 +482,8 @@ def hasnt_change_event_occurred(
             )
             if previous_value is not ANY_VALUE
             else True
-        ),
+        )
+        and further_matching_rules(e),
         # if given use the timeout, else None
         timeout=timeout_util.get_remaining_timeout() if timeout_util else None,
     )
