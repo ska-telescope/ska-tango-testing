@@ -134,6 +134,7 @@ def _print_passed_event_args(
     attribute_value: Any | None = ANY_VALUE,
     previous_value: Any | None = ANY_VALUE,
     further_matching_rules: Callable[[ReceivedEvent], bool] | None = None,
+    target_n_events: int = 1,
 ) -> str:
     """Print the arguments passed to the event query.
 
@@ -151,6 +152,8 @@ def _print_passed_event_args(
     :param further_matching_rules: An arbitrary predicate over the event. It is
         essentially a function or a lambda that takes an event and returns
         ``True`` if it satisfies your condition.
+    :param target_n_events: The minimum number of events to match.
+        If not provided, it defaults to 1.
 
     :return: The string representation of the passed arguments.
     """
@@ -165,6 +168,8 @@ def _print_passed_event_args(
         res += f"previous_value={str(previous_value)}, "
     if further_matching_rules is not None:
         res += "further_matching_rules=<custom predicate>, "
+    if target_n_events != 1:
+        res += f"target_n_events={target_n_events}, "
 
     return res
 
@@ -256,6 +261,7 @@ def has_change_event_occurred(
     attribute_value: Any | None = ANY_VALUE,
     previous_value: Any | None = ANY_VALUE,
     further_matching_rules: Callable[[ReceivedEvent], bool] | None = None,
+    min_n_events: int = 1,
 ) -> Any:
     """Verify that an event matching a given predicate occurs.
 
@@ -263,6 +269,12 @@ def has_change_event_occurred(
     eventually within a specified timeout. When it fails,
     it provides a detailed error message with the events captured by the
     tracer, the passed parameters and some timing information.
+
+    If you wish, you can also specify a minimum number of events
+    that must match the predicate (through the ``min_n_events`` parameter),
+    to verify that **at least** a certain number of events occurred [within the
+    timeout]. By default, it checks that  **at least one event** matches the
+    predicate.
 
     To describe the event to match, you can pass the following parameters
     (all optional):
@@ -305,6 +317,20 @@ def has_change_event_occurred(
         )
 
 
+        # Add an arbitrary condition
+        assert_that(tracer).has_change_event_occurred(
+            attribute_name="other_attrname",
+            further_matching_rules=lambda e: e.attribute_value > 5,
+        )
+
+
+        # Perform the same check, but look for AT LEAST 3 matching events.
+        assert_that(tracer).has_change_event_occurred(
+            attribute_name="attrname",
+            attribute_value="new_value",
+            min_n_events=3,
+        )
+
     :param assertpy_context: The `assertpy` context object
         (It is passed automatically)
     :param device_name: The device name to match. If not provided, it will
@@ -319,6 +345,11 @@ def has_change_event_occurred(
         essentially a function or a lambda that takes an event and returns
         ``True`` if it satisfies your condition. NOTE: it is put in ``and``
         with the other specified parameters.
+    :param min_n_events: The minimum number of events to match for the
+        assertion to pass; verifies that at least n events have occurred.
+        If not provided, it defaults to 1. If used without a timeout, the
+        assertion will only check events received up to the time of calling.
+        If specified, it must be a positive integer >= 1.
 
     :return: The `assertpy` context object.
 
@@ -327,6 +358,8 @@ def has_change_event_occurred(
         instance is not found (i.e., the method is called outside
         an ``assert_that(tracer)`` context).
     """  # noqa: DAR402
+    # pylint: disable=too-many-arguments
+
     # pylint: disable=too-many-arguments
 
     # check assertpy_context has a tracer object
@@ -366,23 +399,31 @@ def has_change_event_occurred(
             if previous_value is not ANY_VALUE
             else True
         ),
+        target_n_events=min_n_events,
         # if given use the timeout, else None
         timeout=timeout_util.get_remaining_timeout() if timeout_util else None,
     )
 
-    # if no event is found, raise an error
-    if len(result) == 0:
+    # if not enough events are found, raise an error
+    if len(result) < min_n_events:
         event_list = "\n".join([str(event) for event in tracer.events])
-        msg = "Expected to find an event matching the predicate"
+        msg = (
+            f"Expected to find {min_n_events} event(s) "
+            + "matching the predicate"
+        )
         if timeout_util:
             msg += f" within {timeout_util.initial_timeout} seconds"
         else:
             msg += " in already existing events"
-        msg += ", but none was found.\n\n"
+        msg += f", but only {len(result)} found.\n\n"
         msg += f"Events captured by TANGO_TRACER:\n{event_list}"
         msg += "\n\nTANGO_TRACER Query arguments: "
         msg += _print_passed_event_args(
-            device_name, attribute_name, attribute_value, previous_value
+            device_name,
+            attribute_name,
+            attribute_value,
+            previous_value,
+            min_n_events,
         )
         msg += "\nQuery start time: " + str(run_query_time)
         msg += "\nQuery end time: " + str(datetime.now())
@@ -399,14 +440,21 @@ def hasnt_change_event_occurred(
     attribute_value: Any | None = ANY_VALUE,
     previous_value: Any | None = ANY_VALUE,
     further_matching_rules: Callable[[ReceivedEvent], bool] | None = None,
+    max_n_events: int = 1,
 ) -> Any:
     """Verify that an event matching a given predicate does not occur.
 
     It is the opposite of :py:func:`has_change_event_occurred`. It verifies
-    that no event matching the given conditions occurs, eventually within a
-    specified timeout. When it fails,
-    it provides a detailed error message with the events captured by the
-    tracer, the passed parameters and some timing information.
+    that no event(s) matching the given conditions occurs, eventually within a
+    specified timeout. When it fails, it provides a detailed
+    error message with the events captured by the tracer,
+    the passed parameters and some timing information.
+
+    If you wish, you can also specify a maximum number of events
+    that must match the predicate (through the ``max_n_events`` parameter),
+    to verify that **no more than** a certain number of events occurred
+    [within the timeout]. By default, it checks that
+    **no more than one event** matches the predicate.
 
     The parameters are the same as :py:func:`has_change_event_occurred`.
 
@@ -436,6 +484,11 @@ def hasnt_change_event_occurred(
         essentially a function or a lambda that takes an event and returns
         ``True`` if it satisfies your condition. NOTE: it is put in ``and``
         with the other specified parameters.
+    :param max_n_events: The maximum number of events to match before the
+        assertion fails; verifies that no more than n-1 events have occurred.
+        If not provided, it defaults to 1. If used without a timeout, the
+        assertion will only check events received up to the time of calling.
+        If specified, it must be a positive integer >= 1.
 
     :return: The assertpy context object.
 
@@ -484,14 +537,18 @@ def hasnt_change_event_occurred(
             else True
         )
         and further_matching_rules(e),
+        target_n_events=max_n_events,
         # if given use the timeout, else None
         timeout=timeout_util.get_remaining_timeout() if timeout_util else None,
     )
 
-    # if any event is found, raise an error
-    if result:
+    # if enough events are found, raise an error
+    if len(result) >= max_n_events:
         event_list = "\n".join([str(event) for event in tracer.events])
-        msg = "Expected to NOT find an event matching the predicate"
+        msg = (
+            f"Expected to NOT find {max_n_events} event(s) "
+            + "matching the predicate"
+        )
         if timeout_util:
             msg += f" within {timeout_util.initial_timeout} seconds"
         else:
@@ -500,7 +557,11 @@ def hasnt_change_event_occurred(
         msg += f"Events captured by TANGO_TRACER:\n{event_list}"
         msg += "\n\nTANGO_TRACER Query arguments: "
         msg += _print_passed_event_args(
-            device_name, attribute_name, attribute_value, previous_value
+            device_name,
+            attribute_name,
+            attribute_value,
+            previous_value,
+            max_n_events,
         )
         msg += "\nQuery start time: " + str(run_query_time)
         msg += "\nQuery end time: " + str(datetime.now())

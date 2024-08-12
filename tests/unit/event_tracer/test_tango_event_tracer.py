@@ -158,7 +158,6 @@ class TestTangoEventTracer:
         device_name, attribute_name = "test_device", "test_attribute"
 
         with patch("tango.DeviceProxy", new_callable=DeviceProxyMock):
-
             device_proxy = tango.DeviceProxy(device_name)
             tracer.subscribe_event(device_proxy, attribute_name)
 
