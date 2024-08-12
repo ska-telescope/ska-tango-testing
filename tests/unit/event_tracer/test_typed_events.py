@@ -1,5 +1,6 @@
 """Typed events behave like normal events, but with a typed attribute value."""
 from assertpy import assert_that
+import pytest
 
 from ska_tango_testing.integration.event import ReceivedEvent
 from ska_tango_testing.integration.typed_event import (
@@ -14,7 +15,7 @@ from tests.unit.event_tracer.testing_utils.eventdata_mock import (
     create_eventdata_mock,
 )
 
-
+@pytest.mark.integration_tracer
 class TestTypedEvents:
     """Test the TypedEvent class and the EventEnumMapper class."""
 

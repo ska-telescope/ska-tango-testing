@@ -14,6 +14,8 @@ from datetime import datetime
 from typing import Any
 from unittest.mock import patch
 
+import pytest
+
 import tango
 from assertpy import assert_that
 
@@ -35,7 +37,7 @@ from tests.unit.event_tracer.testing_utils.populate_tracer import (
     delayed_add_event,
 )
 
-
+@pytest.mark.integration_tracer
 class TestTangoEventTracer:
     """Unit tests for the `TangoEventTracer` class."""
 
