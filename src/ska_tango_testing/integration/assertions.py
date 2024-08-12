@@ -156,7 +156,7 @@ def _print_passed_event_args(
         If not provided, it defaults to 1.
 
     :return: The string representation of the passed arguments.
-    """
+    """  # pylint: disable=too-many-arguments
     res = ""
     if device_name is not ANY_VALUE:
         res += f"device_name='{device_name}', "
@@ -360,8 +360,6 @@ def has_change_event_occurred(
     """  # noqa: DAR402
     # pylint: disable=too-many-arguments
 
-    # pylint: disable=too-many-arguments
-
     # check assertpy_context has a tracer object
     tracer = _get_tracer(assertpy_context)
 
@@ -375,10 +373,6 @@ def has_change_event_occurred(
     run_query_time = (
         timeout_util.start_time if timeout_util else datetime.now()
     )
-
-    # if not provided, set the further_matching_rules to a lambda that
-    # always returns True
-    further_matching_rules = further_matching_rules or (lambda _: True)
 
     # query and check if any event matches the predicate
     result = tracer.query_events(
@@ -397,6 +391,12 @@ def has_change_event_occurred(
                 target_event=e, tracer=tracer, previous_value=previous_value
             )
             if previous_value is not ANY_VALUE
+            else True
+        )
+        and (
+            # if given a further matching rule, apply it
+            further_matching_rules(e)
+            if further_matching_rules
             else True
         ),
         target_n_events=min_n_events,
@@ -423,6 +423,7 @@ def has_change_event_occurred(
             attribute_name,
             attribute_value,
             previous_value,
+            further_matching_rules,
             min_n_events,
         )
         msg += "\nQuery start time: " + str(run_query_time)
@@ -513,10 +514,6 @@ def hasnt_change_event_occurred(
         timeout_util.start_time if timeout_util else datetime.now()
     )
 
-    # if not provided, set the further_matching_rules to a lambda that
-    # always returns True
-    further_matching_rules = further_matching_rules or (lambda _: True)
-
     # query and check if any event matches the predicate
     result = tracer.query_events(
         lambda e:
@@ -536,7 +533,12 @@ def hasnt_change_event_occurred(
             if previous_value is not ANY_VALUE
             else True
         )
-        and further_matching_rules(e),
+        and (
+            # if given a further matching rule, apply it
+            further_matching_rules(e)
+            if further_matching_rules
+            else True
+        ),
         target_n_events=max_n_events,
         # if given use the timeout, else None
         timeout=timeout_util.get_remaining_timeout() if timeout_util else None,
@@ -561,6 +563,7 @@ def hasnt_change_event_occurred(
             attribute_name,
             attribute_value,
             previous_value,
+            further_matching_rules,
             max_n_events,
         )
         msg += "\nQuery start time: " + str(run_query_time)
