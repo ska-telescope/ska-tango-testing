@@ -156,6 +156,19 @@ In the code above, we used two custom methods:
   make more generic checks (e.g., assert presence of events with
   any previous value, any device, any attribute name, etc.).
 
+  **ANOTHER NOTE** (*a bit technical*): we are aware that sometimes
+  a simple `==` check between an expected value and and event value is not
+  enough to perform a meaningful check. For example, maybe you are dealing
+  with a complex attribute value (e.g., a composed tuple of things) and you
+  want to check only a part of it. Another example could be a even more tricky
+  case where your attribute is a ``numpy.ndarray`` of unknown size (and
+  recently ``numpy`` stopped supporting direct comparison between arrays 
+  of different sizes). In those cases, you can provide a further custom
+  predicate (``further_matching_rules``)
+  to the assertion method, which will be put in ``and`` with the
+  other checks and which can be used to perform an arbitrary complex check.
+  More details on the assertions API documentation.
+
 We chose this approach for the assertions because of its intuitive
 and expressive syntax, which is very close to natural language
 and permits you to write very readable tests. Moreover, as we will see
@@ -264,12 +277,12 @@ so the attribute value
 when printed as a string is just a number, 
 and it is not very informative.
 
-To address this issue, we provide a mechanism to associate a type to the
-events, so that when you print them, you can see the value as a human-readable
-label instead of a number. This is done by passing the a mapping when
+To address this issue, we provide a mechanism to associate *enums* types
+to events, so that when you print them, you can see the value as a
+human-readable label instead of a number. 
+This is done by passing the a mapping when
 creating the tracer instance, so that the tracer can use it to convert
-the attribute values to the corresponding labels. The mapping associates
-*attribute names* to enums.
+the attribute values to the corresponding labels.
 
 The typed subscription will look like this:
 
@@ -279,6 +292,13 @@ The typed subscription will look like this:
 
   from ska_control_model import ObsState
   from ska_tango_testing.integration import TangoEventTracer
+
+  # (where ObsState is an enum like this: )
+  # class ObsState(Enum):
+  #     EMPTY = 0
+  #     RESOURCING = 1
+  #     IDLE = 2
+  #     ...
 
   @pytest.fixture
   def event_tracer():
