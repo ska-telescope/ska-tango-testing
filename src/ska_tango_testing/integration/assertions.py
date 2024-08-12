@@ -556,7 +556,7 @@ def hasnt_change_event_occurred(
             msg += f" within {timeout_util.initial_timeout} seconds"
         else:
             msg += " in already existing events"
-        msg += ", but some were found."
+        msg += f", but {len(result)} were found."
         msg += f"Events captured by TANGO_TRACER:\n{event_list}"
         msg += "\n\nTANGO_TRACER Query arguments: "
         msg += _print_passed_event_args(

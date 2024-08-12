@@ -176,7 +176,31 @@ class TestCustomAssertions:
     # Tests: assert has change events occurred fails
 
     @staticmethod
+    def _expected_error_message_has_event(
+        detected_n_events: int = 0,
+        expected_n_events: int = 1,
+        timeout: int | None = None,
+    ) -> str:
+        """Generate (a piece of) the error msg when has event assertion fails.
+
+        :param detected_n_events: The number of events detected.
+        :param expected_n_events: The number of events expected.
+        :param timeout: The timeout value. By default, it is not specified.
+        :return: The error message (or better, the start of it).
+        """
+        res = f"(?:Expected to find {expected_n_events} event\\(s\\) "
+        res += "matching the predicate "
+
+        if timeout is not None:
+            res += f"within {timeout} seconds"
+        else:
+            res += "in already existing events"
+        res += f", but only {detected_n_events} found.)"
+
+        return res
+
     def test_assert_that_event_occurred_fails_when_no_event(
+        self,
         tracer: TangoEventTracer,
     ) -> None:
         """The custom assertion fails when no matching event occurs.
@@ -187,15 +211,17 @@ class TestCustomAssertions:
         add_event(tracer, "device1", 100.1, 4, attr_name="attrname")
         add_event(tracer, "device1", 100, 3, attr_name="attrname2")
 
-        with pytest.raises(AssertionError):
+        with pytest.raises(
+            AssertionError, match=self._expected_error_message_has_event()
+        ):
             assert_that(tracer).has_change_event_occurred(
                 device_name="device1",
                 attribute_name="attrname",
                 attribute_value=100,
             )
 
-    @staticmethod
     def test_assert_that_event_occurred_fails_when_no_event_within_timeout(
+        self,
         tracer: TangoEventTracer,
     ) -> None:
         """The custom ass. fails when no matching event occurs within timeout.
@@ -205,7 +231,10 @@ class TestCustomAssertions:
         delayed_add_event(tracer, "device1", 100, 3)
 
         start_time = datetime.now()
-        with pytest.raises(AssertionError):
+        with pytest.raises(
+            AssertionError,
+            match=self._expected_error_message_has_event(timeout=2),
+        ):
             assert_that(tracer).within_timeout(2).has_change_event_occurred(
                 device_name="device1",
                 attribute_value=100,
@@ -221,8 +250,8 @@ class TestCustomAssertions:
             3
         )
 
-    @staticmethod
     def test_assert_that_evt_occurred_fails_when_not_all_events_within_timeout(
+        self,
         tracer: TangoEventTracer,
     ) -> None:
         """The a. fails when one of the events doesn't occur within a timeout.
@@ -238,7 +267,10 @@ class TestCustomAssertions:
         delayed_add_event(tracer, "device1", 400, 4)
 
         start_time = datetime.now()
-        with pytest.raises(AssertionError):
+        with pytest.raises(
+            AssertionError,
+            match=self._expected_error_message_has_event(timeout=3),
+        ):
             assert_that(tracer).within_timeout(3).has_change_event_occurred(
                 device_name="device1",
                 attribute_value=100,
@@ -260,8 +292,8 @@ class TestCustomAssertions:
             4
         )
 
-    @staticmethod
     def test_assert_that_n_events_occurred_fails_when_less_than_n_events(
+        self,
         tracer: TangoEventTracer,
     ) -> None:
         """The custom assertion fails if less than N events occurs.
@@ -274,9 +306,8 @@ class TestCustomAssertions:
 
         with pytest.raises(
             AssertionError,
-            match=(
-                r"(?:Expected to find 3 event\(s\) matching the predicate "
-                + r"within 3 seconds, but only 2 found.)"
+            match=self._expected_error_message_has_event(
+                detected_n_events=2, expected_n_events=3, timeout=3
             ),
         ):
             assert_that(tracer).described_as(
@@ -446,7 +477,31 @@ class TestCustomAssertions:
         )
 
     @staticmethod
+    def _expected_error_message_hasnt_event(
+        detected_n_events: int = 1,
+        expected_n_events: int = 1,
+        timeout: int | None = None,
+    ) -> str:
+        """Generate (a piece of) the err msg when hasnt event assertion fails.
+
+        :param detected_n_events: The number of events detected.
+        :param expected_n_events: The number of events expected.
+        :param timeout: The timeout value. By default, it is not specified.
+        :return: The error message (or better, the start of it).
+        """
+        res = f"(?:Expected to NOT find {expected_n_events} event\\(s\\) "
+        res += "matching the predicate "
+
+        if timeout is not None:
+            res += f"within {timeout} seconds"
+        else:
+            res += "in already existing events"
+        res += f", but {detected_n_events} were found.)"
+
+        return res
+
     def test_assert_that_n_events_havent_occurred_captures_n_events_within_timeout(  # pylint: disable=line-too-long # noqa: E501
+        self,
         tracer: TangoEventTracer,
     ) -> None:
         """The custom assertion fails when more than N events occur.
@@ -457,13 +512,18 @@ class TestCustomAssertions:
         add_event(tracer, "device1", 5, 2)
         add_event(tracer, "device1", 100, 1)
         add_event(tracer, "device1", 200)
-        delayed_add_event(tracer, "device1", 100, 5)
+        delayed_add_event(tracer, "device1", 100, 2)
 
-        with pytest.raises(AssertionError):
+        with pytest.raises(
+            AssertionError,
+            match=self._expected_error_message_hasnt_event(
+                detected_n_events=3, expected_n_events=3, timeout=3
+            ),
+        ):
             assert_that(tracer).described_as(
                 "The event should match the predicate"
                 " if the future value matches within the timeout."
-            ).within_timeout(6).hasnt_change_event_occurred(
+            ).within_timeout(3).hasnt_change_event_occurred(
                 device_name="device1",
                 attribute_value=100,
                 max_n_events=3,
@@ -472,8 +532,8 @@ class TestCustomAssertions:
     # ##########################################################
     # Tests: assert has/hasnt events with previous value
 
-    @staticmethod
     def test_assert_that_event_occurred_handles_previous(
+        self,
         tracer: TangoEventTracer,
     ) -> None:
         """The custom assertion handles correctly the previous value.
@@ -500,7 +560,9 @@ class TestCustomAssertions:
             previous_value=120,
         )
 
-        with pytest.raises(AssertionError):
+        with pytest.raises(
+            AssertionError, match=self._expected_error_message_hasnt_event()
+        ):
             assert_that(tracer).hasnt_change_event_occurred(
                 device_name="device1",
                 attribute_value=200,
@@ -510,7 +572,9 @@ class TestCustomAssertions:
         # ----------------------------------------------------
         # previous value is not caught when it does not exist
 
-        with pytest.raises(AssertionError):
+        with pytest.raises(
+            AssertionError, match=self._expected_error_message_has_event()
+        ):
             # When there is no previous value, it should fail
             assert_that(tracer).has_change_event_occurred(
                 device_name="device1",
@@ -518,14 +582,17 @@ class TestCustomAssertions:
                 previous_value=100,
             )
 
-        with pytest.raises(AssertionError):
-            # Again, when there is no previous value, it should fail
+        with pytest.raises(
+            AssertionError, match=self._expected_error_message_has_event()
+        ):  # Again, when there is no previous value, it should fail
             assert_that(tracer).has_change_event_occurred(
                 device_name="device2",
                 previous_value=44,
             )
 
-        with pytest.raises(AssertionError):
+        with pytest.raises(
+            AssertionError, match=self._expected_error_message_has_event()
+        ):
             # Again a third time,
             # when there is no previous value, it should fail
             assert_that(tracer).has_change_event_occurred(
@@ -549,7 +616,9 @@ class TestCustomAssertions:
         )
 
         # previous value is not tricked by intermediate events
-        with pytest.raises(AssertionError):
+        with pytest.raises(
+            AssertionError, match=self._expected_error_message_has_event()
+        ):
             assert_that(tracer).has_change_event_occurred(
                 device_name="device1",
                 attribute_value=200,
