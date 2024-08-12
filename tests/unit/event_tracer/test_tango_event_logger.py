@@ -34,6 +34,7 @@ from tests.unit.event_tracer.testing_utils.patch_context_devproxy import (
 
 LOGGING_PATH = "ska_tango_testing.integration.logger.logging"
 
+
 @pytest.mark.integration_tracer
 class TestTangoEventLogger:
     """Basic unit tests for the :py:class:`TangoEventLogger`.
