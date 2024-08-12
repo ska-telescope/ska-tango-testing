@@ -8,7 +8,7 @@ from datetime import datetime
 
 from assertpy import assert_that
 
-from ska_tango_testing.integration.asserions_utils import (
+from ska_tango_testing.integration.assertions_utils import (
     ChainedAssertionsTimeout,
 )
 

@@ -86,7 +86,7 @@ from typing import Any, Callable
 
 import tango
 
-from ska_tango_testing.integration.asserions_utils import (
+from ska_tango_testing.integration.assertions_utils import (
     ChainedAssertionsTimeout,
 )
 from ska_tango_testing.integration.event import ReceivedEvent
@@ -239,6 +239,7 @@ def within_timeout(assertpy_context: Any, timeout: int | float) -> Any:
 
     :return: The decorated assertion context, with a
         :py:class:`~ska_tango_testing.integration.assertions_utils.ChainedAssertionsTimeout`
+        instance stored in the ``event_timeout`` attribute.
 
     :raises ValueError: If the
         :py:class:`~ska_tango_testing.integration.TangoEventTracer`
