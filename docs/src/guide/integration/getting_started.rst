@@ -160,14 +160,26 @@ In the code above, we used two custom methods:
   a simple `==` check between an expected value and and event value is not
   enough to perform a meaningful check. For example, maybe you are dealing
   with a complex attribute value (e.g., a composed tuple of things) and you
-  want to check only a part of it. Another example could be a even more tricky
-  case where your attribute is a ``numpy.ndarray`` of unknown size (and
-  recently ``numpy`` stopped supporting direct comparison between arrays 
-  of different sizes). In those cases, you can provide a further custom
-  predicate (``further_matching_rules``)
-  to the assertion method, which will be put in ``and`` with the
-  other checks and which can be used to perform an arbitrary complex check.
-  More details on the assertions API documentation.
+  want to check only a part of it. To address this issue, you can provide
+  as a parameter a custom predicate (``further_matching_rules``) to the
+  assertion method, which will be put in ``and`` with the other checks
+  and which can be used to perform an arbitrary complex check.
+
+  .. code-block:: python
+
+    assert_that(tracer).has_change_event_occurred(
+        device_name="sys/tg_test/1",
+        attribute_name="tupleAttribute",
+        further_matching_rules=lambda event:
+            len(event.attribute_value) >= 2
+            and event.attribute_value[1] == 123
+    )
+
+  Before using this advanced feature, we suggest to read the documentation
+  of :py:mod:`ska_tango_testing.integration.assertions` and
+  :py:class:`~ska_tango_testing.integration.event.ReceivedEvent`.
+
+
 
 We chose this approach for the assertions because of its intuitive
 and expressive syntax, which is very close to natural language
