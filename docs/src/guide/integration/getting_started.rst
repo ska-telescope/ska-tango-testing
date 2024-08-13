@@ -151,19 +151,51 @@ In the code above, we used two custom methods:
   - with a specific current value,
   - and with a specific previous value (determined by the most recent previous
     event on the same attribute and on the same device).
-  
-  **NOTE**: all those parameters are optional, so you can use the method to
+
+
+
+  **ANOTHER NOTE**: a further parameter called ``min_n_events`` permits you
+  to specify a minimum number of events that must be present in the tracer
+  to make the assertion pass. This is useful when you want to check repeated
+  events. Example:
+
+  .. code-block:: python
+
+    # at least 3 times there must be a transition from OFF to ON
+    assert_that(tracer).has_change_event_occurred(
+        device_name="sys/tg_test/1",
+        attribute_name="State",
+        current_value="ON",
+        previous_value="OFF",
+        min_n_events=3
+    )
+
+
+We chose this approach for the assertions because of its intuitive
+and expressive syntax, which is very close to natural language
+and permits you to write very readable tests. Moreover, as we will see
+in the next section, it permits also to provide very detailed error messages
+in case of failure. 
+
+Some further guidelines on the usage of ``has_change_event_occurred``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Here there are some further guidelines on how to use
+:py:func:`~ska_tango_testing.integration.assertions.has_change_event_occurred`.
+
+- **OPTIONALITY OF PARAMETERS**: all those parameters are optional,
+  so you can use the method to
   make more generic checks (e.g., assert presence of events with
   any previous value, any device, any attribute name, etc.).
 
-  **ANOTHER NOTE** (*a bit technical*): we are aware that sometimes
+- **CUSTOM PREDICATE**: we are aware that sometimes
   a simple `==` check between an expected value and and event value is not
   enough to perform a meaningful check. For example, maybe you are dealing
   with a complex attribute value (e.g., a composed tuple of things) and you
   want to check only a part of it. To address this issue, you can provide
   as a parameter a custom predicate (``further_matching_rules``) to the
   assertion method, which will be put in ``and`` with the other checks
-  and which can be used to perform an arbitrary complex check.
+  and which can be used to perform an arbitrary complex check. Example:
 
   .. code-block:: python
 
@@ -179,15 +211,67 @@ In the code above, we used two custom methods:
   of :py:mod:`ska_tango_testing.integration.assertions` and
   :py:class:`~ska_tango_testing.integration.event.ReceivedEvent`.
 
+- **MIN N EVENTS**: a further parameter called ``min_n_events`` permits you
+  to specify a minimum number of events that must be present in the tracer
+  to make the assertion pass. This is useful when you want to check repeated
+  events. Example:
 
+  .. code-block:: python
 
-We chose this approach for the assertions because of its intuitive
-and expressive syntax, which is very close to natural language
-and permits you to write very readable tests. Moreover, as we will see
-in the next section, it permits also to provide very detailed error messages
-in case of failure. 
+    # at least 3 times there must be a transition from OFF to ON
+    assert_that(tracer).has_change_event_occurred(
+        device_name="sys/tg_test/1",
+        attribute_name="State",
+        current_value="ON",
+        previous_value="OFF",
+        min_n_events=3
+    )
 
-For more details on the assertion methods, see the documentation of
+- **CHAINING OF ASSERTIONS**: `assertpy` permits you to chain multiple
+  assertions on the same object. In this context we used that feature to
+  permit the sharing of the timeout between multiple assertions. When you chain
+  multiple
+  :py:func:`~ska_tango_testing.integration.assertions.has_change_event_occurred`
+  assertions, the timeout specified with the method
+  :py:func:`~ska_tango_testing.integration.assertions.within_timeout`
+  will be shared between all the assertions. In practice, this means that
+  all the events must happen within the same timeout. 
+
+  .. code-block:: python
+
+    # the three devices must change state within 10 seconds
+    assert_that(tracer).within_timeout(10).has_change_event_occurred(
+        device_name="sys/tg_test/1",
+        attribute_name="State",
+        current_value="ON",
+        previous_value="OFF",
+    ).has_change_event_occurred(
+        device_name="sys/tg_test/2",
+        attribute_name="State",
+        current_value="OFF",
+        previous_value="ON",
+    ).has_change_event_occurred(
+        device_name="sys/tg_test/3",
+        attribute_name="State",
+        current_value="ON",
+        previous_value="OFF",
+    )
+
+  When you call this, concretely:
+  
+  - to the first event it's applied the whole timeout of 10 seconds,
+  - to the next assertion it's applied the remaining time (if any),
+  - if there is no remaining time, the assertion will have a timeout of 0
+    seconds and will fail immediately if the condition is not satisfied
+    with the already present events.
+
+  *IMPORTANT NOTE*: the sharing of a timeout between multiple assertions
+  is supported only since version 0.7.2 of `ska-tango-testing`. If you are
+  using an older version, to each of the chained assertions the initial timeout
+  (not decreased by the previous assertions) will be applied.
+
+For more details on this and on other assertion methods,
+see the documentation of
 :py:mod:`ska_tango_testing.integration.assertions`.
 
 Error messages and debugging

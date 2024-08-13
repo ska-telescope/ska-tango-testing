@@ -317,14 +317,6 @@ def has_change_event_occurred(
             further_matching_rules=lambda e: e.attribute_value > 5,
         )
 
-
-        # Add an arbitrary condition
-        assert_that(tracer).has_change_event_occurred(
-            attribute_name="other_attrname",
-            further_matching_rules=lambda e: e.attribute_value > 5,
-        )
-
-
         # Perform the same check, but look for AT LEAST 3 matching events.
         assert_that(tracer).has_change_event_occurred(
             attribute_name="attrname",
