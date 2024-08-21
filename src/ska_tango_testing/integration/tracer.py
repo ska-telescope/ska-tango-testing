@@ -18,7 +18,7 @@ import logging
 import threading
 from collections import defaultdict
 from enum import Enum
-from typing import Callable
+from typing import Callable, SupportsFloat
 
 import tango
 
@@ -547,7 +547,7 @@ class TangoEventTracer:
     def query_events(
         self,
         predicate: Callable[[ReceivedEvent], bool],
-        timeout: int | float | None = None,
+        timeout: int | float | None | SupportsFloat = None,
         target_n_events: int = 1,
     ) -> list[ReceivedEvent]:
         """Query stored and future events with a predicate and a timeout.
@@ -645,6 +645,15 @@ class TangoEventTracer:
         :raises ValueError: If the timeout is less than 0 or the target number
             of events is less than 1.
         """
+        # Timeout may non be always a number but something that can be casted
+        # to a float. This is useful for guaranteeing retro-compatibility
+        # in custom assertions written before 0.7.2, where the timeout
+        # was a number and not an object and some users may still have
+        # code where they directly pass the timeout object, ignoring
+        # that now it is not a number anymore.
+        if isinstance(timeout, SupportsFloat):
+            timeout = float(timeout)
+
         if timeout is not None and timeout < 0:
             raise ValueError(
                 "The timeout must be greater than 0. "

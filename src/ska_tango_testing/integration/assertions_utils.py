@@ -9,9 +9,10 @@ The main ones are:
 
 
 from datetime import datetime
+from typing import SupportsFloat
 
 
-class ChainedAssertionsTimeout:
+class ChainedAssertionsTimeout(SupportsFloat):
     """A utility for using the same timeout for multiple chained assertions.
 
     This class is used to set a timeout once and share it between multiple
@@ -66,6 +67,7 @@ class ChainedAssertionsTimeout:
 
         :param timeout: The initial timeout value in seconds.
         """
+        super().__init__()
         self._initial_timeout = timeout
         self._start_time = datetime.now()
 
@@ -92,6 +94,19 @@ class ChainedAssertionsTimeout:
             and at most the initial timeout value. It will decrease over time.
         """
         return max(
-            0,
-            self.initial_timeout - (datetime.now() - self.start_time).seconds,
+            0.0,
+            self.initial_timeout
+            - (datetime.now() - self.start_time).total_seconds(),
         )
+
+    def __float__(self) -> float:
+        """Get the remaining timeout value when casting to float.
+
+        # NOTE: For retro-compatibility, we want this object to be possible to
+        # cast to a number. This is why before 0.7.2, the timeout in assertions
+        # used as float number directly. We want to keep this behavior for
+        # retro-compatibility reasons.
+
+        :return: The remaining timeout value in seconds.
+        """
+        return self.get_remaining_timeout()

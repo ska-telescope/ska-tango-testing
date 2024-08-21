@@ -11,7 +11,7 @@ those events correctly. For that, see `test_tracer_subscribe_event.py`.
 
 # import logging
 from datetime import datetime
-from typing import Any
+from typing import Any, SupportsFloat
 from unittest.mock import patch
 
 import pytest
@@ -311,9 +311,9 @@ class TestTangoEventTracer:
         # At this point, no event for 'device1' exists
         delayed_add_event(
             tracer, "device1", 100, 3
-        )  # Add an event after 5 seconds
+        )  # Add an event after 3 seconds
 
-        # query_events with a timeout of 10 seconds
+        # query_events with a timeout of 5 seconds
         result = tracer.query_events(
             lambda e: e.has_device("device1"), timeout=5
         )
@@ -321,7 +321,43 @@ class TestTangoEventTracer:
         # Assert that the event is found within the timeout
         assert_that(result).described_as(
             "Expected to find a matching event for 'device1' "
-            "within 10 seconds, but none was found."
+            "within 5 seconds, but none was found."
+        ).is_length(1)
+
+    @staticmethod
+    def test_query_events_accepts_floatable_timeout(
+        tracer: TangoEventTracer,
+    ) -> None:
+        """Test that the query accepts a floatable timeout.
+
+        :param tracer: The `TangoEventTracer` instance.
+        """
+        # At this point, no event for 'device1' exists
+        delayed_add_event(
+            tracer, "device1", 100, 3
+        )  # Add an event after 3 seconds
+
+        class TestTimeout(SupportsFloat):
+            """A test timeout class that can be converted to a float."""
+
+            # pylint: disable=too-few-public-methods
+
+            def __float__(self) -> float:
+                """Convert to a float.
+
+                :return: The timeout as a float value.
+                """
+                return 5.0
+
+        # query_events with a timeout of 5 seconds
+        result = tracer.query_events(
+            lambda e: e.has_device("device1"), timeout=TestTimeout()
+        )
+
+        # Assert that the event is found within the timeout
+        assert_that(result).described_as(
+            "Expected to find a matching event for 'device1' "
+            "within 5 seconds, but none was found."
         ).is_length(1)
 
     # ########################################
