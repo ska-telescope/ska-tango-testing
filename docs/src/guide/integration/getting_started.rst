@@ -193,7 +193,7 @@ Here there are some further guidelines on how to use
   enough to perform a meaningful check. For example, maybe you are dealing
   with a complex attribute value (e.g., a composed tuple of things) and you
   want to check only a part of it. To address this issue, you can provide
-  as a parameter a custom predicate (``further_matching_rules``) to the
+  as a parameter a custom predicate (``custom_matcher``) to the
   assertion method, which will be put in ``and`` with the other checks
   and which can be used to perform an arbitrary complex check. Example:
 
@@ -202,7 +202,7 @@ Here there are some further guidelines on how to use
     assert_that(tracer).has_change_event_occurred(
         device_name="sys/tg_test/1",
         attribute_name="tupleAttribute",
-        further_matching_rules=lambda event:
+        custom_matcher=lambda event:
             len(event.attribute_value) >= 2
             and event.attribute_value[1] == 123
     )

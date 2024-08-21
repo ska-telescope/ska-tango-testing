@@ -133,7 +133,7 @@ def _print_passed_event_args(
     attribute_name: str | None = ANY_VALUE,
     attribute_value: Any | None = ANY_VALUE,
     previous_value: Any | None = ANY_VALUE,
-    further_matching_rules: Callable[[ReceivedEvent], bool] | None = None,
+    custom_matcher: Callable[[ReceivedEvent], bool] | None = None,
     target_n_events: int = 1,
 ) -> str:
     """Print the arguments passed to the event query.
@@ -149,7 +149,7 @@ def _print_passed_event_args(
         it will match any current value.
     :param previous_value: The previous value to match. If not provided,
         it will match any previous value.
-    :param further_matching_rules: An arbitrary predicate over the event. It is
+    :param custom_matcher: An arbitrary predicate over the event. It is
         essentially a function or a lambda that takes an event and returns
         ``True`` if it satisfies your condition.
     :param target_n_events: The minimum number of events to match.
@@ -166,8 +166,8 @@ def _print_passed_event_args(
         res += f"attribute_value={str(attribute_value)}, "
     if previous_value is not ANY_VALUE:
         res += f"previous_value={str(previous_value)}, "
-    if further_matching_rules is not None:
-        res += "further_matching_rules=<custom predicate>, "
+    if custom_matcher is not None:
+        res += "custom_matcher=<custom predicate>, "
     if target_n_events != 1:
         res += f"target_n_events={target_n_events}, "
 
@@ -261,7 +261,7 @@ def has_change_event_occurred(
     attribute_name: str | None = ANY_VALUE,
     attribute_value: Any | None = ANY_VALUE,
     previous_value: Any | None = ANY_VALUE,
-    further_matching_rules: Callable[[ReceivedEvent], bool] | None = None,
+    custom_matcher: Callable[[ReceivedEvent], bool] | None = None,
     min_n_events: int = 1,
 ) -> Any:
     """Verify that an event matching a given predicate occurs.
@@ -314,7 +314,7 @@ def has_change_event_occurred(
         # Add an arbitrary condition
         assert_that(tracer).has_change_event_occurred(
             attribute_name="other_attrname",
-            further_matching_rules=lambda e: e.attribute_value > 5,
+            custom_matcher=lambda e: e.attribute_value > 5,
         )
 
         # Perform the same check, but look for AT LEAST 3 matching events.
@@ -334,7 +334,7 @@ def has_change_event_occurred(
         it will match any current value.
     :param previous_value: The previous value to match. If not provided,
         it will match any previous value.
-    :param further_matching_rules: An arbitrary predicate over the event. It is
+    :param custom_matcher: An arbitrary predicate over the event. It is
         essentially a function or a lambda that takes an event and returns
         ``True`` if it satisfies your condition. NOTE: it is put in ``and``
         with the other specified parameters.
@@ -388,8 +388,8 @@ def has_change_event_occurred(
         )
         and (
             # if given a further matching rule, apply it
-            further_matching_rules(e)
-            if further_matching_rules
+            custom_matcher(e)
+            if custom_matcher
             else True
         ),
         target_n_events=min_n_events,
@@ -416,7 +416,7 @@ def has_change_event_occurred(
             attribute_name,
             attribute_value,
             previous_value,
-            further_matching_rules,
+            custom_matcher,
             min_n_events,
         )
         msg += "\nQuery start time: " + str(run_query_time)
@@ -433,7 +433,7 @@ def hasnt_change_event_occurred(
     attribute_name: str | None = ANY_VALUE,
     attribute_value: Any | None = ANY_VALUE,
     previous_value: Any | None = ANY_VALUE,
-    further_matching_rules: Callable[[ReceivedEvent], bool] | None = None,
+    custom_matcher: Callable[[ReceivedEvent], bool] | None = None,
     max_n_events: int = 1,
 ) -> Any:
     """Verify that an event matching a given predicate does not occur.
@@ -474,7 +474,7 @@ def hasnt_change_event_occurred(
         it will match any current value.
     :param previous_value: The previous value to match. If not provided,
         it will match any previous value.
-    :param further_matching_rules: An arbitrary predicate over the event. It is
+    :param custom_matcher: An arbitrary predicate over the event. It is
         essentially a function or a lambda that takes an event and returns
         ``True`` if it satisfies your condition. NOTE: it is put in ``and``
         with the other specified parameters.
@@ -528,8 +528,8 @@ def hasnt_change_event_occurred(
         )
         and (
             # if given a further matching rule, apply it
-            further_matching_rules(e)
-            if further_matching_rules
+            custom_matcher(e)
+            if custom_matcher
             else True
         ),
         target_n_events=max_n_events,
@@ -556,7 +556,7 @@ def hasnt_change_event_occurred(
             attribute_name,
             attribute_value,
             previous_value,
-            further_matching_rules,
+            custom_matcher,
             max_n_events,
         )
         msg += "\nQuery start time: " + str(run_query_time)

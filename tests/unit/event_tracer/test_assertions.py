@@ -632,3 +632,65 @@ class TestCustomAssertions:
             attribute_value=200,
             previous_value=100,
         )
+
+    # ##########################################################
+    # Tests: assert has/hasnt events with custom matchers
+
+    def test_has_event_custom_matcher_matches_event(
+        self,
+        tracer: TangoEventTracer,
+    ) -> None:
+        """The custom matching rules match the event when it happened.
+
+        :param tracer: The `TangoEventTracer` instance.
+        """
+        add_event(tracer, "device1", 100, 5, attr_name="attrname")
+
+        assert_that(tracer).described_as(
+            "The custom matching rules should match the event"
+        ).has_change_event_occurred(
+            device_name="device1",
+            attribute_name="attrname",
+            custom_matcher=lambda e: e.attribute_value > 50
+            and e.attribute_value < 150,
+        )
+
+        with pytest.raises(
+            AssertionError, match=self._expected_error_message_has_event()
+        ):
+            assert_that(tracer).described_as(
+                "The custom matching rules should match the event"
+            ).has_change_event_occurred(
+                device_name="device1",
+                attribute_name="attrname",
+                custom_matcher=lambda e: e.attribute_value > 150,
+            )
+
+    def test_hasnt_event_custom_matcher_matches_events(
+        self,
+        tracer: TangoEventTracer,
+    ) -> None:
+        """The custom matching rules match the event when it happened.
+
+        :param tracer: The `TangoEventTracer` instance.
+        """
+        add_event(tracer, "device1", 100, 5, attr_name="attrname")
+
+        assert_that(tracer).described_as(
+            "The custom matching rules should match the event"
+        ).hasnt_change_event_occurred(
+            device_name="device1",
+            attribute_name="attrname",
+            custom_matcher=lambda e: e.attribute_value > 150,
+        )
+
+        with pytest.raises(
+            AssertionError, match=self._expected_error_message_hasnt_event()
+        ):
+            assert_that(tracer).described_as(
+                "The custom matching rules should match the event"
+            ).hasnt_change_event_occurred(
+                device_name="device1",
+                attribute_name="attrname",
+                custom_matcher=lambda e: e.attribute_value > 50,
+            )
