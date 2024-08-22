@@ -180,7 +180,7 @@ class TestCustomAssertions:
         expected_n_events: int = 1,
         timeout: int | None = None,
     ) -> str:
-        """A fragment of a regular expression for error message validation.
+        """Create a regular expression for error message validation.
 
         This method returns a regex pattern fragment intended
         to match the start of an error message when an event assertion fails.
@@ -490,7 +490,7 @@ class TestCustomAssertions:
         expected_n_events: int = 1,
         timeout: int | None = None,
     ) -> str:
-        """A fragment of a regular expression for hasnt event error message.
+        """Create a regular expression for hasnt event error message.
 
         This method returns a regex pattern fragment intended
         to match the start of an error message when an event assertion fails
