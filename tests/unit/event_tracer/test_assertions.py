@@ -25,7 +25,7 @@ class TestCustomAssertions:
 
     @staticmethod
     def _assert_exposes(tracer: TangoEventTracer, assertion_name: str) -> None:
-        """Check that a custom assertion is exposed.
+        """Check that a custom assertion is accessible and callable.
 
         :param tracer: The `TangoEventTracer` instance.
         :param assertion_name: The name of the custom assertion.
@@ -202,7 +202,7 @@ class TestCustomAssertions:
         self,
         tracer: TangoEventTracer,
     ) -> None:
-        """The custom assertion fails when no matching event occurs.
+        """The assertion fails when no matching event occurs.
 
         :param tracer: The `TangoEventTracer` instance.
         """
@@ -223,7 +223,7 @@ class TestCustomAssertions:
         self,
         tracer: TangoEventTracer,
     ) -> None:
-        """The custom ass. fails when no matching event occurs within timeout.
+        """The assertion fails when no matching event occurs within timeout.
 
         :param tracer: The `TangoEventTracer` instance.
         """
@@ -253,7 +253,7 @@ class TestCustomAssertions:
         self,
         tracer: TangoEventTracer,
     ) -> None:
-        """The a. fails when one of the events doesn't occur within a timeout.
+        """The assertion fails when not all event occur within a timeout.
 
         When there is a set of events, asserted within the same timeout,
         all of them must occur within that timeout. If one of them doesn't
@@ -295,7 +295,7 @@ class TestCustomAssertions:
         self,
         tracer: TangoEventTracer,
     ) -> None:
-        """The custom assertion fails if less than N events occurs.
+        """The assertion fails if less than N events occurs.
 
         :param tracer: The `TangoEventTracer` instance.
         """
@@ -325,7 +325,7 @@ class TestCustomAssertions:
     def test_assert_that_event_hasnt_occurred_pass_when_no_matching(
         tracer: TangoEventTracer,
     ) -> None:
-        """The custom assertion pass when no event is matching.
+        """The hasnt assertion passes when no event is matching.
 
         :param tracer: The `TangoEventTracer` instance.
         """
@@ -368,7 +368,7 @@ class TestCustomAssertions:
     def test_assert_that_event_hasnt_occurred_waits_for_timeout(
         tracer: TangoEventTracer,
     ) -> None:
-        """The custom assertion waits for the timeout to pass.
+        """The hasnt assertion waits for the timeout before passing.
 
         :param tracer: The `TangoEventTracer` instance.
         """
@@ -397,7 +397,7 @@ class TestCustomAssertions:
     def test_assert_that_event_set_havent_occurred_waits_for_timeout(
         tracer: TangoEventTracer,
     ) -> None:
-        """The custom assertion verifies that no event occurs within timeout.
+        """The hasnt assertion verifies that no event occurs within timeout.
 
         When a certain set of event doesn't occur within a timeout,
         the assertion should pass.
@@ -435,7 +435,7 @@ class TestCustomAssertions:
     def test_assert_that_n_events_havent_occurred(
         tracer: TangoEventTracer,
     ) -> None:
-        """The custom assertion checks that N events didn't occur.
+        """The hasnt assertion checks that N events didn't occur.
 
         :param tracer: The `TangoEventTracer` instance.
         """
@@ -456,7 +456,7 @@ class TestCustomAssertions:
     def test_assert_that_n_events_havent_occurred_within_timeout(
         tracer: TangoEventTracer,
     ) -> None:
-        """The custom assertion waits to checks that N events don't occur.
+        """The hasnt assertion waits to checks that N events don't occur.
 
         :param tracer: The `TangoEventTracer` instance.
         """
@@ -503,7 +503,7 @@ class TestCustomAssertions:
         self,
         tracer: TangoEventTracer,
     ) -> None:
-        """The custom assertion fails when more than N events occur.
+        """The hasnt assertion fails when more than N events occur.
 
         :param tracer: The `TangoEventTracer` instance.
         """
@@ -535,7 +535,7 @@ class TestCustomAssertions:
         self,
         tracer: TangoEventTracer,
     ) -> None:
-        """The custom assertion handles correctly the previous value.
+        """The hasnt assertion handles correctly the previous value.
 
         :param tracer: The `TangoEventTracer` instance.
         """
@@ -638,14 +638,16 @@ class TestCustomAssertions:
         self,
         tracer: TangoEventTracer,
     ) -> None:
-        """The custom matching rules match the event when it happened.
+        """The custom matcher matches the event when it happened.
+
+        (In the has_change_event_occurred assertion)
 
         :param tracer: The `TangoEventTracer` instance.
         """
         add_event(tracer, "device1", 100, 5, attr_name="attrname")
 
         assert_that(tracer).described_as(
-            "The custom matching rules should match the event"
+            "The custom matcher should match the event"
         ).has_change_event_occurred(
             device_name="device1",
             attribute_name="attrname",
@@ -657,7 +659,7 @@ class TestCustomAssertions:
             AssertionError, match=self._expected_error_message_has_event()
         ):
             assert_that(tracer).described_as(
-                "The custom matching rules should match the event"
+                "The custom matcher should match the event"
             ).has_change_event_occurred(
                 device_name="device1",
                 attribute_name="attrname",
@@ -668,14 +670,16 @@ class TestCustomAssertions:
         self,
         tracer: TangoEventTracer,
     ) -> None:
-        """The custom matching rules match the event when it happened.
+        """The custom matcher matches the event when it happened.
+
+        (In the hasnt_change_event_occurred assertion)
 
         :param tracer: The `TangoEventTracer` instance.
         """
         add_event(tracer, "device1", 100, 5, attr_name="attrname")
 
         assert_that(tracer).described_as(
-            "The custom matching rules should match the event"
+            "The custom matcher should match the event"
         ).hasnt_change_event_occurred(
             device_name="device1",
             attribute_name="attrname",
@@ -686,7 +690,7 @@ class TestCustomAssertions:
             AssertionError, match=self._expected_error_message_hasnt_event()
         ):
             assert_that(tracer).described_as(
-                "The custom matching rules should match the event"
+                "The custom matcher should match the event"
             ).hasnt_change_event_occurred(
                 device_name="device1",
                 attribute_name="attrname",
