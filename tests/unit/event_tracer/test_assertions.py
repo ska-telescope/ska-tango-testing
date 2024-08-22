@@ -189,7 +189,7 @@ class TestCustomAssertions:
         :param timeout: The timeout value. By default, it is not specified.
         :return: The error message (or better, the start of it).
         """
-        res = f"(?:Expected to find {expected_n_events} event\\(s\\) "
+        res = rf"(?:Expected to find {expected_n_events} event\(s\) "
         res += "matching the predicate "
 
         if timeout is not None:

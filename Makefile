@@ -25,7 +25,7 @@ PYTHON_VARS_AFTER_PYTEST := $(PYTHON_VARS_AFTER_PYTEST) -k '$(PYTHON_TEST_NAME)'
 
 PYTHON_TEST_MARK ?=## Mark of your test target (it will be passed to pytest through -m)
 ifneq ($(PYTHON_TEST_MARK),)
-	PYTHON_VARS_AFTER_PYTEST := $(PYTHON_VARS_AFTER_PYTEST) -m '$(PYTHON_TEST_MARK)'
+	PYTHON_VARS_AFTER_PYTEST += -m '$(PYTHON_TEST_MARK)'
 endif
 
 # Example: make python-test PYTHON_TEST_MARK="integration_tracer"

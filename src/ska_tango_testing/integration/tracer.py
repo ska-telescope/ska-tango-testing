@@ -547,7 +547,7 @@ class TangoEventTracer:
     def query_events(
         self,
         predicate: Callable[[ReceivedEvent], bool],
-        timeout: int | float | None | SupportsFloat = None,
+        timeout: SupportsFloat | None = None,
         target_n_events: int = 1,
     ) -> list[ReceivedEvent]:
         """Query stored and future events with a predicate and a timeout.
@@ -651,20 +651,20 @@ class TangoEventTracer:
         # was a number and not an object and some users may still have
         # code where they directly pass the timeout object, ignoring
         # that now it is not a number anymore.
-        if isinstance(timeout, SupportsFloat):
+        if timeout is not None:
             timeout = float(timeout)
 
-        if timeout is not None and timeout < 0:
-            raise ValueError(
-                "The timeout must be greater than 0. "
-                f"Instead, you provided {timeout}."
-            )
+            if timeout < 0:
+                raise ValueError(
+                    "The timeout must be greater than 0. "
+                    f"Instead, you provided {timeout}."
+                )
 
-        if timeout == float("inf"):
-            raise ValueError(
-                "The timeout must not be infinite. "
-                "Instead, you provided float('inf')."
-            )
+            if timeout == float("inf"):
+                raise ValueError(
+                    "The timeout must not be infinite. "
+                    "Instead, you provided float('inf')."
+                )
 
         if target_n_events < 1:
             raise ValueError(
