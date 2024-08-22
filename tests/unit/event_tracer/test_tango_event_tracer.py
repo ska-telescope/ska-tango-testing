@@ -474,6 +474,6 @@ class TestTangoEventTracer:
         assert_that(tracer.events[0].attribute_value).described_as(
             "The attribute value should be DummyStateEnum.STATE2"
         ).is_equal_to(DummyStateEnum.STATE_2)
-        assert_that(tracer.events[0].attribute_value_as_str).described_as(
+        assert_that(str(tracer.events[0].attribute_value)).described_as(
             "The attribute value as string should be 'STATE2'"
         ).is_equal_to("DummyStateEnum.STATE_2")

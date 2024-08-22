@@ -28,7 +28,7 @@ class TestTypedEvents:
         assert_that(typed_event.attribute_value).is_equal_to(
             DummyStateEnum.STATE_1
         )
-        assert_that(typed_event.attribute_value_as_str).is_equal_to(
+        assert_that(str(typed_event.attribute_value)).is_equal_to(
             "DummyStateEnum.STATE_1"
         )
 
@@ -60,7 +60,7 @@ class TestTypedEvents:
         assert_that(ret_typed_event.attribute_value).is_equal_to(
             DummyStateEnum.STATE_1
         )
-        assert_that(ret_typed_event.attribute_value_as_str).is_equal_to(
+        assert_that(str(ret_typed_event.attribute_value)).is_equal_to(
             "DummyStateEnum.STATE_1"
         )
 
@@ -79,7 +79,7 @@ class TestTypedEvents:
         assert_that(typed_event.device_name).is_equal_to("test/device/1")
         assert_that(typed_event.attribute_name).is_equal_to("state2")
         assert_that(typed_event.attribute_value).is_equal_to(1)
-        assert_that(typed_event.attribute_value_as_str).is_equal_to("1")
+        assert_that(str(typed_event.attribute_value)).is_equal_to("1")
 
     @staticmethod
     def test_event_enum_mapper_raises_error_on_invalid_enum() -> None:
@@ -106,7 +106,7 @@ class TestTypedEvents:
         assert_that(ret_typed_event.attribute_value).is_equal_to(
             DummyStateEnum.STATE_1
         )
-        assert_that(typed_event.attribute_value_as_str).is_equal_to(
+        assert_that(str(typed_event.attribute_value)).is_equal_to(
             "DummyStateEnum.STATE_1"
         )
 

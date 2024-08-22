@@ -94,7 +94,7 @@ def DEFAULT_LOG_MESSAGE_BUILDER(  # pylint: disable=invalid-name
     """
     return (
         f"    EVENT_LOGGER: At {event.reception_time}, {event.device_name} "
-        + f"{event.attribute_name} changed to {event.attribute_value_as_str}."
+        + f"{event.attribute_name} changed to {str(event.attribute_value)}."
     )
 
 
@@ -275,7 +275,6 @@ class TangoEventLogger:
         with self.lock:
             self._subscription_ids[device_proxy].append(sub_id)
 
-    # @staticmethod
     def _log_event(
         self,
         event_data: tango.EventData,

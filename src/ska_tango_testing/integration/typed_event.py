@@ -65,7 +65,7 @@ class TypedEvent(ReceivedEvent):
 
         event = TypedEvent(event_data, MyEnum)
 
-        print(event.attribute_value_as_str)  # MyEnum.STATE1
+        print(str(event.attribute_value))  # MyEnum.STATE1
     """
 
     def __init__(
@@ -84,6 +84,24 @@ class TypedEvent(ReceivedEvent):
     @property
     def attribute_value(self) -> Enum:
         """The attribute value, eventually casted to the given enum.
+
+        NOTE: remember that if you want to have it printed with the Enum
+        label instead of the integer value, you need to cast it to a string,
+        like done here:
+
+        .. code-block:: python
+
+            from enum import Enum
+
+            class MyEnum(Enum):
+                STATE1 = 1
+                STATE2 = 2
+                STATE3 = 3
+
+            event = TypedEvent(event_data, MyEnum)
+
+            print(event.attribute_value) # 1
+            print(str(event.attribute_value))  # MyEnum.STATE1
 
         :return: the attribute value, eventually converted to an enum.
         """
