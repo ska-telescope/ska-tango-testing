@@ -490,7 +490,15 @@ class TestCustomAssertions:
         expected_n_events: int = 1,
         timeout: int | None = None,
     ) -> str:
-        """Generate (a piece of) the err msg when hasnt event assertion fails.
+        """Create a regular expression for hasnt event error message.
+
+        This method returns a regex pattern fragment intended
+        to match the start of an error message when an event assertion fails
+        in the hasnt assertion. It is parametrized with the number of detected
+        events and the (not) expected number of events (both defaults to
+        1, since most of the times you were expecting less than 1 event and
+        instead you found exactly 1 event), and the timeout value (defaults
+        to None, since in most of the tests it is not specified).
 
         :param detected_n_events: The number of events detected.
         :param expected_n_events: The number of events expected. It is intended
