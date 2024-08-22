@@ -21,20 +21,12 @@ from assertpy import assert_that
 import ska_tango_testing.context
 from ska_tango_testing.integration.event import ReceivedEvent
 from ska_tango_testing.integration.tracer import TangoEventTracer
-from tests.unit.event_tracer.testing_utils import create_eventdata_mock
-from tests.unit.event_tracer.testing_utils.dev_proxy_mock import (
-    DeviceProxyMock,
-)
-from tests.unit.event_tracer.testing_utils.dummy_state_enum import (
-    DummyStateEnum,
-)
-from tests.unit.event_tracer.testing_utils.patch_context_devproxy import (
-    patch_context_device_proxy,
-)
-from tests.unit.event_tracer.testing_utils.populate_tracer import (
-    add_event,
-    delayed_add_event,
-)
+
+from .testing_utils import create_eventdata_mock
+from .testing_utils.dev_proxy_mock import DeviceProxyMock
+from .testing_utils.dummy_state_enum import DummyStateEnum
+from .testing_utils.patch_context_devproxy import patch_context_device_proxy
+from .testing_utils.populate_tracer import add_event, delayed_add_event
 
 
 @pytest.mark.integration_tracer

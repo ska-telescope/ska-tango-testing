@@ -7,13 +7,9 @@ from ska_tango_testing.integration.typed_event import (
     EventEnumMapper,
     TypedEvent,
 )
-from tests.unit.event_tracer.testing_utils.dummy_state_enum import (
-    DummyNonEnumClass,
-    DummyStateEnum,
-)
-from tests.unit.event_tracer.testing_utils.eventdata_mock import (
-    create_eventdata_mock,
-)
+
+from .testing_utils.dummy_state_enum import DummyNonEnumClass, DummyStateEnum
+from .testing_utils.eventdata_mock import create_eventdata_mock
 
 
 @pytest.mark.integration_tracer

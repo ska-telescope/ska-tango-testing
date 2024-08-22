@@ -21,16 +21,11 @@ from ska_tango_testing.integration.logger import (
     DEFAULT_LOG_MESSAGE_BUILDER,
     TangoEventLogger,
 )
-from tests.unit.event_tracer.testing_utils import create_eventdata_mock
-from tests.unit.event_tracer.testing_utils.dev_proxy_mock import (
-    DeviceProxyMock,
-)
-from tests.unit.event_tracer.testing_utils.dummy_state_enum import (
-    DummyStateEnum,
-)
-from tests.unit.event_tracer.testing_utils.patch_context_devproxy import (
-    patch_context_device_proxy,
-)
+
+from .testing_utils import create_eventdata_mock
+from .testing_utils.dev_proxy_mock import DeviceProxyMock
+from .testing_utils.dummy_state_enum import DummyStateEnum
+from .testing_utils.patch_context_devproxy import patch_context_device_proxy
 
 LOGGING_PATH = "ska_tango_testing.integration.logger.logging"
 

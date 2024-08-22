@@ -12,9 +12,7 @@ instance of the device proxy.
 from typing import Any
 from unittest.mock import patch
 
-from tests.unit.event_tracer.testing_utils.dev_proxy_mock import (
-    DeviceProxyMock,
-)
+from .dev_proxy_mock import DeviceProxyMock
 
 
 def patch_context_device_proxy() -> Any:

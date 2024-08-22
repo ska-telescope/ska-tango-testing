@@ -15,9 +15,8 @@ from ska_tango_testing.integration.predicates import (
     event_matches_parameters,
 )
 from ska_tango_testing.integration.tracer import TangoEventTracer
-from tests.unit.event_tracer.testing_utils.received_event_mock import (
-    create_dummy_event,
-)
+
+from .testing_utils.received_event_mock import create_dummy_event
 
 
 @pytest.mark.integration_tracer
