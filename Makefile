@@ -17,7 +17,7 @@ docs-pre-build:
 
 
 PYTHON_TEST_NAME ?=## Name of your test target (it will be passed to pytest through -k) 
-PYTHON_VARS_AFTER_PYTEST := $(PYTHON_VARS_AFTER_PYTEST) -k '$(PYTHON_TEST_NAME)'
+PYTHON_VARS_AFTER_PYTEST += -k '$(PYTHON_TEST_NAME)'
 
 # Example: make python-test
 #	PYTHON_TEST_NAME="TangoEventTracer or TangoEventLogger or TestCustomPredicates or TestCustomAssertions or TestTypedEvents or TestChainedAssertionsTimeout"

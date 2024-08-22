@@ -620,7 +620,16 @@ class TangoEventTracer:
         :param timeout: The time span in seconds to wait for a matching event
             (optional). If not specified, the method returns immediately.
 
-            It must be greater or equal to 0. It must not be infinite.
+            A timeout can be None or something that can be casted to a float.
+            If it is something that can be casted to a float, it must be
+            greater than 0 and not infinite.
+
+            **TECHNICAL NOTE**: Timeout may non be always a number but
+            something that can be casted to a float. This is useful for
+            guaranteeing retro-compatibility in custom assertions written
+            before 0.7.2, where the timeout was a number and not an object
+            and some users may still have code where they directly pass
+            the timeout object, ignoring that now it is not a number anymore.
 
         :param target_n_events: How many events do you expect to find with this
             query? If in past events (events which happens prior to the moment
@@ -642,35 +651,13 @@ class TangoEventTracer:
         :return: all matching events within the timeout
             period if there are any, or an empty list if there are none.
 
-        :raises ValueError: If the timeout is less than 0 or the target number
-            of events is less than 1.
-        """
-        # Timeout may non be always a number but something that can be casted
-        # to a float. This is useful for guaranteeing retro-compatibility
-        # in custom assertions written before 0.7.2, where the timeout
-        # was a number and not an object and some users may still have
-        # code where they directly pass the timeout object, ignoring
-        # that now it is not a number anymore.
-        if timeout is not None:
-            timeout = float(timeout)
-
-            if timeout < 0:
-                raise ValueError(
-                    "The timeout must be greater than 0. "
-                    f"Instead, you provided {timeout}."
-                )
-
-            if timeout == float("inf"):
-                raise ValueError(
-                    "The timeout must not be infinite. "
-                    "Instead, you provided float('inf')."
-                )
-
-        if target_n_events < 1:
-            raise ValueError(
-                "The target number of events must be greater or equal to 1. "
-                f"Instead, you provided {target_n_events}."
-            )
+        :raises ValueError: If the timeout or the target number of events
+            does not meet the requirements (see above).
+        """  # noqa: DAR402
+        # validate the timeout and the target number of events
+        # and raise a ValueError if they are not correct
+        timeout = self._validate_timeout(timeout)
+        target_n_events = self._validate_target_n_events(target_n_events)
 
         # we aim to get a certain target number of events
         # that match a predicate
@@ -710,3 +697,59 @@ class TangoEventTracer:
         # remove the query from the list of pending queries
         with self._query_lock:
             self._pending_queries.remove(query_evaluator)
+
+    # -----------------------------
+    # Input validators
+
+    @staticmethod
+    def _validate_timeout(timeout: SupportsFloat | None) -> float | None:
+        """Validate the timeout and return it as a float.
+
+        A timeout can be None or something that can be casted to a float. If
+        it is something that can be casted to a float, it must be greater than
+        0 and not infinite. This method performs these checks and returns the
+        timeout as a float (or None).
+
+        :param timeout: The timeout to validate.
+        :return: The timeout as a float.
+        :raises ValueError: If some of the stated conditions are not met.
+        """
+        if timeout is None:
+            return None
+
+        timeout = float(timeout)
+
+        if timeout < 0:
+            raise ValueError(
+                "The timeout must be greater than 0. "
+                f"Instead, you provided {timeout}."
+            )
+
+        if timeout == float("inf"):
+            raise ValueError(
+                "The timeout must not be infinite. "
+                "Instead, you provided float('inf') or something "
+                "that when casted as float turns to become "
+                "float('inf')."
+            )
+
+        return timeout
+
+    @staticmethod
+    def _validate_target_n_events(target_n_events: int) -> int:
+        """Validate the target number of events and return it as an int.
+
+        The target number of events must be greater or equal to 1. This method
+        performs this check and returns the target number of events as an int.
+
+        :param target_n_events: The target number of events to validate.
+        :return: The target number of events as an int.
+        :raises ValueError: If the target number of events is less than 1.
+        """
+        if target_n_events < 1:
+            raise ValueError(
+                "The target number of events must be greater or equal to 1. "
+                f"Instead, you provided {target_n_events}."
+            )
+
+        return target_n_events
