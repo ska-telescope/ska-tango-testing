@@ -11,28 +11,25 @@ those events correctly. For that, see `test_tracer_subscribe_event.py`.
 
 # import logging
 from datetime import datetime
-from typing import Any
+from typing import Any, SupportsFloat
 from unittest.mock import patch
 
+import pytest
 import tango
 from assertpy import assert_that
 
 import ska_tango_testing.context
 from ska_tango_testing.integration.event import ReceivedEvent
 from ska_tango_testing.integration.tracer import TangoEventTracer
-from tests.unit.event_tracer.testing_utils import create_eventdata_mock
-from tests.unit.event_tracer.testing_utils.dev_proxy_mock import (
-    DeviceProxyMock,
-)
-from tests.unit.event_tracer.testing_utils.patch_context_devproxy import (
-    patch_context_device_proxy,
-)
-from tests.unit.event_tracer.testing_utils.populate_tracer import (
-    add_event,
-    delayed_add_event,
-)
+
+from .testing_utils import create_eventdata_mock
+from .testing_utils.dev_proxy_mock import DeviceProxyMock
+from .testing_utils.dummy_state_enum import DummyStateEnum
+from .testing_utils.patch_context_devproxy import patch_context_device_proxy
+from .testing_utils.populate_tracer import add_event, delayed_add_event
 
 
+@pytest.mark.integration_tracer
 class TestTangoEventTracer:
     """Unit tests for the `TangoEventTracer` class."""
 
@@ -306,9 +303,9 @@ class TestTangoEventTracer:
         # At this point, no event for 'device1' exists
         delayed_add_event(
             tracer, "device1", 100, 3
-        )  # Add an event after 5 seconds
+        )  # Add an event after 3 seconds
 
-        # query_events with a timeout of 10 seconds
+        # query_events with a timeout of 5 seconds
         result = tracer.query_events(
             lambda e: e.has_device("device1"), timeout=5
         )
@@ -316,7 +313,43 @@ class TestTangoEventTracer:
         # Assert that the event is found within the timeout
         assert_that(result).described_as(
             "Expected to find a matching event for 'device1' "
-            "within 10 seconds, but none was found."
+            "within 5 seconds, but none was found."
+        ).is_length(1)
+
+    @staticmethod
+    def test_query_events_accepts_floatable_timeout(
+        tracer: TangoEventTracer,
+    ) -> None:
+        """Test that the query accepts a floatable timeout.
+
+        :param tracer: The `TangoEventTracer` instance.
+        """
+        # At this point, no event for 'device1' exists
+        delayed_add_event(
+            tracer, "device1", 100, 3
+        )  # Add an event after 3 seconds
+
+        class TestTimeout(SupportsFloat):
+            """A test timeout class that can be converted to a float."""
+
+            # pylint: disable=too-few-public-methods
+
+            def __float__(self) -> float:
+                """Convert to a float.
+
+                :return: The timeout as a float value.
+                """
+                return 5.0
+
+        # query_events with a timeout of 5 seconds
+        result = tracer.query_events(
+            lambda e: e.has_device("device1"), timeout=TestTimeout()
+        )
+
+        # Assert that the event is found within the timeout
+        assert_that(result).described_as(
+            "Expected to find a matching event for 'device1' "
+            "within 5 seconds, but none was found."
         ).is_length(1)
 
     # ########################################
@@ -414,3 +447,33 @@ class TestTangoEventTracer:
             "Expected to find a matching event for 'TestAttr', "
             "but none was found."
         ).is_length(1)
+
+    # ########################################
+    # Test cases: typed events
+    # (some special events are typed with an Enum)
+
+    @staticmethod
+    def test_add_typed_event() -> None:
+        """A typed event is correctly created and added to the tracer."""
+        tracer = TangoEventTracer({"state": DummyStateEnum})
+        test_event = create_eventdata_mock(
+            "test_device", "state", DummyStateEnum.STATE_2
+        )
+
+        tracer._event_callback(test_event)  # pylint: disable=protected-access
+
+        assert_that(tracer.events).described_as(
+            "Event callback should add an event"
+        ).is_length(1)
+        assert_that(tracer.events[0]).described_as(
+            "First event should be a TypedEvent instance"
+        ).is_instance_of(ReceivedEvent)
+        assert_that(tracer.events[0].attribute_value).described_as(
+            "The attribute value should be a DummyStateEnum instance"
+        ).is_instance_of(DummyStateEnum)
+        assert_that(tracer.events[0].attribute_value).described_as(
+            "The attribute value should be DummyStateEnum.STATE2"
+        ).is_equal_to(DummyStateEnum.STATE_2)
+        assert_that(str(tracer.events[0].attribute_value)).described_as(
+            "The attribute value as string should be 'STATE2'"
+        ).is_equal_to("DummyStateEnum.STATE_2")

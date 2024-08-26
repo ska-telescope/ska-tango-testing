@@ -7,9 +7,8 @@ from typing import Any
 
 from ska_tango_testing.integration.event import ReceivedEvent
 from ska_tango_testing.integration.tracer import TangoEventTracer
-from tests.unit.event_tracer.testing_utils.eventdata_mock import (
-    create_eventdata_mock,
-)
+
+from .eventdata_mock import create_eventdata_mock
 
 
 def add_event(

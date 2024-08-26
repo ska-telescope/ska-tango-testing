@@ -55,7 +55,7 @@ class ReceivedEvent:
             f"ReceivedEvent("
             f"device_name='{self.device_name}', "
             f"attribute_name='{self.attribute_name}', "
-            f"attribute_value={self.attribute_value}, "
+            f"attribute_value={str(self.attribute_value)}, "
             f"reception_time={self.reception_time})"
         )
 

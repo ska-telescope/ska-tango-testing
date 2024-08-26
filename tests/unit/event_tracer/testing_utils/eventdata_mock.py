@@ -5,9 +5,7 @@ from unittest.mock import MagicMock
 
 import tango
 
-from tests.unit.event_tracer.testing_utils.dev_proxy_mock import (
-    create_dev_proxy_mock,
-)
+from .dev_proxy_mock import create_dev_proxy_mock
 
 
 def create_eventdata_mock(

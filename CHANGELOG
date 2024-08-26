@@ -1,5 +1,16 @@
 # Version History
 
+## Unreleased
+
+* [CIP-2423] In TangoEventTracer custom assertions, add support for
+setting a target number of events
+* [OMCPT-73] In TangoEventTracer custom assertions, add support for
+a further predicate to make more complex checks
+* [OMCPT-73] In TangoEventTracer custom assertions chains, make them
+share the same timeout
+* [OMCPT-73] In TangoEventTracer and TangoEventLogger, add support for
+Enum typed events
+
 ## 0.7.1
 
 * [OMCPT-38] Fix ReadTheDocs build and update Sphinx dependencies

@@ -71,6 +71,7 @@ the documentation of the
 class.
 """
 
+from enum import Enum
 from typing import Callable
 
 import tango
@@ -95,6 +96,7 @@ add_extension(within_timeout)
 def log_events(
     device_attribute_map: dict["str | tango.DeviceProxy", list[str]],
     dev_factory: Callable[[str], tango.DeviceProxy] | None = None,
+    event_enum_mapping: dict[str, type[Enum]] | None = None,
 ) -> TangoEventLogger:
     """Log events from a set of devices and attributes.
 
@@ -130,6 +132,17 @@ def log_events(
     (filtering some messages) and the message builder (formatting the
     messages in a custom way).
 
+    **NOTE**: some events attributes even if technically they are
+    primitive types (like integers or strings), they can be
+    semantically typed with an ``Enum`` (e.g., a state machine attribute can be
+    represented as an integer, but it is semantically a state). To handle
+    those cases, when you call ``log_events(...)``, you can
+    provide a mapping of attribute names to enums through the
+    ``event_enum_mapping`` parameter (see the
+    :py:class:`ska_tango_testing.integration.typed_event.EventEnumMapper`
+    class). Typed events attribute values will be logged using the
+    corresponding Enum labels instead of the raw values.
+
     :param device_attribute_map: A dictionary mapping devices to a list
         of attribute names you are interested in logging. Each device
         could be specified either as a device name (str) or as a
@@ -137,11 +150,13 @@ def log_events(
     :param dev_factory: An optional factory function that can be used instead
         of the default :py:class:`tango.DeviceProxy` constructor
         (if you need to customize the device proxy creation).
+    :param event_enum_mapping: An optional dictionary to map attribute names
+        to Enums. By default, it is an empty dictionary.
 
     :return: The `TangoEventLogger` instance that is used to log
         the given events.
     """
-    logger = TangoEventLogger()
+    logger = TangoEventLogger(event_enum_mapping=event_enum_mapping)
 
     for device, attr_list in device_attribute_map.items():
         for attr in attr_list:

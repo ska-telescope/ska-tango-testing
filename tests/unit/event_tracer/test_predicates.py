@@ -5,6 +5,7 @@ as expected, matching the correct events and values.
 """
 from unittest.mock import MagicMock
 
+import pytest
 import tango
 from assertpy import assert_that
 from pytest import fixture
@@ -14,11 +15,11 @@ from ska_tango_testing.integration.predicates import (
     event_matches_parameters,
 )
 from ska_tango_testing.integration.tracer import TangoEventTracer
-from tests.unit.event_tracer.testing_utils.received_event_mock import (
-    create_dummy_event,
-)
+
+from .testing_utils.received_event_mock import create_dummy_event
 
 
+@pytest.mark.integration_tracer
 class TestCustomPredicates:
     """Test the custom predicates for the :py:class:`TangoEventTracer`.
 
