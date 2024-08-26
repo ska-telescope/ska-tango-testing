@@ -1,6 +1,6 @@
 # Version History
 
-## Unreleased
+## 0.7.2
 
 * [CIP-2423] In TangoEventTracer custom assertions, add support for
 setting a target number of events
