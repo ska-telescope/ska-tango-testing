@@ -1,5 +1,10 @@
 # Version History
 
+## 0.7.3
+
+* [WOM-502] Relax version constaints for pytango to allow installing
+alongside pytango 10.0.0
+
 ## 0.7.2
 
 * [CIP-2423] In TangoEventTracer custom assertions, add support for

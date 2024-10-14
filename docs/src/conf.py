@@ -13,17 +13,17 @@ import sys
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-sys.path.insert(0, os.path.abspath('../../src'))
+sys.path.insert(0, os.path.abspath("../../src"))
 
 
 # -- Project information -----------------------------------------------------
 
-project = 'ska-tango-testing'
-copyright = '2022, CSIRO'
-author = 'Drew Devereux <drew.devereux@csiro.au>'
+project = "ska-tango-testing"
+copyright = "2022, CSIRO"
+author = "Drew Devereux <drew.devereux@csiro.au>"
 
 # The full version, including alpha/beta/rc tags
-release = '0.7.2'
+release = "0.7.3"
 
 
 # -- General configuration ---------------------------------------------------
@@ -66,8 +66,8 @@ html_context = {}
 
 
 intersphinx_mapping = {
-    'python': ('https://docs.python.org/3.10', None), 
-    'pytest': ("https://docs.pytest.org/en/7.1.x/", None),
+    "python": ("https://docs.python.org/3.10", None),
+    "pytest": ("https://docs.pytest.org/en/7.1.x/", None),
     "tango": ("https://pytango.readthedocs.io/en/v9.4.2/", None),
 }
 
