@@ -11,7 +11,7 @@ packages = [
 
 [tool.poetry.dependencies]
 python = "^3.10"
-pytango = "^9.4.2"
+pytango = ">=9.4.2 <11.0.0"
 numpy = "^1.23.2"
 assertpy = "^1.1"
 
