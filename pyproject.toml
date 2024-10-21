@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "ska-tango-testing"
-version = "0.7.2"
+version = "0.7.3"
 description = "Test harness for testing SKA Tango devices"
 authors = ["Drew Devereux <drew.devereux@csiro.au>"]
 license = "BSD 3-clause new license"
@@ -11,7 +11,7 @@ packages = [
 
 [tool.poetry.dependencies]
 python = "^3.10"
-pytango = "^9.4.2"
+pytango = ">=9.4.2 <11.0.0"
 numpy = "^1.23.2"
 assertpy = "^1.1"
 
