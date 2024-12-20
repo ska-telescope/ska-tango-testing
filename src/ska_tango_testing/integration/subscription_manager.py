@@ -4,7 +4,7 @@ import logging
 import threading
 from collections import defaultdict
 from enum import Enum
-from typing import Callable, Dict
+from typing import Callable
 
 import tango
 
@@ -54,7 +54,7 @@ class TangoSubscriber:
     """
 
     def __init__(
-        self, event_enum_mapping: Dict[str, type[Enum]] | None = None
+        self, event_enum_mapping: dict[str, type[Enum]] | None = None
     ) -> None:
         """Initialize the subscriber.
 
@@ -70,7 +70,7 @@ class TangoSubscriber:
 
         # The subscription ids are stored in a dictionary with the device
         # proxy as key and a list of subscription ids as value.
-        self._subscription_ids: Dict[
+        self._subscription_ids: dict[
             tango.DeviceProxy, list[int]
         ] = defaultdict(list)
 

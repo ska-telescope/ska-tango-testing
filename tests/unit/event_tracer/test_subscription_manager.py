@@ -13,16 +13,21 @@ from assertpy import assert_that
 
 from ska_tango_testing.integration.event import ReceivedEvent
 from ska_tango_testing.integration.subscription_manager import TangoSubscriber
+from ska_tango_testing.integration.typed_event import TypedEvent
 from tests.unit.event_tracer.testing_utils.patch_context_devproxy import (
     patch_context_device_proxy,
 )
 
 from .testing_utils import DeviceProxyMock, create_eventdata_mock
+from .testing_utils.dummy_state_enum import DummyStateEnum
 
 
 @pytest.mark.integration_tracer
 class TestTangoSubscriber:
     """Unit tests for the TangoSubscriber class."""
+
+    # ------------------------------------------------------------------------
+    # Subscription management testing
 
     @staticmethod
     def test_subscribe_event_adds_subscription_and_subscribes() -> None:
@@ -103,6 +108,9 @@ class TestTangoSubscriber:
             1234
         )
 
+    # ------------------------------------------------------------------------
+    # Callback and events generation testing
+
     @staticmethod
     def test_callback_is_called_with_received_event() -> None:
         """Passed callback function is called with ReceivedEvent instance."""
@@ -130,3 +138,33 @@ class TestTangoSubscriber:
         assert_that(received_event.attribute_value).described_as(
             "ReceivedEvent should have correct value"
         ).is_equal_to(42)
+
+    @staticmethod
+    def test_callback_receives_typed_event_if_mapping_contains_attr() -> None:
+        """Callback is called with a typed event when attribute is mapped."""
+        subscriber = TangoSubscriber({"test_attr": DummyStateEnum})
+        callback = MagicMock()
+        event_data = create_eventdata_mock(
+            "test/device/1", "test_attr", DummyStateEnum.STATE_2
+        )
+
+        # pylint: disable=protected-access
+        subscriber._call_callback(event_data, callback)
+
+        assert_that(callback.call_args_list).described_as(
+            "Callback should be called once"
+        ).is_length(1)
+
+        received_event = callback.call_args_list[0][0][0]
+        assert_that(received_event).described_as(
+            "Callback should be called with a ReceivedEvent"
+        ).is_instance_of(TypedEvent)
+        assert_that(received_event.device_name).described_as(
+            "ReceivedEvent should have correct device name"
+        ).is_equal_to("test/device/1")
+        assert_that(received_event.attribute_name).described_as(
+            "ReceivedEvent should have correct attribute name"
+        ).is_equal_to("test_attr")
+        assert_that(received_event.attribute_value).described_as(
+            "ReceivedEvent should have correct value"
+        ).is_equal_to(DummyStateEnum.STATE_2)
