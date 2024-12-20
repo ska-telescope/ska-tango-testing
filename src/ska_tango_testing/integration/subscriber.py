@@ -136,7 +136,9 @@ class TangoSubscriber:
         subscription_id = device.subscribe_event(
             attribute_name,
             tango.EventType.CHANGE_EVENT,
-            lambda event_data: self._call_callback(event_data, callback),
+            lambda event_data: self._on_receive_tango_event(
+                event_data, callback
+            ),
         )
 
         # store the subscription id for the device
@@ -195,7 +197,7 @@ class TangoSubscriber:
             f"{type(device_name)}."
         )
 
-    def _call_callback(
+    def _on_receive_tango_event(
         self,
         event_data: tango.EventData,
         callback: Callable[[ReceivedEvent], None],

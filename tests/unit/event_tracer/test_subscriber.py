@@ -12,7 +12,7 @@ import tango
 from assertpy import assert_that
 
 from ska_tango_testing.integration.event import ReceivedEvent
-from ska_tango_testing.integration.subscription_manager import TangoSubscriber
+from ska_tango_testing.integration.subscriber import TangoSubscriber
 from ska_tango_testing.integration.typed_event import TypedEvent
 from tests.unit.event_tracer.testing_utils.patch_context_devproxy import (
     patch_context_device_proxy,
@@ -119,7 +119,7 @@ class TestTangoSubscriber:
         event_data = create_eventdata_mock("test/device/1", "test_attr", 42)
 
         # pylint: disable=protected-access
-        subscriber._call_callback(event_data, callback)
+        subscriber._on_receive_tango_event(event_data, callback)
 
         assert_that(callback.call_args_list).described_as(
             "Callback should be called once"
@@ -149,7 +149,7 @@ class TestTangoSubscriber:
         )
 
         # pylint: disable=protected-access
-        subscriber._call_callback(event_data, callback)
+        subscriber._on_receive_tango_event(event_data, callback)
 
         assert_that(callback.call_args_list).described_as(
             "Callback should be called once"
