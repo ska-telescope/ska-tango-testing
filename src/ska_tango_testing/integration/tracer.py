@@ -23,6 +23,7 @@ from typing import Callable, SupportsFloat
 import tango
 
 import ska_tango_testing.context
+from ska_tango_testing.integration.events_storage import EventsStorage
 
 from .event import ReceivedEvent
 from .typed_event import EventEnumMapper
@@ -333,13 +334,8 @@ class TangoEventTracer:
         :param event_enum_mapping: An optional mapping of attribute names
             to enums (to handle typed events).
         """
-        # set of received events
-        self._events: list[ReceivedEvent] = []
-
-        # lock for thread safety in event handling
-        # (events are read by queries and written by the event callback
-        # of the subscriptions => they must be protected)
-        self._events_lock = threading.Lock()
+        # (thread-safe) storage for the received events
+        self._events_storage = EventsStorage()
 
         # dictionary of subscription ids (foreach device proxy
         # are stored the subscription ids of the subscribed attributes)
@@ -384,13 +380,11 @@ class TangoEventTracer:
 
         :return: A copy of the stored events.
         """  # noqa: D402
-        with self._events_lock:
-            return self._events.copy()
+        return self._events_storage.events
 
     def clear_events(self) -> None:
         """Clear all stored events."""
-        with self._events_lock:
-            self._events.clear()
+        self._events_storage.clear_events()
 
     # #############################
     # Subscription and
@@ -505,9 +499,7 @@ class TangoEventTracer:
         event = self.attribute_enum_mapping.get_typed_event(event)
 
         # append the event to the list of stored events
-        with self._events_lock:
-            self._events.append(event)
-            events_now = self._events.copy()
+        events_now = self._events_storage.store(event)
 
         # logging.info("Trying unlocking %s pending queries.",
         #              str(len(self._pending_queries)))

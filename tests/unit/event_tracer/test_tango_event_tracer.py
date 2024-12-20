@@ -477,3 +477,59 @@ class TestTangoEventTracer:
         assert_that(str(tracer.events[0].attribute_value)).described_as(
             "The attribute value as string should be 'STATE2'"
         ).is_equal_to("DummyStateEnum.STATE_2")
+
+    @staticmethod
+    def test_recursive_query_call_does_not_cause_deadlock(
+        tracer: TangoEventTracer,
+    ) -> None:
+        """A recursive query call does not cause a deadlock.
+
+        :param tracer: The `TangoEventTracer` instance.
+        """
+        add_event(tracer, "device1", 100, 0)
+        add_event(tracer, "device2", 100, 0)
+
+        def match_even_only_if_another_event_from_diff_device_exists(
+            event: ReceivedEvent,
+        ) -> bool:
+            # This could cause issues
+            other_event = tracer.query_events(
+                lambda e: e.device_name != event.device_name
+                and e.attribute_name == event.attribute_name
+                and e.attribute_value == event.attribute_value
+            )
+            return len(other_event) > 0
+
+        result = tracer.query_events(
+            match_even_only_if_another_event_from_diff_device_exists
+        )
+
+        assert_that(result).described_as(
+            "Expected to find 2 events, but found "
+            f"{'more' if len(result) > 2 else 'less'} ({len(result)})."
+        ).is_length(2)
+
+    @staticmethod
+    def test_recursive_events_retrieval_does_not_cause_deadlock(
+        tracer: TangoEventTracer,
+    ) -> None:
+        """A recursive events retrieval does not cause a deadlock.
+
+        :param tracer: The `TangoEventTracer` instance.
+        """
+        add_event(tracer, "device1", 100, 0)
+        add_event(tracer, "device2", 100, 0)
+
+        def match_event_only_if_2_or_more_events_exist(
+            _: ReceivedEvent,
+        ) -> bool:
+            return len(tracer.events) >= 2
+
+        result = tracer.query_events(
+            match_event_only_if_2_or_more_events_exist
+        )
+
+        assert_that(result).described_as(
+            "Expected to find 2 events, but found "
+            f"{'more' if len(result) > 2 else 'less'} ({len(result)})."
+        ).is_length(2)
