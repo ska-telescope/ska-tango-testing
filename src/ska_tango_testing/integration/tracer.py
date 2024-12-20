@@ -23,9 +23,9 @@ from typing import Callable, SupportsFloat
 import tango
 
 import ska_tango_testing.context
-from ska_tango_testing.integration.events_storage import EventsStorage
 
 from .event import ReceivedEvent
+from .events_storage import EventsStorage
 from .typed_event import EventEnumMapper
 
 
