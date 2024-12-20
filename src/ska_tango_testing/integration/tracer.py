@@ -326,7 +326,7 @@ class TangoEventTracer:
     def __init__(
         self, event_enum_mapping: dict[str, type[Enum]] | None = None
     ):
-        """Initialize the event collection and the lock.
+        """Initialise the event collection and the lock.
 
         :param event_enum_mapping: An optional mapping of attribute names
             to enums (to handle typed events).

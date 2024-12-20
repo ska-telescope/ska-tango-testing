@@ -1,16 +1,13 @@
 """Tango proxy client which can log events from Tango devices."""
 
 import logging
-import threading
-from collections import defaultdict
 from enum import Enum
 from typing import Callable
 
 import tango
 
-import ska_tango_testing.context
-
 from .event import ReceivedEvent
+from .subscriber import TangoSubscriber
 from .typed_event import EventEnumMapper
 
 
@@ -147,18 +144,13 @@ class TangoEventLogger:
     def __init__(
         self, event_enum_mapping: dict[str, type[Enum]] | None = None
     ) -> None:
-        """Initialize the Tango event logger.
+        """Initialise the Tango event logger.
 
         :param event_enum_mapping: An optional mapping of attribute names
             to enums (to handle typed events).
         """
-        # subscription ids for each device
-        self._subscription_ids: dict[
-            tango.DeviceProxy, list[int]
-        ] = defaultdict(list)
-
-        # lock to protect the subscription ids
-        self.lock = threading.Lock()
+        # (thread-safe) Tango devices subscriber
+        self._subscriber = TangoSubscriber(event_enum_mapping)
 
         # mapping of attribute names to enums (to handle typed events)
         self.attribute_enum_mapping: EventEnumMapper = EventEnumMapper(
@@ -245,20 +237,8 @@ class TangoEventLogger:
         :raises ValueError: If device_name is not a string or a
             :py:class:`tango.DeviceProxy` instance.
         """  # noqa: DAR402
-        if isinstance(device_name, str):
-            dev_factory = (
-                dev_factory or ska_tango_testing.context.DeviceProxy
-            )  # tango.DeviceProxy
-            device_proxy = dev_factory(device_name)
-        elif isinstance(device_name, tango.DeviceProxy):
-            device_proxy = device_name
-        else:
-            raise ValueError(
-                "The device_name must be the name of a Tango device (as a str)"
-                "or a Tango DeviceProxy instance. Instead, it is of type "
-                f"{type(device_name)}."
-            )
-
+        # define a callback to log an event using the given filtering rule
+        # and a message builder
         def _callback(event_data: tango.EventData) -> None:
             """Log an event using a filtering rule and a message builder.
 
@@ -266,14 +246,9 @@ class TangoEventLogger:
             """
             self._log_event(event_data, filtering_rule, message_builder)
 
-        # subscribe to the change event
-        sub_id = device_proxy.subscribe_event(
-            attribute_name, tango.EventType.CHANGE_EVENT, _callback
+        self._subscriber.subscribe_event(
+            device_name, attribute_name, _callback, dev_factory
         )
-
-        # store the subscription id
-        with self.lock:
-            self._subscription_ids[device_proxy].append(sub_id)
 
     def _log_event(
         self,
@@ -309,8 +284,4 @@ class TangoEventLogger:
 
     def unsubscribe_all(self) -> None:
         """Unsubscribe from all events."""
-        with self.lock:
-            for device_proxy, sub_ids in self._subscription_ids.items():
-                for sub_id in sub_ids:
-                    device_proxy.unsubscribe_event(sub_id)
-            self._subscription_ids.clear()
+        self._subscriber.unsubscribe_all()
