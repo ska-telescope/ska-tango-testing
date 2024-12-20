@@ -8,6 +8,8 @@ from typing import Callable, Dict
 
 import tango
 
+import ska_tango_testing
+
 from .event import ReceivedEvent
 from .typed_event import EventEnumMapper
 
@@ -116,6 +118,8 @@ class TangoSubscriber:
         :param dev_factory: Optional factory function to create
             DeviceProxy instances. Useful for testing or custom proxy creation.
             If None, tango.DeviceProxy will be used.
+        :raises ValueError: If the device_name is not a string or DeviceProxy
+
 
         **NOTE**: Upon subscription, you will immediately receive an event with
         the current value of the attribute.
@@ -123,8 +127,9 @@ class TangoSubscriber:
         **TECHNICAL NOTE**: This method is thread-safe. The subscription ID is
         stored in a thread-safe way to allow concurrent subscriptions and
         unsubscriptions.
-        """
-        # create the device proxy if needed
+        """  # noqa: DAR402
+        # create the device proxy if needed. Raise an error if the device_name
+        # is not a string or DeviceProxy
         device = self._get_or_create_device(device_name, dev_factory)
 
         # subscribe to the Tango device attribute with the given callback
@@ -170,12 +175,25 @@ class TangoSubscriber:
         :param device_name: The name of the device or a DeviceProxy instance
         :param dev_factory: Optional factory function to create device proxies
         :return: A DeviceProxy instance
+        :raises ValueError: If the device_name is not a string or DeviceProxy
         """
+        # create the device proxy if needed (using the provided factory
+        # or the default one)
         if isinstance(device_name, str):
-            if dev_factory is None:
-                dev_factory = tango.DeviceProxy
+            dev_factory = dev_factory or ska_tango_testing.context.DeviceProxy
             return dev_factory(device_name)
-        return device_name
+
+        # If the device_name is already a DeviceProxy, return it
+        if isinstance(device_name, tango.DeviceProxy):
+            return device_name
+
+        # If the device_name is neither a string nor a DeviceProxy,
+        # raise a value error
+        raise ValueError(
+            "The device_name must be the name of a Tango device (as a str)"
+            "or a Tango DeviceProxy instance. Instead, it is of type "
+            f"{type(device_name)}."
+        )
 
     def _call_callback(
         self,
