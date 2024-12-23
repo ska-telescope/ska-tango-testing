@@ -65,27 +65,6 @@ class TestEventsStorage:
         ).is_empty()
 
     @staticmethod
-    def test_get_matching_filters_correctly() -> None:
-        """Test that get_matching correctly filters events."""
-        storage = EventsStorage()
-        event = create_test_event()
-        storage.store(event)
-
-        matching = storage.get_matching(
-            lambda e: e.device_name == "test/device/1"
-        )
-        not_matching = storage.get_matching(
-            lambda e: e.device_name == "wrong_device"
-        )
-
-        assert_that(matching).described_as(
-            "Should find one matching event"
-        ).is_length(1)
-        assert_that(not_matching).described_as(
-            "Should find no non-matching events"
-        ).is_empty()
-
-    @staticmethod
     def test_events_returns_copy() -> None:
         """Test that events property returns a copy of the events list."""
         storage = EventsStorage()
@@ -96,21 +75,4 @@ class TestEventsStorage:
 
         assert_that(storage.events).described_as(
             "Original storage should still contain the event"
-        ).is_length(1)
-
-    @staticmethod
-    def test_recursive_predicate_no_deadlock() -> None:
-        """Test that recursive predicates don't cause deadlocks."""
-        storage = EventsStorage()
-        event = create_test_event()
-        storage.store(event)
-
-        def recursive_predicate(_: ReceivedEvent) -> bool:
-            # This could deadlock with a regular lock
-            return len(storage.events) > 0
-
-        result = storage.get_matching(recursive_predicate)
-
-        assert_that(result).described_as(
-            "Should handle recursive predicate correctly"
         ).is_length(1)

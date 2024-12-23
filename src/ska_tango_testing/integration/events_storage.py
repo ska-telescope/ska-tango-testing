@@ -1,7 +1,6 @@
 """Thread-safe storage for Tango events."""
 
 import threading
-from typing import Callable
 
 from .event import ReceivedEvent
 
@@ -28,29 +27,6 @@ class EventsStorage:
         with self._lock:
             self._events.append(event)
             return self._events.copy()
-
-    def get_matching(
-        self, predicate: Callable[[ReceivedEvent], bool]
-    ) -> list[ReceivedEvent]:
-        """Get all events that match the given predicate.
-
-        :param predicate: Function that takes an event and returns
-            True if it matches your desired criteria.
-
-            NOTE: The predicate may recursively reference the current
-            list of events, and also call this method.
-
-            E.g., return all the events only if the total number of events
-            is greater than 10, otherwise return an empty list.
-
-            .. code-block:: python
-
-                storage.get_matching(lambda _: len(storage.events) > 10)
-
-        :return: list of matching events
-        """
-        current_events = self.events
-        return [event for event in current_events if predicate(event)]
 
     def clear_events(self) -> None:
         """Clear all stored events."""
