@@ -11,7 +11,10 @@ import pytest
 from assertpy import assert_that
 
 from ska_tango_testing.integration.event import ReceivedEvent
-from ska_tango_testing.integration.events_storage import EventsStorage
+from ska_tango_testing.integration.events_storage import (
+    EventsStorage,
+    EventsStorageObserver,
+)
 
 from .testing_utils import create_eventdata_mock
 
@@ -30,6 +33,23 @@ def create_test_event(
     """
     event_data = create_eventdata_mock(device_name, attr_name, value)
     return ReceivedEvent(event_data)
+
+
+# pylint: disable=too-few-public-methods
+class MockEventsStorageObserver(EventsStorageObserver):
+    """A mock observer for testing EventsStorage."""
+
+    def __init__(self) -> None:
+        """Initialize the mock observer with an empty events list."""
+        super().__init__()
+        self.events: list[ReceivedEvent] = []
+
+    def on_events_change(self, events: list[ReceivedEvent]) -> None:
+        """Store the received events for later inspection.
+
+        :param events: The updated list of events
+        """
+        self.events = events
 
 
 @pytest.mark.integration_tracer
@@ -76,3 +96,73 @@ class TestEventsStorage:
         assert_that(storage.events).described_as(
             "Original storage should still contain the event"
         ).is_length(1)
+
+    @staticmethod
+    def test_observer_is_notified_when_event_stored() -> None:
+        """Test that observers are notified when an event is stored."""
+        storage = EventsStorage()
+        observer = MockEventsStorageObserver()
+        storage.subscribe(observer)
+
+        event = create_test_event()
+        storage.store(event)
+
+        assert_that(observer.events).described_as(
+            "Observer should receive current events"
+        ).is_length(1)
+        assert_that(observer.events[0]).described_as(
+            "Observer should receive the stored event"
+        ).is_equal_to(event)
+
+    @staticmethod
+    def test_unsubscribed_observer_not_notified() -> None:
+        """Test that unsubscribed observers are not notified."""
+        storage = EventsStorage()
+        observer = MockEventsStorageObserver()
+
+        storage.subscribe(observer)
+        storage.unsubscribe(observer)
+
+        event = create_test_event()
+        storage.store(event)
+
+        assert_that(observer.events).described_as(
+            "Unsubscribed observer should not receive any events"
+        ).is_empty()
+
+    @staticmethod
+    def test_multiple_observers_notified() -> None:
+        """Test that multiple observers are notified."""
+        storage = EventsStorage()
+        observer1 = MockEventsStorageObserver()
+        observer2 = MockEventsStorageObserver()
+
+        storage.subscribe(observer1)
+        storage.subscribe(observer2)
+
+        event = create_test_event()
+        storage.store(event)
+
+        assert_that(observer1.events).described_as(
+            "First observer should receive the stored event"
+        ).is_length(1)
+        assert_that(observer2.events).described_as(
+            "Second observer should receive the stored event"
+        ).is_length(1)
+
+        assert_that(observer1.events).described_as(
+            "Both observers should receive the same events"
+        ).is_equal_to(observer2.events)
+
+    @staticmethod
+    def test_observer_notified_on_clear() -> None:
+        """Test that observers are notified when events are cleared."""
+        storage = EventsStorage()
+        observer = MockEventsStorageObserver()
+
+        storage.subscribe(observer)
+        storage.clear_events()
+
+        assert_that(observer.events).described_as(
+            "Observer should receive an empty events list"
+        ).is_empty()
