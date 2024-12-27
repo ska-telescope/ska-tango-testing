@@ -239,20 +239,20 @@ class TangoEventLogger:
         """  # noqa: DAR402
         # define a callback to log an event using the given filtering rule
         # and a message builder
-        def _callback(event_data: tango.EventData) -> None:
+        def _callback(event: ReceivedEvent) -> None:
             """Log an event using a filtering rule and a message builder.
 
-            :param event_data: The received event data.
+            :param event: The received event.
             """
-            self._log_event(event_data, filtering_rule, message_builder)
+            self._log_event(event, filtering_rule, message_builder)
 
         self._subscriber.subscribe_event(
             device_name, attribute_name, _callback, dev_factory
         )
 
+    @staticmethod
     def _log_event(
-        self,
-        event_data: tango.EventData,
+        event: ReceivedEvent,
         filtering_rule: Callable[[ReceivedEvent], bool],
         message_builder: Callable[[ReceivedEvent], str],
     ) -> None:
@@ -262,15 +262,10 @@ class TangoEventLogger:
         method checks if the event passes the filter and if it does, it uses
         the message builder to generate the log message and log it.
 
-        :param event_data: The received event data.
+        :param event: The received event.
         :param filtering_rule: The filtering rule to apply.
         :param message_builder: The message builder to use.
         """
-        event = ReceivedEvent(event_data)
-
-        # the event may be typed with an Enum
-        event = self.attribute_enum_mapping.get_typed_event(event)
-
         # if the filter check fails, the message is not logged
         if not filtering_rule(event):
             return
