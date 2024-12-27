@@ -25,7 +25,7 @@ import tango
 import ska_tango_testing.context
 
 from .event import ReceivedEvent
-from .events_storage import EventsStorage
+from .event_storage import EventStorage
 from .typed_event import EventEnumMapper
 
 
@@ -335,7 +335,7 @@ class TangoEventTracer:
             to enums (to handle typed events).
         """
         # (thread-safe) storage for the received events
-        self._events_storage = EventsStorage()
+        self._events_storage = EventStorage()
 
         # dictionary of subscription ids (foreach device proxy
         # are stored the subscription ids of the subscribed attributes)

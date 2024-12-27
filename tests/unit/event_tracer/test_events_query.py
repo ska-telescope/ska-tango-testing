@@ -1,7 +1,7 @@
-"""Unit tests for :py:class:`EventsQuery`.
+"""Unit tests for :py:class:`EventQuery`.
 
 This set of tests covers the basic functionality of the
-:py:class:`EventsQuery` class, focusing on thread safety
+:py:class:`EventQuery` class, focusing on thread safety
 and correct event handling.
 """
 
@@ -13,16 +13,16 @@ import pytest
 from assertpy import assert_that
 
 from ska_tango_testing.integration.event import ReceivedEvent
-from ska_tango_testing.integration.events_query import (
-    EventsQuery,
-    EventsQueryStatus,
+from ska_tango_testing.integration.event_query import (
+    EventQuery,
+    EventQueryStatus,
 )
-from ska_tango_testing.integration.events_storage import EventsStorage
+from ska_tango_testing.integration.event_storage import EventStorage
 
 from .testing_utils.received_event_mock import create_test_event
 
 
-class SimpleEventsQuery(EventsQuery):
+class SimpleEventQuery(EventQuery):
     """A simple query that collects events and matches a simple criteria."""
 
     def __init__(
@@ -68,12 +68,12 @@ class SimpleEventsQuery(EventsQuery):
 
 
 @pytest.mark.integration_tracer
-class TestEventsQuery:
-    """Unit tests for the EventsQuery class."""
+class TestEventQuery:
+    """Unit tests for the EventQuery class."""
 
     @staticmethod
     def deferred_add_event(
-        storage: EventsStorage, event: ReceivedEvent, delay: float
+        storage: EventStorage, event: ReceivedEvent, delay: float
     ) -> None:
         """Add an event to the storage after a delay.
 
@@ -92,8 +92,8 @@ class TestEventsQuery:
     @staticmethod
     def test_query_succeeds_when_event_matches() -> None:
         """Test that the query succeeds when an event matches."""
-        storage = EventsStorage()
-        query = SimpleEventsQuery(
+        storage = EventStorage()
+        query = SimpleEventQuery(
             device_name="test/device/1",
             attr_name="test_attr",
             value=42,
@@ -106,7 +106,7 @@ class TestEventsQuery:
 
         assert_that(query.status()).described_as(
             "Query should succeed when an event matches"
-        ).is_equal_to(EventsQueryStatus.SUCCEEDED)
+        ).is_equal_to(EventQueryStatus.SUCCEEDED)
         assert_that(query.matching_events).described_as(
             "Query should collect the matching event"
         ).is_length(1)
@@ -117,8 +117,8 @@ class TestEventsQuery:
     @staticmethod
     def test_query_fails_when_no_event_matches() -> None:
         """Test that the query fails when no event matches."""
-        storage = EventsStorage()
-        query = SimpleEventsQuery(
+        storage = EventStorage()
+        query = SimpleEventQuery(
             device_name="test/device/1",
             attr_name="test_attr",
             value=42,
@@ -131,15 +131,15 @@ class TestEventsQuery:
 
         assert_that(query.status()).described_as(
             "Query should fail when no event matches"
-        ).is_equal_to(EventsQueryStatus.FAILED)
+        ).is_equal_to(EventQueryStatus.FAILED)
         assert_that(query.matching_events).described_as(
             "Query should not collect any events"
         ).is_empty()
 
     def test_query_succeeds_with_delayed_event(self) -> None:
         """The query should succeed when an event is delayed but matches."""
-        storage = EventsStorage()
-        query = SimpleEventsQuery(
+        storage = EventStorage()
+        query = SimpleEventQuery(
             timeout=2,
             device_name="test/device/1",
             attr_name="test_attr",
@@ -152,15 +152,15 @@ class TestEventsQuery:
 
         assert_that(query.status()).described_as(
             "Query should succeed when an event is received during evaluation"
-        ).is_equal_to(EventsQueryStatus.SUCCEEDED)
+        ).is_equal_to(EventQueryStatus.SUCCEEDED)
         assert_that(query.matching_events).described_as(
             "Query should collect the matching event"
         ).is_length(1)
 
     def test_query_timeout(self) -> None:
         """The query times out when no event matches within timeout."""
-        storage = EventsStorage()
-        query = SimpleEventsQuery(
+        storage = EventStorage()
+        query = SimpleEventQuery(
             timeout=1,
             device_name="test/device/1",
             attr_name="test_attr",
@@ -175,7 +175,7 @@ class TestEventsQuery:
 
         assert_that(query.status()).described_as(
             "Query should fail when it times out"
-        ).is_equal_to(EventsQueryStatus.FAILED)
+        ).is_equal_to(EventQueryStatus.FAILED)
         assert_that(query.matching_events).described_as(
             "Query should not collect any events"
         ).is_empty()

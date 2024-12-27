@@ -7,8 +7,8 @@ from .event import ReceivedEvent
 
 
 # pylint: disable=too-few-public-methods
-class EventsStorageObserver(Protocol):
-    """Observer interface for EventsStorage changes."""
+class EventStorageObserver(Protocol):
+    """Observer interface for EventStorage changes."""
 
     def on_events_change(self, events: list[ReceivedEvent]) -> None:
         """Handle events list change.
@@ -17,7 +17,7 @@ class EventsStorageObserver(Protocol):
         """
 
 
-class EventsStorage:
+class EventStorage:
     """Thread-safe storage for Tango events.
 
     This class provides thread-safe storage and retrieval of ReceivedEvents.
@@ -29,9 +29,9 @@ class EventsStorage:
         """Initialize the events storage."""
         self._events: list[ReceivedEvent] = []
         self._lock = threading.Lock()
-        self._observers: list[EventsStorageObserver] = []
+        self._observers: list[EventStorageObserver] = []
 
-    def subscribe(self, observer: EventsStorageObserver) -> None:
+    def subscribe(self, observer: EventStorageObserver) -> None:
         """Add an observer to be notified of events changes.
 
         :param observer: The observer to add
@@ -41,7 +41,7 @@ class EventsStorage:
                 self._observers.append(observer)
         observer.on_events_change(self.events)
 
-    def unsubscribe(self, observer: EventsStorageObserver) -> None:
+    def unsubscribe(self, observer: EventStorageObserver) -> None:
         """Remove an observer.
 
         :param observer: The observer to remove

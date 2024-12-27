@@ -1,7 +1,7 @@
-"""Unit tests for :py:class:`EventsStorage`.
+"""Unit tests for :py:class:`EventStorage`.
 
 This set of tests covers the basic functionality of the
-:py:class:`EventsStorage` class, focusing on thread safety
+:py:class:`EventStorage` class, focusing on thread safety
 and correct event handling.
 """
 
@@ -9,17 +9,17 @@ import pytest
 from assertpy import assert_that
 
 from ska_tango_testing.integration.event import ReceivedEvent
-from ska_tango_testing.integration.events_storage import (
-    EventsStorage,
-    EventsStorageObserver,
+from ska_tango_testing.integration.event_storage import (
+    EventStorage,
+    EventStorageObserver,
 )
 
 from .testing_utils.received_event_mock import create_test_event
 
 
 # pylint: disable=too-few-public-methods
-class MockEventsStorageObserver(EventsStorageObserver):
-    """A mock observer for testing EventsStorage."""
+class MockEventStorageObserver(EventStorageObserver):
+    """A mock observer for testing EventStorage."""
 
     def __init__(self) -> None:
         """Initialize the mock observer with an empty events list."""
@@ -35,13 +35,13 @@ class MockEventsStorageObserver(EventsStorageObserver):
 
 
 @pytest.mark.integration_tracer
-class TestEventsStorage:
-    """Unit tests for the EventsStorage class."""
+class TestEventStorage:
+    """Unit tests for the EventStorage class."""
 
     @staticmethod
     def test_store_adds_event() -> None:
         """Test that storing an event adds it to storage."""
-        storage = EventsStorage()
+        storage = EventStorage()
         event = create_test_event()
         storage.store(event)
 
@@ -56,7 +56,7 @@ class TestEventsStorage:
     @staticmethod
     def test_clear_events_removes_all() -> None:
         """Test that clearing events removes all stored events."""
-        storage = EventsStorage()
+        storage = EventStorage()
         event = create_test_event()
         storage.store(event)
         storage.store(event)
@@ -69,7 +69,7 @@ class TestEventsStorage:
     @staticmethod
     def test_events_returns_copy() -> None:
         """Test that events property returns a copy of the events list."""
-        storage = EventsStorage()
+        storage = EventStorage()
         event = create_test_event()
         storage.store(event)
         events = storage.events
@@ -82,8 +82,8 @@ class TestEventsStorage:
     @staticmethod
     def test_observer_is_notified_when_event_stored() -> None:
         """Test that observers are notified when an event is stored."""
-        storage = EventsStorage()
-        observer = MockEventsStorageObserver()
+        storage = EventStorage()
+        observer = MockEventStorageObserver()
         storage.subscribe(observer)
 
         event = create_test_event()
@@ -99,8 +99,8 @@ class TestEventsStorage:
     @staticmethod
     def test_unsubscribed_observer_not_notified() -> None:
         """Test that unsubscribed observers are not notified."""
-        storage = EventsStorage()
-        observer = MockEventsStorageObserver()
+        storage = EventStorage()
+        observer = MockEventStorageObserver()
 
         storage.subscribe(observer)
         storage.unsubscribe(observer)
@@ -115,9 +115,9 @@ class TestEventsStorage:
     @staticmethod
     def test_multiple_observers_notified() -> None:
         """Test that multiple observers are notified."""
-        storage = EventsStorage()
-        observer1 = MockEventsStorageObserver()
-        observer2 = MockEventsStorageObserver()
+        storage = EventStorage()
+        observer1 = MockEventStorageObserver()
+        observer2 = MockEventStorageObserver()
 
         storage.subscribe(observer1)
         storage.subscribe(observer2)
@@ -139,8 +139,8 @@ class TestEventsStorage:
     @staticmethod
     def test_observer_notified_on_clear() -> None:
         """Test that observers are notified when events are cleared."""
-        storage = EventsStorage()
-        observer = MockEventsStorageObserver()
+        storage = EventStorage()
+        observer = MockEventStorageObserver()
 
         storage.subscribe(observer)
         storage.clear_events()

@@ -10,7 +10,7 @@ from typing import List, SupportsFloat
 from .event import ReceivedEvent
 
 
-class EventsQueryStatus(Enum):
+class EventQueryStatus(Enum):
     """Enumeration for the status of an events query."""
 
     NOT_STARTED = "NOT_STARTED"
@@ -19,7 +19,7 @@ class EventsQueryStatus(Enum):
     FAILED = "FAILED"
 
 
-class EventsQuery(ABC):
+class EventQuery(ABC):
     """Abstract class for querying events with a timeout mechanism.
 
     An events query is a mechanism to query a set of events within a timeout.
@@ -56,7 +56,7 @@ class EventsQuery(ABC):
     To evaluate a query, technically you:
 
     - subscribe the query to an
-        :py:class:`ska_tango_testing.integration.events_storage.EventsStorage`;
+        :py:class:`ska_tango_testing.integration.events_storage.EventStorage`;
     - call the ``evaluate`` method of the query, which will block you until
         the query is completed or the timeout expires.
 
@@ -120,20 +120,20 @@ class EventsQuery(ABC):
 
         return description
 
-    def status(self) -> EventsQueryStatus:
+    def status(self) -> EventQueryStatus:
         """Get the status of the query.
 
         :return: The status of the query.
         """
         with self._evaluation_time_lock:
             if self.evaluation_start is None:
-                return EventsQueryStatus.NOT_STARTED
+                return EventQueryStatus.NOT_STARTED
             if self.evaluation_end is None:
-                return EventsQueryStatus.IN_PROGRESS
+                return EventQueryStatus.IN_PROGRESS
 
         if self.succeeded():
-            return EventsQueryStatus.SUCCEEDED
-        return EventsQueryStatus.FAILED
+            return EventQueryStatus.SUCCEEDED
+        return EventQueryStatus.FAILED
 
     def is_completed(self) -> bool:
         """Check if the query is completed.
@@ -141,8 +141,8 @@ class EventsQuery(ABC):
         :return: True if the query is completed, False otherwise.
         """
         return self.status() in (
-            EventsQueryStatus.SUCCEEDED,
-            EventsQueryStatus.FAILED,
+            EventQueryStatus.SUCCEEDED,
+            EventQueryStatus.FAILED,
         )
 
     def evaluate(self) -> None:
@@ -154,7 +154,7 @@ class EventsQuery(ABC):
 
         :raises ValueError: If the evaluation is already started.
         """
-        # Set the start time
+        # Begin the evaluation (set the start time)
         with self._evaluation_time_lock:
             if self.evaluation_start:
                 raise ValueError(
@@ -170,7 +170,7 @@ class EventsQuery(ABC):
             self._timeout_signal.clear()
             self._timeout_signal.wait(timeout)
 
-        # Set the end time
+        # End the evaluation (set the end time)
         with self._evaluation_time_lock:
             self.evaluation_end = datetime.now()
 

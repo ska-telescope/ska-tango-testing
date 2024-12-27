@@ -4,7 +4,7 @@
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
-                <mxCell id="2" value="EventsStorage" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;" parent="1" vertex="1">
+                <mxCell id="2" value="EventStorage" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;" parent="1" vertex="1">
                     <mxGeometry x="40" y="360" width="360" height="202" as="geometry"/>
                 </mxCell>
                 <mxCell id="3" value=" # events lock" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" parent="2" vertex="1">
@@ -19,10 +19,10 @@
                 <mxCell id="13" value="+ clear_events() : None" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" parent="2" vertex="1">
                     <mxGeometry y="86" width="360" height="26" as="geometry"/>
                 </mxCell>
-                <mxCell id="134" value="+ subscribe(observer: EventsStorageObserver)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" parent="2" vertex="1">
+                <mxCell id="134" value="+ subscribe(observer: EventStorageObserver)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" parent="2" vertex="1">
                     <mxGeometry y="112" width="360" height="30" as="geometry"/>
                 </mxCell>
-                <mxCell id="136" value="+ unsubscribe(observer: EventsStorageObserver)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" parent="2" vertex="1">
+                <mxCell id="136" value="+ unsubscribe(observer: EventStorageObserver)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" parent="2" vertex="1">
                     <mxGeometry y="142" width="360" height="30" as="geometry"/>
                 </mxCell>
                 <mxCell id="135" value="+ notify_all()" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" parent="2" vertex="1">
@@ -84,7 +84,7 @@
                 <mxCell id="33" value="+ query_events(&#10;    predicate: Callable[[ReceivedEvent], bool],&#10;    timeout: SupportsFloat | None = None,&#10;    target_n_events: int = 1) : list[ReceivedEvent]" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" parent="21" vertex="1">
                     <mxGeometry y="160" width="360" height="74" as="geometry"/>
                 </mxCell>
-                <mxCell id="35" value="+ evaluate_query(query: EventsQuery): None" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" parent="21" vertex="1">
+                <mxCell id="35" value="+ evaluate_query(query: EventQuery): None" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" parent="21" vertex="1">
                     <mxGeometry y="234" width="360" height="26" as="geometry"/>
                 </mxCell>
                 <mxCell id="32" value="+ unsubscribe_all() : None" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" parent="21" vertex="1">
@@ -115,7 +115,7 @@
                         <mxPoint x="-27" y="148" as="offset"/>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="36" value="{abstract} EventsQuery" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;" parent="1" vertex="1">
+                <mxCell id="36" value="{abstract} EventQuery" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;" parent="1" vertex="1">
                     <mxGeometry x="40" y="803" width="360" height="320" as="geometry"/>
                 </mxCell>
                 <mxCell id="78" value="+ evaluation_start: datetime | None = None" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" parent="36" vertex="1">
@@ -136,7 +136,7 @@
                 <mxCell id="41" value="+ describe(): str" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontStyle=0" parent="36" vertex="1">
                     <mxGeometry y="138" width="360" height="26" as="geometry"/>
                 </mxCell>
-                <mxCell id="45" value="+ status(): EventsQueryStatus" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontStyle=0" parent="36" vertex="1">
+                <mxCell id="45" value="+ status(): EventQueryStatus" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontStyle=0" parent="36" vertex="1">
                     <mxGeometry y="164" width="360" height="26" as="geometry"/>
                 </mxCell>
                 <mxCell id="124" value="+ is_completed(): bool" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontStyle=0" parent="36" vertex="1">
@@ -154,7 +154,7 @@
                 <mxCell id="156" value="+ {abstract} on_events_change(events:list[ReceivedEvent])" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontStyle=2" parent="36" vertex="1">
                     <mxGeometry y="294" width="360" height="26" as="geometry"/>
                 </mxCell>
-                <mxCell id="52" value="&lt;&lt;Enum&gt;&gt; EventsQuery" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;" parent="1" vertex="1">
+                <mxCell id="52" value="&lt;&lt;Enum&gt;&gt; EventQuery" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;" parent="1" vertex="1">
                     <mxGeometry x="1080" y="600" width="240" height="130" as="geometry"/>
                 </mxCell>
                 <mxCell id="56" value="+ NOT_STARTED" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" parent="52" vertex="1">
@@ -169,7 +169,7 @@
                 <mxCell id="58" value="+ FAILED" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" parent="52" vertex="1">
                     <mxGeometry y="104" width="240" height="26" as="geometry"/>
                 </mxCell>
-                <mxCell id="62" value="EventsQueryWithFailCondition" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;" parent="1" vertex="1">
+                <mxCell id="62" value="EventQueryWithFailCondition" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;" parent="1" vertex="1">
                     <mxGeometry x="-360" y="1200" width="320" height="268" as="geometry"/>
                 </mxCell>
                 <mxCell id="63" value="+ fail_event_matcher: Callable[[ReceivedEvent] -&gt; bool]" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" parent="62" vertex="1">
@@ -184,7 +184,7 @@
                 <mxCell id="175" value="+ describe(): str" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontStyle=0" parent="62" vertex="1">
                     <mxGeometry y="86" width="320" height="26" as="geometry"/>
                 </mxCell>
-                <mxCell id="176" value="+ status(): EventsQueryStatus" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontStyle=0" parent="62" vertex="1">
+                <mxCell id="176" value="+ status(): EventQueryStatus" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontStyle=0" parent="62" vertex="1">
                     <mxGeometry y="112" width="320" height="26" as="geometry"/>
                 </mxCell>
                 <mxCell id="177" value="+ is_completed(): bool" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontStyle=0" parent="62" vertex="1">
@@ -240,7 +240,7 @@
                         <mxPoint as="offset"/>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="125" value="&lt;&lt;Enum&gt;&gt; EventsQueryStatus" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;" parent="1" vertex="1">
+                <mxCell id="125" value="&lt;&lt;Enum&gt;&gt; EventQueryStatus" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;" parent="1" vertex="1">
                     <mxGeometry x="520" y="770" width="240" height="130" as="geometry"/>
                 </mxCell>
                 <mxCell id="128" value="+ NOT_STARTED" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontStyle=0" parent="125" vertex="1">
@@ -255,7 +255,7 @@
                 <mxCell id="133" value="+ FAILED" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontStyle=0" parent="125" vertex="1">
                     <mxGeometry y="104" width="240" height="26" as="geometry"/>
                 </mxCell>
-                <mxCell id="146" value="&lt;&lt;interface&gt;&gt; EventsStorageObserver" style="swimlane;fontStyle=3;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;" parent="1" vertex="1">
+                <mxCell id="146" value="&lt;&lt;interface&gt;&gt; EventStorageObserver" style="swimlane;fontStyle=3;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;" parent="1" vertex="1">
                     <mxGeometry x="40" y="640" width="360" height="90" as="geometry"/>
                 </mxCell>
                 <mxCell id="147" value=" " style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" parent="146" vertex="1">
@@ -309,7 +309,7 @@
                         <mxPoint y="1190" as="targetPoint"/>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="180" value="EventsQueryComposite" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;" parent="1" vertex="1">
+                <mxCell id="180" value="EventQueryComposite" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;" parent="1" vertex="1">
                     <mxGeometry x="480" y="1200" width="320" height="242" as="geometry"/>
                 </mxCell>
                 <mxCell id="181" value="+ operator: AND | OR | XOR (?)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" parent="180" vertex="1">
@@ -321,7 +321,7 @@
                 <mxCell id="184" value="+ describe(): str" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontStyle=0" parent="180" vertex="1">
                     <mxGeometry y="60" width="320" height="26" as="geometry"/>
                 </mxCell>
-                <mxCell id="185" value="+ status(): EventsQueryStatus" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontStyle=0" parent="180" vertex="1">
+                <mxCell id="185" value="+ status(): EventQueryStatus" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontStyle=0" parent="180" vertex="1">
                     <mxGeometry y="86" width="320" height="26" as="geometry"/>
                 </mxCell>
                 <mxCell id="186" value="+ is_completed(): bool" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontStyle=0" parent="180" vertex="1">
