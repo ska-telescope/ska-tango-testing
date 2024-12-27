@@ -14,16 +14,19 @@ assertions
 (:py:mod:`ska_tango_testing.integration.assertions`).
 """
 
+import logging
 import threading
+from collections import defaultdict
 from enum import Enum
 from typing import Callable, SupportsFloat
 
 import tango
 
-from ska_tango_testing.integration.subscriber import TangoSubscriber
+import ska_tango_testing.context
 
 from .event import ReceivedEvent
 from .events_storage import EventsStorage
+from .typed_event import EventEnumMapper
 
 
 class _QueryEvaluator:
@@ -326,7 +329,7 @@ class TangoEventTracer:
     def __init__(
         self, event_enum_mapping: dict[str, type[Enum]] | None = None
     ):
-        """Initialise the event collection and the lock.
+        """Initialize the event collection and the lock.
 
         :param event_enum_mapping: An optional mapping of attribute names
             to enums (to handle typed events).
@@ -334,8 +337,19 @@ class TangoEventTracer:
         # (thread-safe) storage for the received events
         self._events_storage = EventsStorage()
 
-        # (thread-safe) Tango devices subscriber
-        self._subscriber = TangoSubscriber(event_enum_mapping)
+        # dictionary of subscription ids (foreach device proxy
+        # are stored the subscription ids of the subscribed attributes)
+        self._subscription_ids: dict[
+            tango.DeviceProxy, list[int]
+        ] = defaultdict(list)
+
+        # lock for thread safety in subscription handling
+        # (for current use case, the subscriptions are created and deleted
+        # only in the main test thread, but what if the test subscriptions
+        # are created in a different thread? It is not a good practice to
+        # do that, but technically it is possible => it is better to protect
+        # even this to make the class entirely thread-safe)
+        self._subscriptions_lock = threading.Lock()
 
         # list of pending queries
         self._pending_queries: list[_QueryEvaluator] = []
@@ -346,6 +360,11 @@ class TangoEventTracer:
         # queries - and by the event callback - to update the queries
         # and unlock them => they must be protected)
         self._query_lock = threading.Lock()
+
+        # mapping of attribute names to enums (to handle typed events)
+        self.attribute_enum_mapping: EventEnumMapper = EventEnumMapper(
+            event_enum_mapping
+        )
 
     def __del__(self) -> None:
         """Teardown the object and unsubscribe from all subscriptions."""
@@ -428,22 +447,62 @@ class TangoEventTracer:
         :raises ValueError: If the device_name is not a string or a
             DeviceProxy.
         """  # noqa: DAR402
-        self._subscriber.subscribe_event(
-            device_name, attribute_name, self._add_event, dev_factory
+        if isinstance(device_name, str):
+            dev_factory = (
+                dev_factory or ska_tango_testing.context.DeviceProxy
+            )  # tango.DeviceProxy
+            device_proxy = dev_factory(device_name)
+        elif isinstance(device_name, tango.DeviceProxy):
+            device_proxy = device_name
+        else:
+            raise ValueError(
+                "The device_name must be the name of a Tango device (as a str)"
+                "or a Tango DeviceProxy instance. Instead, it is of type "
+                f"{type(device_name)}."
+            )
+
+        # subscribe to the change event
+        sub_id = device_proxy.subscribe_event(
+            attribute_name,
+            tango.EventType.CHANGE_EVENT,
+            self._event_callback,
         )
+
+        # store the subscription id
+        with self._subscriptions_lock:
+            self._subscription_ids[device_proxy].append(sub_id)
+
+    def _event_callback(self, event: tango.EventData) -> None:
+        """Capture the received events and store them.
+
+        This method is called as a callback when an event is received.
+
+        :param event: The event data object.
+        """
+        # logging.info("Received event. Current state: %s", self._events)
+
+        if event.err:
+            logging.error("Error in event callback: %s", event.errors)
+            return
+
+        try:
+            self._add_event(ReceivedEvent(event))
+        except BaseException as exception:  # pylint: disable=broad-except
+            logging.error("Error while processing event: %s", exception)
 
     def _add_event(self, event: ReceivedEvent) -> None:
         """Store an event and update all pending queries.
 
-        This method is the callback that is called every time a new event
-        is received by any subscription. It stores the event in the
-        internal list of stored events and updates all the pending queries
-        (trying to unlock them if the new event makes them satisfied).
-
         :param event: The event to add.
         """
+        # event may be typed
+        event = self.attribute_enum_mapping.get_typed_event(event)
+
         # append the event to the list of stored events
         events_now = self._events_storage.store(event)
+
+        # logging.info("Trying unlocking %s pending queries.",
+        #              str(len(self._pending_queries)))
 
         # update all pending queries
         with self._query_lock:
@@ -461,7 +520,17 @@ class TangoEventTracer:
 
     def unsubscribe_all(self) -> None:
         """Unsubscribe from all subscriptions."""
-        self._subscriber.unsubscribe_all()
+        with self._subscriptions_lock:
+            for device_proxy, device_sub_ids in self._subscription_ids.items():
+                for subscription_id in device_sub_ids:
+                    try:
+                        device_proxy.unsubscribe_event(subscription_id)
+                    except tango.DevFailed as dev_failed_exception:
+                        logging.warning(
+                            "Error while unsubscribing from event: %s",
+                            dev_failed_exception,
+                        )
+            self._subscription_ids.clear()
 
     # #############################
     # Querying stored

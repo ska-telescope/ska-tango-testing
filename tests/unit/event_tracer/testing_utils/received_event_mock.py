@@ -6,6 +6,8 @@ from unittest.mock import MagicMock
 
 from ska_tango_testing.integration.event import ReceivedEvent
 
+from .eventdata_mock import create_eventdata_mock
+
 
 def create_dummy_event(
     device_name: str,
@@ -35,3 +37,19 @@ def create_dummy_event(
         == target_attribute_name
     )
     return event
+
+
+def create_test_event(
+    device_name: str = "test/device/1",
+    attr_name: str = "test_attr",
+    value: Any = 42,
+) -> ReceivedEvent:
+    """Create a test event with given parameters.
+
+    :param device_name: Name of the device
+    :param attr_name: Name of the attribute
+    :param value: Value for the event
+    :return: A ReceivedEvent instance
+    """
+    event_data = create_eventdata_mock(device_name, attr_name, value)
+    return ReceivedEvent(event_data)

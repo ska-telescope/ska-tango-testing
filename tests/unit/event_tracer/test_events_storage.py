@@ -5,8 +5,6 @@ This set of tests covers the basic functionality of the
 and correct event handling.
 """
 
-from typing import Any
-
 import pytest
 from assertpy import assert_that
 
@@ -16,23 +14,7 @@ from ska_tango_testing.integration.events_storage import (
     EventsStorageObserver,
 )
 
-from .testing_utils import create_eventdata_mock
-
-
-def create_test_event(
-    device_name: str = "test/device/1",
-    attr_name: str = "test_attr",
-    value: Any = 42,
-) -> ReceivedEvent:
-    """Create a test event with given parameters.
-
-    :param device_name: Name of the device
-    :param attr_name: Name of the attribute
-    :param value: Value for the event
-    :return: A ReceivedEvent instance
-    """
-    event_data = create_eventdata_mock(device_name, attr_name, value)
-    return ReceivedEvent(event_data)
+from .testing_utils.received_event_mock import create_test_event
 
 
 # pylint: disable=too-few-public-methods
