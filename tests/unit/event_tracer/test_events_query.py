@@ -23,7 +23,7 @@ from .testing_utils.received_event_mock import create_test_event
 
 
 class SimpleEventQuery(EventQuery):
-    """A simple query that collects events and matches a simple criteria."""
+    """A simple query that checks if any event matches a given criteria."""
 
     def __init__(
         self,
@@ -43,14 +43,14 @@ class SimpleEventQuery(EventQuery):
         self.device_name = device_name
         self.attr_name = attr_name
         self.value = value
-        self.matching_events: List[ReceivedEvent] = []
+        self.match_found = False
 
     def _succeeded(self) -> bool:
         """Check if the query succeeded.
 
         :return: True if the query succeeded, False otherwise.
         """
-        return len(self.matching_events) > 0
+        return self.match_found
 
     def _evaluate_events(self, events: List[ReceivedEvent]) -> None:
         """Evaluate the query based on the current events.
@@ -62,9 +62,9 @@ class SimpleEventQuery(EventQuery):
                 event.has_device(self.device_name)
                 and event.has_attribute(self.attr_name)
                 and event.attribute_value == self.value
-                and event not in self.matching_events
             ):
-                self.matching_events.append(event)
+                self.match_found = True
+                break
 
 
 @pytest.mark.integration_tracer
@@ -72,7 +72,7 @@ class TestEventQuery:
     """Unit tests for the EventQuery class."""
 
     @staticmethod
-    def deferred_add_event(
+    def delayed_store_event(
         storage: EventStorage, event: ReceivedEvent, delay: float
     ) -> None:
         """Add an event to the storage after a delay.
@@ -107,12 +107,9 @@ class TestEventQuery:
         assert_that(query.status()).described_as(
             "Query should succeed when an event matches"
         ).is_equal_to(EventQueryStatus.SUCCEEDED)
-        assert_that(query.matching_events).described_as(
-            "Query should collect the matching event"
-        ).is_length(1)
-        assert_that(query.matching_events[0]).described_as(
-            "Query should collect the correct event"
-        ).is_equal_to(event)
+        assert_that(query.match_found).described_as(
+            "Query should indicate a match was found"
+        ).is_true()
 
     @staticmethod
     def test_query_fails_when_no_event_matches() -> None:
@@ -132,9 +129,9 @@ class TestEventQuery:
         assert_that(query.status()).described_as(
             "Query should fail when no event matches"
         ).is_equal_to(EventQueryStatus.FAILED)
-        assert_that(query.matching_events).described_as(
-            "Query should not collect any events"
-        ).is_empty()
+        assert_that(query.match_found).described_as(
+            "Query should indicate no match was found"
+        ).is_false()
 
     def test_query_succeeds_with_delayed_event(self) -> None:
         """The query should succeed when an event is delayed but matches."""
@@ -145,7 +142,7 @@ class TestEventQuery:
             attr_name="test_attr",
             value=42,
         )
-        self.deferred_add_event(storage, create_test_event(), delay=1)
+        self.delayed_store_event(storage, create_test_event(), delay=1)
 
         storage.subscribe(query)
         query.evaluate()
@@ -153,9 +150,9 @@ class TestEventQuery:
         assert_that(query.status()).described_as(
             "Query should succeed when an event is received during evaluation"
         ).is_equal_to(EventQueryStatus.SUCCEEDED)
-        assert_that(query.matching_events).described_as(
-            "Query should collect the matching event"
-        ).is_length(1)
+        assert_that(query.match_found).described_as(
+            "Query should indicate a match was found"
+        ).is_true()
 
     def test_query_timeout(self) -> None:
         """The query times out when no event matches within timeout."""
@@ -166,7 +163,7 @@ class TestEventQuery:
             attr_name="test_attr",
             value=42,
         )
-        self.deferred_add_event(storage, create_test_event(), delay=2)
+        self.delayed_store_event(storage, create_test_event(), delay=2)
 
         storage.subscribe(query)
         query.evaluate()
@@ -176,6 +173,6 @@ class TestEventQuery:
         assert_that(query.status()).described_as(
             "Query should fail when it times out"
         ).is_equal_to(EventQueryStatus.FAILED)
-        assert_that(query.matching_events).described_as(
-            "Query should not collect any events"
-        ).is_empty()
+        assert_that(query.match_found).described_as(
+            "Query should indicate no match was found"
+        ).is_false()
