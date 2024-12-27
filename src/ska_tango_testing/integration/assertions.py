@@ -394,7 +394,7 @@ def has_change_event_occurred(
         ),
         target_n_events=min_n_events,
         # if given use the timeout, else None
-        timeout=timeout_util.get_remaining_timeout() if timeout_util else None,
+        timeout=timeout_util.get_remaining_timeout() if timeout_util else 0.0,
     )
 
     # if not enough events are found, raise an error
@@ -534,7 +534,7 @@ def hasnt_change_event_occurred(
         ),
         target_n_events=max_n_events,
         # if given use the timeout, else None
-        timeout=timeout_util.get_remaining_timeout() if timeout_util else None,
+        timeout=timeout_util.get_remaining_timeout() if timeout_util else 0.0,
     )
 
     # if enough events are found, raise an error

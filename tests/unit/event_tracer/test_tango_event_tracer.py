@@ -161,9 +161,7 @@ class TestTangoEventTracer:
         :param tracer: The `TangoEventTracer` instance.
         """
         add_event(tracer, "device1", 100, 5)  # Adds an event 5 seconds ago
-        result = tracer.query_events(
-            lambda e: e.has_device("device1"), timeout=None
-        )
+        result = tracer.query_events(lambda e: e.has_device("device1"))
         assert_that(result).described_as(
             "Expected to find a matching event for 'device1', "
             "but none was found."
@@ -180,9 +178,7 @@ class TestTangoEventTracer:
         add_event(tracer, "device1", 100, 5)
 
         start_time = datetime.now()
-        result = tracer.query_events(
-            lambda e: e.has_device("device2"), timeout=None
-        )
+        result = tracer.query_events(lambda e: e.has_device("device2"))
 
         assert_that(result).described_as(
             "Found an unexpected event for 'device2' when none should exist."
