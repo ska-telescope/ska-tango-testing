@@ -18,14 +18,18 @@ class NEventsMatchQuery(EventQuery):
 
     def __init__(
         self,
-        predicate: Callable[[ReceivedEvent], bool],
+        predicate: Callable[[ReceivedEvent, List[ReceivedEvent]], bool],
         target_n_events: int = 1,
         timeout: SupportsFloat = 0.0,
     ) -> None:
         """Initialize the query with the predicate and target number of events.
 
-        :param predicate: A function that takes an event as input and returns
-            True if the event matches the desired criteria.
+        :param predicate: A function that takes an event
+            and the list of all events as input and returns True
+            if the event matches the desired criteria. the predicate
+            can evaluate just the event in isolation or also the
+            event in the context of the other events. The list of events
+            is supposed to be ordered by the time they were received.
         :param target_n_events: The target number of events to match.
             Defaults to 1.
         :param timeout: The timeout for the query in seconds. Defaults to 0.
@@ -48,7 +52,10 @@ class NEventsMatchQuery(EventQuery):
         :param events: The updated list of events.
         """
         for event in events:
-            if self.predicate(event) and event not in self.matching_events:
+            if (
+                self.predicate(event, events)
+                and event not in self.matching_events
+            ):
                 self.matching_events.append(event)
 
 

@@ -10,6 +10,7 @@ number of events is reached, and stopping early if a stop condition is met.
 """
 
 import time
+from unittest.mock import MagicMock
 
 import pytest
 from assertpy import assert_that
@@ -30,11 +31,35 @@ class TestNEventsMatchQuery:
     """Unit tests for the NEventsMatchQuery class."""
 
     @staticmethod
+    def test_query_calls_predicate_and_pass_events() -> None:
+        """The query calls the predicate with the correct arguments."""
+        storage = EventStorage()
+        mock_predicate = MagicMock()
+        query = NEventsMatchQuery(
+            predicate=mock_predicate,
+        )
+        event = create_test_event()
+        storage.store(event)
+
+        storage.subscribe(query)
+
+        assert_that(mock_predicate.call_count).described_as(
+            "Predicate should be called once per event"
+        ).is_equal_to(1)
+        assert_that(mock_predicate.call_args[0][0]).described_as(
+            "Predicate should receive the event as first argument"
+        ).is_equal_to(event)
+        assert_that(mock_predicate.call_args[0][1]).described_as(
+            "Predicate should receive the list of all "
+            " events as second argument"
+        ).is_equal_to([event])
+
+    @staticmethod
     def test_query_succeeds_when_event_matches() -> None:
         """Test that the query succeeds when an event matches."""
         storage = EventStorage()
         query = NEventsMatchQuery(
-            predicate=lambda e: e.has_device("test/device/1")
+            predicate=lambda e, _: e.has_device("test/device/1")
             and e.has_attribute("test_attr")
             and e.attribute_value == 42,
         )
@@ -63,7 +88,7 @@ class TestNEventsMatchQuery:
         """Test that the query fails when no event matches."""
         storage = EventStorage()
         query = NEventsMatchQuery(
-            predicate=lambda e: e.has_device("test/device/1")
+            predicate=lambda e, _: e.has_device("test/device/1")
             and e.has_attribute("test_attr")
             and e.attribute_value == 42,
         )
@@ -88,7 +113,7 @@ class TestNEventsMatchQuery:
         """Test that the query succeeds with multiple matching events."""
         storage = EventStorage()
         query = NEventsMatchQuery(
-            predicate=lambda e: e.has_device("test/device/1")
+            predicate=lambda e, _: e.has_device("test/device/1")
             and e.has_attribute("test_attr")
             and e.attribute_value == 42,
             target_n_events=2,
@@ -120,7 +145,7 @@ class TestNEventsMatchQuery:
         """Test that the query times out when not all events matches."""
         storage = EventStorage()
         query = NEventsMatchQuery(
-            predicate=lambda e: e.has_device("test/device/1")
+            predicate=lambda e, _: e.has_device("test/device/1")
             and e.has_attribute("test_attr")
             and e.attribute_value == 42,
             target_n_events=2,
@@ -157,7 +182,7 @@ class TestQueryWithFailCondition:
         """Test that the query succeeds when an event matches."""
         storage = EventStorage()
         wrapped_query = NEventsMatchQuery(
-            predicate=lambda e: e.has_device("test/device/1")
+            predicate=lambda e, _: e.has_device("test/device/1")
             and e.has_attribute("test_attr")
             and e.attribute_value == 42,
         )
@@ -193,7 +218,7 @@ class TestQueryWithFailCondition:
         """Test that the query fails when the stop condition is met."""
         storage = EventStorage()
         wrapped_query = NEventsMatchQuery(
-            predicate=lambda e: e.has_device("test/device/1")
+            predicate=lambda e, _: e.has_device("test/device/1")
             and e.has_attribute("test_attr")
             and e.attribute_value == 42,
         )
@@ -229,7 +254,7 @@ class TestQueryWithFailCondition:
         """The query should succeed when an event is delayed but matches."""
         storage = EventStorage()
         wrapped_query = NEventsMatchQuery(
-            predicate=lambda e: e.has_device("test/device/1")
+            predicate=lambda e, _: e.has_device("test/device/1")
             and e.has_attribute("test_attr")
             and e.attribute_value == 42,
             timeout=0,  # this timeout will be ignored
@@ -273,7 +298,7 @@ class TestQueryWithFailCondition:
         """The query should fail when the stop condition is met (delayed)."""
         storage = EventStorage()
         wrapped_query = NEventsMatchQuery(
-            predicate=lambda e: e.has_device("test/device/1")
+            predicate=lambda e, _: e.has_device("test/device/1")
             and e.has_attribute("test_attr")
             and e.attribute_value == 42,
             timeout=2,  # this timeout will be ignored
@@ -314,7 +339,7 @@ class TestQueryWithFailCondition:
         """The query times out when no event matches within timeout."""
         storage = EventStorage()
         wrapped_query = NEventsMatchQuery(
-            predicate=lambda e: e.has_device("test/device/1")
+            predicate=lambda e, _: e.has_device("test/device/1")
             and e.has_attribute("test_attr")
             and e.attribute_value == 42,
             timeout=1,

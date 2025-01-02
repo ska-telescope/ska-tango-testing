@@ -438,7 +438,9 @@ class TangoEventTracer:
         target_n_events = self._validate_target_n_events(target_n_events)
 
         # Create a query for the N events that match the predicate
-        query = NEventsMatchQuery(predicate, target_n_events, timeout)
+        query = NEventsMatchQuery(
+            lambda event, _: predicate(event), target_n_events, timeout
+        )
 
         # Subscribe to the query and evaluate it
         self._events_storage.subscribe(query)
