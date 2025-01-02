@@ -1,12 +1,14 @@
 """Unit tests for EventQuery concrete implementations.
 
 Currently, the tested classes are:
-:py:class:`NEventsMatchQuery` and :py:class:`QueryWithFailCondition`.
+:py:class:`NEventsMatchQuery`, :py:class:`QueryWithFailCondition`,
+and :py:class:`NStateChangesQuery`.
 
 This set of tests covers the basic functionality of the
-:py:class:`NEventsMatchQuery` and :py:class:`QueryWithFailCondition` classes,
-focusing on matching events through a predicate and succeeding when a target
-number of events is reached, and stopping early if a stop condition is met.
+:py:class:`NEventsMatchQuery`, :py:class:`QueryWithFailCondition`,
+and :py:class:`NStateChangesQuery` classes, focusing on matching events
+through a predicate and succeeding when a target number of events is reached,
+and stopping early if a stop condition is met.
 """
 
 import time
@@ -19,6 +21,7 @@ from ska_tango_testing.integration.event_query import EventQueryStatus
 from ska_tango_testing.integration.event_storage import EventStorage
 from ska_tango_testing.integration.queries import (
     NEventsMatchQuery,
+    NStateChangesQuery,
     QueryWithFailCondition,
 )
 
@@ -364,3 +367,137 @@ class TestQueryWithFailCondition:
         assert_that(query.failed_event).described_as(
             "Query should not store any event that caused the failure"
         ).is_none()
+
+
+@pytest.mark.integration_tracer
+class TestNStateChangesQuery:
+    """Unit tests for the NStateChangesQuery class."""
+
+    @staticmethod
+    def test_query_succeeds_when_event_matches() -> None:
+        """Test that the query succeeds when an event matches."""
+        storage = EventStorage()
+        query = NStateChangesQuery(
+            device_name="test/device/1",
+            attribute_name="test_attr",
+            attribute_value=42,
+            previous_value=41,
+        )
+
+        event1 = create_test_event(value=41)
+        event2 = create_test_event(value=42)
+        non_matching_event = create_test_event(device_name="test/device/2")
+        other_non_matchig_event = create_test_event(attr_name="other_attr")
+        storage.store(event1)
+        storage.store(event2)
+        storage.store(non_matching_event)
+        storage.store(other_non_matchig_event)
+
+        storage.subscribe(query)
+        query.evaluate()
+
+        assert_that(query.succeeded()).described_as(
+            "Query should succeed when an event matches"
+        ).is_true()
+        assert_that(query.status()).described_as(
+            "Query status should be SUCCEEDED when an event matches"
+        ).is_equal_to(EventQueryStatus.SUCCEEDED)
+        assert_that(query.matching_events).described_as(
+            "Query should collect the matching event"
+        ).is_length(1)
+        assert_that(query.matching_events[0]).described_as(
+            "Query should collect the correct event"
+        ).is_equal_to(event2)
+
+    @staticmethod
+    def test_query_fails_when_no_event_matches_when_prev_value_miss() -> None:
+        """Test that the query fails when no event matches."""
+        storage = EventStorage()
+        query = NStateChangesQuery(
+            attribute_value=42,
+            previous_value=41,
+        )
+
+        event = create_test_event(value=42)
+        storage.store(event)
+
+        storage.subscribe(query)
+        query.evaluate()
+
+        assert_that(query.succeeded()).described_as(
+            "Query should fail when no event matches"
+        ).is_false()
+        assert_that(query.status()).described_as(
+            "Query status should be FAILED when no event matches"
+        ).is_equal_to(EventQueryStatus.FAILED)
+        assert_that(query.matching_events).described_as(
+            "Query should not collect any events"
+        ).is_empty()
+
+    @staticmethod
+    def test_query_fails_when_no_event_matches_for_diff_prev_value() -> None:
+        """Test that the query fails when no event matches."""
+        storage = EventStorage()
+        query = NStateChangesQuery(
+            device_name="test/device/1",
+            attribute_name="test_attr",
+            attribute_value=42,
+            previous_value=41,
+        )
+        event0 = create_test_event(value=41)
+        event1 = create_test_event(value=40)
+        event_diff_device = create_test_event(
+            device_name="test/device/2", value=41
+        )
+        event2 = create_test_event(value=42)
+
+        storage.store(event0)
+        storage.store(event1)
+        storage.store(event_diff_device)
+        storage.store(event2)
+
+        storage.subscribe(query)
+        query.evaluate()
+
+        assert_that(query.succeeded()).described_as(
+            "Query should fail when no event matches"
+        ).is_false()
+        assert_that(query.status()).described_as(
+            "Query status should be FAILED when no event matches"
+        ).is_equal_to(EventQueryStatus.FAILED)
+        assert_that(query.matching_events).described_as(
+            "Query should not collect any events"
+        ).is_empty()
+
+    @staticmethod
+    def test_query_applies_custom_matcher() -> None:
+        """Test that the query applies a custom matcher."""
+        storage = EventStorage()
+        query = NStateChangesQuery(
+            device_name="test/device/1",
+            attribute_name="test_attr",
+            custom_matcher=lambda e: str(e.attribute_value).endswith("2"),
+        )
+
+        event1 = create_test_event(value=41)
+        event2 = create_test_event(value=42)
+        event3 = create_test_event(device_name="test/device/2", value=42)
+        storage.store(event1)
+        storage.store(event2)
+        storage.store(event3)
+
+        storage.subscribe(query)
+        query.evaluate()
+
+        assert_that(query.succeeded()).described_as(
+            "Query should succeed when an event matches"
+        ).is_true()
+        assert_that(query.status()).described_as(
+            "Query status should be SUCCEEDED when an event matches"
+        ).is_equal_to(EventQueryStatus.SUCCEEDED)
+        assert_that(query.matching_events).described_as(
+            "Query should collect the matching event"
+        ).is_length(1)
+        assert_that(query.matching_events[0]).described_as(
+            "Query should collect the correct event"
+        ).is_equal_to(event2)
