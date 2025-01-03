@@ -153,6 +153,12 @@ class EventQuery(ABC):
     def evaluation_duration(self) -> float | None:
         """Get the duration of the query evaluation in seconds.
 
+        The duration is the time elapsed between the evaluation start
+        and the evaluation end. If the evaluation has not started yet,
+        the duration is None. If the evaluation is in progress, the
+        duration is the time elapsed between the evaluation start and
+        the current time.
+
         :return: The duration of the query evaluation in seconds.
         """
         with self._lock:
@@ -340,10 +346,11 @@ class EventQuery(ABC):
     def _evaluation_duration(self) -> float | None:
         """Get the duration of the query evaluation in seconds (thread-unsafe).
 
-        :return: The duration of the query evaluation in seconds.
+        :return: The duration of the query evaluation in seconds or None
+            if the evaluation has not started yet.
         """
         if self._evaluation_start is None:
-            return 0.0
+            return None
         if self._evaluation_end is None:
             return (datetime.now() - self._evaluation_start).total_seconds()
         return (self._evaluation_end - self._evaluation_start).total_seconds()
