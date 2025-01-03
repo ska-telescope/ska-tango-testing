@@ -468,7 +468,7 @@ class TangoEventTracer:
 
         :param query: The query to evaluate.
         :raises ValueError: If the query you are trying to evaluate is already
-            being evaluated by another thread. This is to prevent
+            being evaluated by another thread.
         """  # pylint: disable=line-too-long # noqa: DAR402 E501
         query.evaluate(self._events_storage)
 

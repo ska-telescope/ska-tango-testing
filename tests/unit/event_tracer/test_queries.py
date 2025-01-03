@@ -25,7 +25,7 @@ from ska_tango_testing.integration.queries import (
     QueryWithFailCondition,
 )
 
-from .test_events_query import TestEventQuery
+from .test_event_query import TestEventQuery
 from .testing_utils.received_event_mock import create_test_event
 
 
