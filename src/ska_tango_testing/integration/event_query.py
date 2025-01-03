@@ -71,54 +71,32 @@ class EventQuery(ABC):
         :param timeout: The timeout for the query in seconds.
         """
         self.evaluation_start: datetime | None = None
+        """The evaluation start time. It is set when the evaluation begins."""
+
         self.evaluation_end: datetime | None = None
-        self.timeout: SupportsFloat = timeout
-        self._timeout_signal = Event()
+        """The evaluation end time. It is set when the evaluation ends."""
 
-        self._evaluation_time_lock = Lock()
-        self._evaluation_events_lock = Lock()
+        self._timeout: SupportsFloat = timeout
+        """The object that will determine the timeout of the query.
 
-    def describe(self) -> str:
-        """Describe the query for logging purposes.
-
-        The description includes:
-
-        - The query class name
-        - The query status
-        - The query timeout
-        - The query evaluation start time, the duration and end time
-          (if available)
-        - Additional information provided by the subclass.
-
-        Extend this method in subclasses to provide additional information
-        such as query criteria, expected results, and actual results. Be
-        exhaustive in the description to facilitate debugging. Design a
-        one-line description.
-
-        :return: A string description of the query.
+        It is not simply a float because it can also be something that
+        casts to a float. This is useful when you want to have a dynamic
+        timeout shared between multiple queries.
         """
-        description = (
-            f"Query class: {self.__class__.__name__}, "
-            f"Status: {self.status().value}, "
-            f"Timeout: {self.timeout} s, "
-        )
 
-        duration = None
+        self.initial_timeout: float | None = None
+        """The initial timeout set when the evaluation begins.
 
-        with self._evaluation_time_lock:
-            if self.evaluation_start is not None:
-                description += f"Start time: {self.evaluation_start}, "
-                duration = datetime.now() - self.evaluation_start
+        It is automatically set to the value of the timeout attribute
+        at the time of the evaluation start.
+        """
 
-            if self.evaluation_end is not None:
-                assert self.evaluation_start is not None
-                description += f"End time: {self.evaluation_end}, "
-                duration = self.evaluation_end - self.evaluation_start
-
-        if duration is not None:
-            description += f"Duration: {duration}, "
-
-        return description
+        self._timeout_signal = Event()
+        """A signal to notify the timeout expiration."""
+        self._evaluation_time_lock = Lock()
+        """A lock to protect evaluation timestamps."""
+        self._evaluation_events_lock = Lock()
+        """A lock to protect events evaluation implementation."""
 
     def status(self) -> EventQueryStatus:
         """Get the status of the query.
@@ -165,7 +143,7 @@ class EventQuery(ABC):
 
         # If a timeout is set, start a timer and wait for it to expire
         # or for the query to be completed (succeeded or failed)
-        timeout = float(self.timeout)
+        timeout = float(self._timeout)
         if timeout > 0.0:
             self._timeout_signal.clear()
             self._timeout_signal.wait(timeout)
@@ -195,16 +173,6 @@ class EventQuery(ABC):
         if stop:
             self._timeout_signal.set()
 
-    def _is_stop_criteria_met(self) -> bool:
-        """Check if the stop criteria are met.
-
-        This method is called by the events manager to check if the
-        query should stop evaluating events.
-
-        :return: True if the query should stop, False otherwise.
-        """
-        return self._succeeded()
-
     def succeeded(self) -> bool:
         """Check if the query succeeded.
 
@@ -213,12 +181,64 @@ class EventQuery(ABC):
         with self._evaluation_events_lock:
             return self._succeeded()
 
+    # ---------------------------------------------------------------------
+    # Protected thread-unlocked methods
+    #
+    # The following methods are by themselves thread-unsafe,
+    # but they are protected by the locks in the public methods
+
+    def _is_stop_criteria_met(self) -> bool:
+        """Check if the evaluation should stop now (thread-unsafe).
+
+        The stop criteria is the criteria that determines if the query
+        should stop evaluating events. By default, the query stops if
+        it succeeded, but you can override this method to add more
+        criteria (e.g., an early stop condition).
+
+        NOTE: this is NOT a method to check if the query completed or
+        succeeded, but if it should stop right now (and then so be marked
+        as completed).
+
+        :return: True if the query should stop, False otherwise.
+        """
+        return self._succeeded()
+
+    def _evaluation_duration(self) -> float | None:
+        """Get the duration of the query evaluation in seconds (thread-unsafe).
+
+        :return: The duration of the query evaluation in seconds.
+        """
+        if self.evaluation_start is None:
+            return 0.0
+        if self.evaluation_end is None:
+            return (datetime.now() - self.evaluation_start).total_seconds()
+        return (self.evaluation_end - self.evaluation_start).total_seconds()
+
+    def _remaining_timeout(self) -> float:
+        """Get the remaining timeout in seconds (thread-unsafe).
+
+        :return: The remaining timeout in seconds.
+        """
+        if self.initial_timeout is None:
+            return float(self._timeout)
+
+        duration = self._evaluation_duration()
+
+        # duration cannot be None because evaluation
+        # start time is not None when initial timeout is set
+        assert duration is not None
+
+        return max(0.0, self.initial_timeout - duration)
+
+    # ---------------------------------------------------------------------
+    # Subclasses must implement the following methods
+
     @abstractmethod
     def _succeeded(self) -> bool:
         """Check if the query succeeded.
 
         NOTE: this method should be implemented in subclasses. By default,
-        if is protected by the events lock, so whatever data structure
+        if is protected by the a lock, so whatever data structure
         you use to store events, you can safely access it.
 
         :return: True if the query succeeded, False otherwise.
