@@ -2,6 +2,8 @@
 
 from typing import Any, Callable, List, SupportsFloat
 
+import tango
+
 from .event import ReceivedEvent
 from .event_query import EventQuery
 
@@ -57,6 +59,30 @@ class NEventsMatchQuery(EventQuery):
                 and event not in self.matching_events
             ):
                 self.matching_events.append(event)
+
+    def _describe_criteria(self) -> str:
+        """Describe the criteria of the query.
+
+        :return: A string describing the criteria of the query.
+        """
+        return f"N={self.target_n_events} satisfy a given predicate. "
+
+    def _describe_results(self) -> str:
+        """Describe the results of the query.
+
+        :return: A string describing the results of the query.
+        """
+        desc = f"{len(self.matching_events)} events satisfy the predicate. "
+        if self.matching_events:
+            desc += "\n" + self._events_to_str()
+        return desc
+
+    def _events_to_str(self) -> str:
+        """Convert the matching events to a string.
+
+        :return: A string representation of the matching events.
+        """
+        return "\n".join(map(str, self.matching_events))
 
 
 class QueryWithFailCondition(EventQuery):
@@ -117,6 +143,37 @@ class QueryWithFailCondition(EventQuery):
         """
         return self._succeeded() or self.failed_event is not None
 
+    def _describe_criteria(self) -> str:
+        """Describe the criteria of the query.
+
+        :return: A string describing the criteria of the query.
+        """
+        # pylint: disable=protected-access
+        wrapped_query_criteria = self.wrapped_query._describe_criteria()
+        return wrapped_query_criteria + "\nAn early stop condition is set. "
+
+    def _describe_results(self) -> str:
+        """Describe the results of the query.
+
+        :return: A string describing the results of the query.
+        """
+        # pylint: disable=protected-access
+        wrapped_query_results = self.wrapped_query._describe_results()
+
+        if self._succeeded():
+            return wrapped_query_results
+
+        return f"{wrapped_query_results}\n{self._describe_fail_reason()}"
+
+    def _describe_fail_reason(self) -> str:
+        """Describe the reason why the query failed.
+
+        :return: A string describing the reason why the query failed.
+        """
+        if self.failed_event is not None:
+            return f"Event {str(self.failed_event)} failed the stop condition"
+        return "The query failed because the stop condition was met"
+
 
 class NStateChangesQuery(NEventsMatchQuery):
     """Query that looks for N state change events.
@@ -143,7 +200,7 @@ class NStateChangesQuery(NEventsMatchQuery):
     # pylint: disable=too-many-arguments
     def __init__(
         self,
-        device_name: str | None = None,
+        device_name: str | tango.DeviceProxy | None = None,
         attribute_name: str | None = None,
         attribute_value: Any | None = None,
         previous_value: Any | None = None,
@@ -245,3 +302,46 @@ class NStateChangesQuery(NEventsMatchQuery):
 
         # If the previous event was found, check if previous value matches
         return previous_event.attribute_value == self.previous_value
+
+    def _describe_criteria(self) -> str:
+        """Describe the criteria of the query.
+
+        :return: A string describing the criteria of the query.
+        """
+        desc = super()._describe_criteria()
+        desc += "\nState change criteria: "
+
+        criteria: list[str] = []
+        if self.device_name is not None:
+            criteria += f"device_name='{self._describe_device_name()}'"
+        if self.attribute_name is not None:
+            criteria += f"attribute_name={self.attribute_name}"
+        if self.attribute_value is not None:
+            criteria += f"attribute_value={self.attribute_value}"
+        if self.previous_value is not None:
+            criteria += f"previous_value={self.previous_value}"
+        if self.custom_matcher is not None:
+            criteria += "a custom matcher function is set"
+
+        if criteria:
+            desc += ", ".join(criteria)
+        else:
+            desc += "no criteria set"
+
+        return desc
+
+    def _describe_device_name(self) -> str:
+        """Describe the device name criterion.
+
+        Use this method to get the device name criterion as a string.
+        Use it only if the device name is set.
+
+        :return: A string describing the device name criterion.
+        :raises ValueError: If there is no device name criterion set.
+        """
+        if isinstance(self.device_name, str):
+            return self.device_name
+        if isinstance(self.device_name, tango.DeviceProxy):
+            return self.device_name.dev_name()
+
+        raise ValueError("There is no device name criterion set")
