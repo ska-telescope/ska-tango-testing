@@ -142,8 +142,24 @@ class EventQuery(ABC):
         with self._lock:
             return self._is_completed()
 
+    def initial_timeout(self) -> float:
+        """Get the initial timeout in seconds.
+
+        The initial timeout is the timeout set when the evaluation begins.
+        If the evaluation did not start yet, the initial timeout is the
+        value that can be read now from the timeout attribute.
+
+        :return: The initial timeout in seconds.
+        """
+        with self._lock:
+            return self._initial_timeout_value or float(self._timeout)
+
     def remaining_timeout(self) -> float:
         """Get the remaining timeout in seconds.
+
+        The remaining timeout is the time left before the timeout expires.
+        If the evaluation did not start yet, the remaining timeout is the
+        value of the timeout attribute.
 
         :return: The remaining timeout in seconds.
         """
