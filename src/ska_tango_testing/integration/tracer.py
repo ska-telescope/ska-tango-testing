@@ -29,6 +29,7 @@ from typing import Callable, SupportsFloat
 import tango
 
 from .event import ReceivedEvent
+from .event_query import EventQuery
 from .event_storage import EventStorage
 from .queries import NEventsMatchQuery
 from .subscriber import TangoSubscriber
@@ -437,18 +438,41 @@ class TangoEventTracer:
         timeout = self._validate_timeout(timeout)
         target_n_events = self._validate_target_n_events(target_n_events)
 
-        # Create a query for the N events that match the predicate
+        # Create a query to get at least N matching
+        # events within the timeout
         query = NEventsMatchQuery(
             lambda event, _: predicate(event), target_n_events, timeout
         )
 
-        # Subscribe to the query and evaluate it
-        self._events_storage.subscribe(query)
-        query.evaluate()
-        self._events_storage.unsubscribe(query)
+        # Evaluate it
+        self.evaluate_query(query)
 
         # extract and return the matching events
         return query.matching_events
+
+    def evaluate_query(self, query: EventQuery) -> None:
+        """Evaluate a query over the current and future captured events.
+
+        A :py:class:`~ska_tango_testing.integration.event_query.EventQuery`
+        is a query over the tracer's present and eventually future events
+        (if a timeout is specified). This method takes an already built
+        and not yet evaluated query and evaluates it. The evaluation is a
+        blocking operation that waits for the query to be satisfied or for
+        the timeout to be reached.
+
+        This method returns nothing, because eventual query results are
+        supposed to be accessed through the query object itself. The most
+        basic and common result is it's success status, which can be
+        accessed through the
+        :py:meth:`~ska_tango_testing.integration.event_query.EventQuery.succeeded`
+
+        :param query: The query to evaluate.
+        :raises ValueError: If the query you are trying to evaluate is already
+            being evaluated by another thread. This is to prevent
+        """  # pylint: disable=line-too-long # noqa: DAR402 E501
+        self._events_storage.subscribe(query)
+        query.evaluate()
+        self._events_storage.unsubscribe(query)
 
     # -----------------------------
     # Input validators
