@@ -70,10 +70,10 @@ class EventQuery(ABC):
 
         :param timeout: The timeout for the query in seconds.
         """
-        self.evaluation_start: datetime | None = None
+        self._evaluation_start: datetime | None = None
         """The evaluation start time. It is set when the evaluation begins."""
 
-        self.evaluation_end: datetime | None = None
+        self._evaluation_end: datetime | None = None
         """The evaluation end time. It is set when the evaluation ends."""
 
         self._timeout: SupportsFloat = timeout
@@ -84,7 +84,7 @@ class EventQuery(ABC):
         timeout shared between multiple queries.
         """
 
-        self.initial_timeout: float | None = None
+        self._initial_timeout_value: float | None = None
         """The initial timeout set when the evaluation begins.
 
         It is automatically set to the value of the timeout attribute
@@ -93,92 +93,121 @@ class EventQuery(ABC):
 
         self._timeout_signal = Event()
         """A signal to notify the timeout expiration."""
-        self._evaluation_time_lock = Lock()
-        """A lock to protect evaluation timestamps."""
-        self._evaluation_events_lock = Lock()
-        """A lock to protect events evaluation implementation."""
+        self._lock = Lock()
+        """A lock to protect the query state."""
 
+    # ---------------------------------------------------------------------
+    # Status properties
+    
     def status(self) -> EventQueryStatus:
         """Get the status of the query.
 
+        The query can be in one of the following states:
+
+        - NOT_STARTED: the query is created but not evaluated yet.
+        - IN_PROGRESS: the query is being evaluated.
+        - SUCCEEDED: the query evaluation terminated and succeeded.
+        - FAILED: the query evaluation terminated and failed.
+
         :return: The status of the query.
         """
-        with self._evaluation_time_lock:
-            if self.evaluation_start is None:
-                return EventQueryStatus.NOT_STARTED
-            if self.evaluation_end is None:
-                return EventQueryStatus.IN_PROGRESS
-
-        if self.succeeded():
-            return EventQueryStatus.SUCCEEDED
-        return EventQueryStatus.FAILED
+        with self._lock:
+            return self._status()
 
     def is_completed(self) -> bool:
         """Check if the query is completed.
 
         :return: True if the query is completed, False otherwise.
         """
-        return self.status() in (
-            EventQueryStatus.SUCCEEDED,
-            EventQueryStatus.FAILED,
-        )
+        with self._lock:
+            return self._is_completed()
+        
+    def remaining_timeout(self) -> float:
+        """Get the remaining timeout in seconds.
+
+        :return: The remaining timeout in seconds.
+        """
+        with self._lock:
+            return self._remaining_timeout()
+        
+    def evaluation_duration(self) -> float | None:
+        """Get the duration of the query evaluation in seconds.
+
+        :return: The duration of the query evaluation in seconds.
+        """
+        with self._lock:
+            return self._evaluation_duration()
+        
+    # ---------------------------------------------------------------------
+    # Evaluation methods (DO NOT CALL DIRECTLY)
+
 
     def evaluate(self) -> None:
-        """Start the evaluation of the query.
+        """Start the evaluation of the query (DO NOT CALL DIRECTLY).
 
-        This method is called by the events manager to start the evaluation
-        of the query. It blocks until the query is completed or the timeout
-        expires.
+        This method is used by the tracer to put the query in evaluation
+        mode so it can receive events and evaluate them. It should not
+        be called directly by the user. This method is blocking and
+        will return only when the query evaluation completes or the
+        timeout expires.
 
         :raises ValueError: If the evaluation is already started.
         """
         # Begin the evaluation (set the start time)
-        with self._evaluation_time_lock:
-            if self.evaluation_start:
+        with self._lock:
+            if self._evaluation_start:
                 raise ValueError(
                     "Evaluation already started. A query can "
                     "only be evaluated once."
                 )
-            self.evaluation_start = datetime.now()
+            self._evaluation_start = datetime.now()
+            self._initial_timeout_value = float(self._timeout)
+
+        # TODO: here I may do the storage subscription, it would be
+        # appropriate to keep it controlled I guess.
 
         # If a timeout is set, start a timer and wait for it to expire
         # or for the query to be completed (succeeded or failed)
-        timeout = float(self._timeout)
-        if timeout > 0.0:
+        # If the timeout is 0.0, the query will not wait for nothing and
+        # will return immediately
+        if self._initial_timeout_value > 0.0:
             self._timeout_signal.clear()
-            self._timeout_signal.wait(timeout)
+            self._timeout_signal.wait(self._initial_timeout_value)
 
         # End the evaluation (set the end time)
-        with self._evaluation_time_lock:
-            self.evaluation_end = datetime.now()
+        with self._lock:
+            self._evaluation_end = datetime.now()
 
     def on_events_change(self, events: List[ReceivedEvent]) -> None:
-        """Handle events change.
+        """Handle events change and evaluate them against the query criteria.
 
-        :param events: The updated list of events.
+        (DO NOT CALL DIRECTLY)
+
+        This method is the callback that is called when new events are
+        received by the events manager. It evaluates again all the events
+        and stops the evaluation if the criteria are met.
+
+        :param events: The updated list of events (with both
+            new and old events).
         """
-        # no more evaluation if the query is completed
-        if self.is_completed():
-            return
+        with self._lock:
+            # If the query is already completed, do not evaluate
+            if self._is_completed():
+                return
 
-        # Evaluate the events and stop if the criteria are met
-        # (protected by the events lock)
-        stop = False
-        with self._evaluation_events_lock:
+            # Evaluate the events and stop if the criteria are met
             self._evaluate_events(events)
-            stop = self._is_stop_criteria_met()
 
-        # If the query should stop, set the timeout signal
-        # (the end time will be set by the evaluate method)
-        if stop:
-            self._timeout_signal.set()
+            # If the query should stop, set the timeout signal
+            if self._is_stop_criteria_met():
+                self._timeout_signal.set()
 
     def succeeded(self) -> bool:
         """Check if the query succeeded.
 
         :return: True if the query succeeded, False otherwise.
         """
-        with self._evaluation_events_lock:
+        with self._lock:
             return self._succeeded()
 
     # ---------------------------------------------------------------------
@@ -186,6 +215,30 @@ class EventQuery(ABC):
     #
     # The following methods are by themselves thread-unsafe,
     # but they are protected by the locks in the public methods
+
+    def _status(self) -> EventQueryStatus:
+        """Get the status of the query (thread-unsafe).
+
+        :return: The status of the query.
+        """
+        if self._evaluation_start is None:
+            return EventQueryStatus.NOT_STARTED
+        if self._evaluation_end is None:
+            return EventQueryStatus.IN_PROGRESS
+
+        if self._succeeded():
+            return EventQueryStatus.SUCCEEDED
+        return EventQueryStatus.FAILED
+    
+    def _is_completed(self) -> bool:
+        """Check if the query evaluation is completed (thread-unsafe).
+
+        :return: True if the query evaluation is completed, False otherwise.
+        """
+        return self._status() in (
+            EventQueryStatus.SUCCEEDED,
+            EventQueryStatus.FAILED,
+        )
 
     def _is_stop_criteria_met(self) -> bool:
         """Check if the evaluation should stop now (thread-unsafe).
@@ -208,18 +261,18 @@ class EventQuery(ABC):
 
         :return: The duration of the query evaluation in seconds.
         """
-        if self.evaluation_start is None:
+        if self._evaluation_start is None:
             return 0.0
-        if self.evaluation_end is None:
-            return (datetime.now() - self.evaluation_start).total_seconds()
-        return (self.evaluation_end - self.evaluation_start).total_seconds()
+        if self._evaluation_end is None:
+            return (datetime.now() - self._evaluation_start).total_seconds()
+        return (self._evaluation_end - self._evaluation_start).total_seconds()
 
     def _remaining_timeout(self) -> float:
         """Get the remaining timeout in seconds (thread-unsafe).
 
         :return: The remaining timeout in seconds.
         """
-        if self.initial_timeout is None:
+        if self._initial_timeout_value is None:
             return float(self._timeout)
 
         duration = self._evaluation_duration()
@@ -228,7 +281,7 @@ class EventQuery(ABC):
         # start time is not None when initial timeout is set
         assert duration is not None
 
-        return max(0.0, self.initial_timeout - duration)
+        return max(0.0, self._initial_timeout_value - duration)
 
     # ---------------------------------------------------------------------
     # Subclasses must implement the following methods
