@@ -101,8 +101,7 @@ class TestEventQuery:
         event = create_test_event()
         storage.store(event)
 
-        storage.subscribe(query)
-        query.evaluate()
+        query.evaluate(storage)
 
         assert_that(query.status()).described_as(
             "Query should succeed when an event matches"
@@ -123,12 +122,14 @@ class TestEventQuery:
         event = create_test_event(device_name="test/device/2")
         storage.store(event)
 
-        storage.subscribe(query)
-        query.evaluate()
+        query.evaluate(storage)
 
         assert_that(query.status()).described_as(
             "Query should fail when no event matches"
         ).is_equal_to(EventQueryStatus.FAILED)
+        assert_that(query.match_found).described_as(
+            "Query should indicate no match was found"
+        ).is_false()
         assert_that(query.match_found).described_as(
             "Query should indicate no match was found"
         ).is_false()
@@ -144,12 +145,14 @@ class TestEventQuery:
         )
         self.delayed_store_event(storage, create_test_event(), delay=1)
 
-        storage.subscribe(query)
-        query.evaluate()
+        query.evaluate(storage)
 
         assert_that(query.status()).described_as(
             "Query should succeed when an event is received during evaluation"
         ).is_equal_to(EventQueryStatus.SUCCEEDED)
+        assert_that(query.succeeded()).described_as(
+            "Query should have succeeded"
+        ).is_true()
         assert_that(query.match_found).described_as(
             "Query should indicate a match was found"
         ).is_true()
@@ -165,14 +168,16 @@ class TestEventQuery:
         )
         self.delayed_store_event(storage, create_test_event(), delay=2)
 
-        storage.subscribe(query)
-        query.evaluate()
+        query.evaluate(storage)
 
         time.sleep(1.5)
 
         assert_that(query.status()).described_as(
             "Query should fail when it times out"
         ).is_equal_to(EventQueryStatus.FAILED)
+        assert_that(query.succeeded()).described_as(
+            "Query should not have succeeded"
+        ).is_false()
         assert_that(query.match_found).described_as(
             "Query should indicate no match was found"
         ).is_false()

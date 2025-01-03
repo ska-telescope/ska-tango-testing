@@ -470,9 +470,7 @@ class TangoEventTracer:
         :raises ValueError: If the query you are trying to evaluate is already
             being evaluated by another thread. This is to prevent
         """  # pylint: disable=line-too-long # noqa: DAR402 E501
-        self._events_storage.subscribe(query)
-        query.evaluate()
-        self._events_storage.unsubscribe(query)
+        query.evaluate(self._events_storage)
 
     # -----------------------------
     # Input validators

@@ -44,7 +44,7 @@ class TestNEventsMatchQuery:
         event = create_test_event()
         storage.store(event)
 
-        storage.subscribe(query)
+        query.evaluate(storage)
 
         assert_that(mock_predicate.call_count).described_as(
             "Predicate should be called once per event"
@@ -70,8 +70,7 @@ class TestNEventsMatchQuery:
         event = create_test_event()
         storage.store(event)
 
-        storage.subscribe(query)
-        query.evaluate()
+        query.evaluate(storage)
 
         assert_that(query.succeeded()).described_as(
             "Query should succeed when an event matches"
@@ -98,8 +97,7 @@ class TestNEventsMatchQuery:
         event = create_test_event(device_name="test/device/2")
         storage.store(event)
 
-        storage.subscribe(query)
-        query.evaluate()
+        query.evaluate(storage)
 
         assert_that(query.succeeded()).described_as(
             "Query should fail when no event matches"
@@ -127,8 +125,7 @@ class TestNEventsMatchQuery:
         storage.store(event1)
         TestEventQuery.delayed_store_event(storage, event2, delay=1)
 
-        storage.subscribe(query)
-        query.evaluate()
+        query.evaluate(storage)
 
         assert_that(query.succeeded()).described_as(
             "Query should succeed when multiple events match"
@@ -161,8 +158,7 @@ class TestNEventsMatchQuery:
         TestEventQuery.delayed_store_event(storage, event3, delay=0.5)
         TestEventQuery.delayed_store_event(storage, event2, delay=1.5)
 
-        storage.subscribe(query)
-        query.evaluate()
+        query.evaluate(storage)
 
         time.sleep(1.5)
         assert_that(query.succeeded()).described_as(
@@ -197,8 +193,7 @@ class TestQueryWithFailCondition:
         event = create_test_event()
         storage.store(event)
 
-        storage.subscribe(query)
-        query.evaluate()
+        query.evaluate(storage)
 
         assert_that(query.succeeded()).described_as(
             "Query should succeed when an event matches"
@@ -236,8 +231,7 @@ class TestQueryWithFailCondition:
         fail_event = create_test_event(device_name="test/device/2")
         storage.store(fail_event)
 
-        storage.subscribe(query)
-        query.evaluate()
+        query.evaluate(storage)
 
         assert_that(query.succeeded()).described_as(
             "Query should fail when the stop condition is met"
@@ -275,8 +269,7 @@ class TestQueryWithFailCondition:
         fail_event = create_test_event(device_name="test/device/2")
         TestEventQuery.delayed_store_event(storage, fail_event, delay=1.5)
 
-        storage.subscribe(query)
-        query.evaluate()
+        query.evaluate(storage)
         time.sleep(1)
 
         assert_that(wrapped_query.succeeded()).described_as(
@@ -319,8 +312,7 @@ class TestQueryWithFailCondition:
         event = create_test_event()
         TestEventQuery.delayed_store_event(storage, event, delay=1.5)
 
-        storage.subscribe(query)
-        query.evaluate()
+        query.evaluate(storage)
 
         assert_that(query.succeeded()).described_as(
             "Query should fail when the stop condition "
@@ -352,8 +344,7 @@ class TestQueryWithFailCondition:
             stop_condition=lambda e: False,
         )
 
-        storage.subscribe(query)
-        query.evaluate()
+        query.evaluate(storage)
 
         assert_that(query.succeeded()).described_as(
             "Query should fail when it times out"
@@ -393,8 +384,7 @@ class TestNStateChangesQuery:
         storage.store(non_matching_event)
         storage.store(other_non_matchig_event)
 
-        storage.subscribe(query)
-        query.evaluate()
+        query.evaluate(storage)
 
         assert_that(query.succeeded()).described_as(
             "Query should succeed when an event matches"
@@ -421,8 +411,7 @@ class TestNStateChangesQuery:
         event = create_test_event(value=42)
         storage.store(event)
 
-        storage.subscribe(query)
-        query.evaluate()
+        query.evaluate(storage)
 
         assert_that(query.succeeded()).described_as(
             "Query should fail when no event matches"
@@ -456,8 +445,7 @@ class TestNStateChangesQuery:
         storage.store(event_diff_device)
         storage.store(event2)
 
-        storage.subscribe(query)
-        query.evaluate()
+        query.evaluate(storage)
 
         assert_that(query.succeeded()).described_as(
             "Query should fail when no event matches"
@@ -486,8 +474,7 @@ class TestNStateChangesQuery:
         storage.store(event2)
         storage.store(event3)
 
-        storage.subscribe(query)
-        query.evaluate()
+        query.evaluate(storage)
 
         assert_that(query.succeeded()).described_as(
             "Query should succeed when an event matches"

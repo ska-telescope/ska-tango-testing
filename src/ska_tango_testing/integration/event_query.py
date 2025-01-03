@@ -7,6 +7,8 @@ from enum import Enum
 from threading import Event, Lock
 from typing import List, SupportsFloat
 
+from ska_tango_testing.integration.event_storage import EventStorage
+
 from .event import ReceivedEvent
 
 
@@ -25,44 +27,62 @@ class EventQuery(ABC):
     An events query is a mechanism to query a set of events within a timeout.
     A query has the following characteristics:
 
-    - it has a lifecycle:
+    - it has a lifecycle (accessible through the ``status`` method):
         - it is created
-        - it is evaluated, (with the ``evaluate`` method, called once
-            by the events manager)
-        - while ongoing, the query receive events and wait or to reach
+        - it is evaluated through an event tracer
+        - while ongoing, the query will receive events and wait or to reach
             the success criteria defined in the ``succeeded`` method
             or for a timeout to expire
         - when the query is completed, the status is updated and the
             evaluation end time is set
 
-    The lifecycle is accessible through the ``status`` method.
-
     - it is an abstract class, so it cannot be instantiated directly
         and you have to subclass it and implement two key methods:
-    - ``_succeeded`` defines the success criteria of your query, write
-        here some logic to check if your query is satisfied (return True
-        if it is, False otherwise). Consider that by default a timeout
-        will be awaited if the query is not completed yet.
-    - ``_evaluate_events`` is a callback method you can implement to
-        analyze new events and update some kind of your internal state.
-        The same internal state can be used in the ``_succeeded`` method.
-        The method is activated once when the query evaluation begins
-        and every time new events are received. Consider that every time
-        this method is called all the received events are passed to it
-        (not only the new ones). Consider also that both this method and
-        the ``_succeeded`` method are protected by a lock, so you can
-        safely access your internal state.
 
-    To evaluate a query, technically you:
-
-    - subscribe the query to an
-        :py:class:`ska_tango_testing.integration.events_storage.EventStorage`;
-    - call the ``evaluate`` method of the query, which will block you until
-        the query is completed or the timeout expires.
+        - ``_succeeded`` defines the success criteria of your query, write
+            here some logic to check if your query is satisfied (return True
+            if it is, False otherwise). Consider that by default a timeout
+            will be awaited if the query is not completed yet.
+        - ``_evaluate_events`` is a callback method you can implement to
+            analyze new events and update some kind of your internal state.
+            The same internal state can be used in the ``_succeeded`` method.
+            The method is activated once when the query evaluation begins
+            and every time new events are received. Consider that every time
+            this method is called all the received events are passed to it
+            (not only the new ones). Consider also that both this method and
+            the ``_succeeded`` method are protected by a lock, so you can
+            safely access your internal state.
+        - you may also want to override the ``_is_stop_criteria_met`` method
+            to add more criteria to stop the evaluation (e.g., an early stop
+            condition)
 
     From an user perspective, to evaluate the query you can simply pass it
     to a :py:class:`ska_tango_testing.integration.tracer.TangoEventTracer`
-    instance.
+    instance. Inside it, the query will automatically subscribe to the
+    events storage and wait for the evaluation to complete. Example:
+
+    .. code-block:: python
+
+        tracer = TangoEventTracer()
+        # (do all your subscriptions here)
+
+        class MyQuery(EventQuery):
+
+            def _evaluate_events(self, events: List[ReceivedEvent]) -> None:
+                # (your logic here, that saves some kind of state)
+
+            def _succeeded(self):
+                # (your logic here, that checks if the query is satisfied
+                # using the state saved in the _evaluate_events method)
+
+        # simple evaluation without timeout (non blocking)
+        query = MyQuery()
+        tracer.evaluate_query(query)
+
+        # evaluation with timeout (blocking)
+        query_with_timeout = MyQuery(timeout=10.0)
+        tracer.evaluate_query(query_with_timeout)
+
     """
 
     def __init__(self, timeout: SupportsFloat = 0.0) -> None:
@@ -98,7 +118,7 @@ class EventQuery(ABC):
 
     # ---------------------------------------------------------------------
     # Status properties
-    
+
     def status(self) -> EventQueryStatus:
         """Get the status of the query.
 
@@ -121,7 +141,7 @@ class EventQuery(ABC):
         """
         with self._lock:
             return self._is_completed()
-        
+
     def remaining_timeout(self) -> float:
         """Get the remaining timeout in seconds.
 
@@ -129,7 +149,7 @@ class EventQuery(ABC):
         """
         with self._lock:
             return self._remaining_timeout()
-        
+
     def evaluation_duration(self) -> float | None:
         """Get the duration of the query evaluation in seconds.
 
@@ -137,20 +157,35 @@ class EventQuery(ABC):
         """
         with self._lock:
             return self._evaluation_duration()
-        
+
     # ---------------------------------------------------------------------
-    # Evaluation methods (DO NOT CALL DIRECTLY)
+    # Evaluation methods
+    # (DO NOT OVERRIDE THESE METHODS)
 
-
-    def evaluate(self) -> None:
-        """Start the evaluation of the query (DO NOT CALL DIRECTLY).
+    def evaluate(self, storage: EventStorage) -> None:
+        """Start the evaluation of the query (USED BY THE TRACER).
 
         This method is used by the tracer to put the query in evaluation
-        mode so it can receive events and evaluate them. It should not
-        be called directly by the user. This method is blocking and
+        mode so it can receive events and evaluate them.
+        This method is blocking and
         will return only when the query evaluation completes or the
         timeout expires.
 
+        NOTE: this method is meant to be called only one time. If you
+        try to evaluate again or if you try to evaluate a query that is
+        already in an evaluation state, a ValueError will be raised.
+
+        NOTE: this method is meant to be called by the tracer, not by
+        the end user. The end user should simply pass the query to the
+        tracer and let it handle the evaluation.
+
+        NOTE: this method is not meant to be overridden. If you want to
+        implement the evaluation logic, you should implement the
+        ``_succeeded`` and ``_evaluate_events`` methods. You can also
+        override the ``_is_stop_criteria_met`` method to add more
+        criteria to stop the evaluation.
+
+        :param storage: The event storage to use to receive events.
         :raises ValueError: If the evaluation is already started.
         """
         # Begin the evaluation (set the start time)
@@ -163,8 +198,11 @@ class EventQuery(ABC):
             self._evaluation_start = datetime.now()
             self._initial_timeout_value = float(self._timeout)
 
-        # TODO: here I may do the storage subscription, it would be
-        # appropriate to keep it controlled I guess.
+        # (if multiple processes call evaluate together, only one will
+        # go on evaluating, the others will fail the check above)
+
+        # Subscribe the query to the storage to receive events
+        storage.subscribe(self)
 
         # If a timeout is set, start a timer and wait for it to expire
         # or for the query to be completed (succeeded or failed)
@@ -174,6 +212,9 @@ class EventQuery(ABC):
             self._timeout_signal.clear()
             self._timeout_signal.wait(self._initial_timeout_value)
 
+        # Unsubscribe the query from the storage
+        storage.unsubscribe(self)
+
         # End the evaluation (set the end time)
         with self._lock:
             self._evaluation_end = datetime.now()
@@ -181,11 +222,19 @@ class EventQuery(ABC):
     def on_events_change(self, events: List[ReceivedEvent]) -> None:
         """Handle events change and evaluate them against the query criteria.
 
-        (DO NOT CALL DIRECTLY)
-
         This method is the callback that is called when new events are
         received by the events manager. It evaluates again all the events
         and stops the evaluation if the criteria are met.
+
+        NOTE: this method is meant to be called by the events manager
+        when new events are received. The end user should not call this
+        method directly.
+
+        NOTE: this method is not meant to be overridden. If you want to
+        implement the evaluation logic, you should implement the
+        ``_succeeded`` and ``_evaluate_events`` methods. You can also
+        override the ``_is_stop_criteria_met`` method to add more
+        criteria to stop the evaluation.
 
         :param events: The updated list of events (with both
             new and old events).
@@ -211,6 +260,38 @@ class EventQuery(ABC):
             return self._succeeded()
 
     # ---------------------------------------------------------------------
+    # Subclasses must implement the following methods
+
+    @abstractmethod
+    def _succeeded(self) -> bool:
+        """Check if the query succeeded.
+
+        NOTE: this method should be implemented in subclasses. By default,
+        if is protected by the a lock, so whatever data structure
+        you use to store events, you can safely access it.
+
+        IMPORTANT: do not call public methods from this method implementation,
+        as they may acquire the lock again and cause a deadlock! Also, do not
+        acquire the lock again in this method, as it is already acquired.
+
+        :return: True if the query succeeded, False otherwise.
+        """
+
+    @abstractmethod
+    def _evaluate_events(self, events: List[ReceivedEvent]) -> None:
+        """Evaluate the query based on the current events.
+
+        This method is called automatically by the events manager
+        whenever the list of events changes.
+
+        IMPORTANT: do not call public methods from this method implementation,
+        as they may acquire the lock again and cause a deadlock! Also, do not
+        acquire the lock again in this method, as it is already acquired.
+
+        :param events: The updated list of events.
+        """
+
+    # ---------------------------------------------------------------------
     # Protected thread-unlocked methods
     #
     # The following methods are by themselves thread-unsafe,
@@ -229,7 +310,7 @@ class EventQuery(ABC):
         if self._succeeded():
             return EventQueryStatus.SUCCEEDED
         return EventQueryStatus.FAILED
-    
+
     def _is_completed(self) -> bool:
         """Check if the query evaluation is completed (thread-unsafe).
 
@@ -282,27 +363,3 @@ class EventQuery(ABC):
         assert duration is not None
 
         return max(0.0, self._initial_timeout_value - duration)
-
-    # ---------------------------------------------------------------------
-    # Subclasses must implement the following methods
-
-    @abstractmethod
-    def _succeeded(self) -> bool:
-        """Check if the query succeeded.
-
-        NOTE: this method should be implemented in subclasses. By default,
-        if is protected by the a lock, so whatever data structure
-        you use to store events, you can safely access it.
-
-        :return: True if the query succeeded, False otherwise.
-        """
-
-    @abstractmethod
-    def _evaluate_events(self, events: List[ReceivedEvent]) -> None:
-        """Evaluate the query based on the current events.
-
-        This method is called automatically by the events manager
-        whenever the list of events changes.
-
-        :param events: The updated list of events.
-        """
