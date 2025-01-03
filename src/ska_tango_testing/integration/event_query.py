@@ -55,6 +55,10 @@ class EventQuery(ABC):
         - you may also want to override the ``_is_stop_criteria_met`` method
             to add more criteria to stop the evaluation (e.g., an early stop
             condition)
+        - you may also want to override the description private method
+            ``_describe_results`` to provide a custom description of the
+            query results and the ``_describe_criteria`` method to provide
+            a custom description of the query criteria you are using.
 
     From an user perspective, to evaluate the query you can simply pass it
     to a :py:class:`ska_tango_testing.integration.tracer.TangoEventTracer`
@@ -179,6 +183,28 @@ class EventQuery(ABC):
         """
         with self._lock:
             return self._evaluation_duration()
+
+    def describe(self) -> str:
+        """Describe the query status, criteria and results.
+
+        By default the status is described including the status, the
+        start and end time of the evaluation (if available), the timeout
+        and the remaining timeout. You can override this method to
+        provide a custom description of the query results overriding
+        the ``_describe_results`` method and the query criteria
+        overriding the ``_describe_criteria`` method.
+
+        :return: The description of the query. It is a 6 lines string divided
+            in 3 sections: status, criteria and results.
+        """
+        with self._lock:
+            description = "EVENT QUERY STATUS:\n"
+            description += self._describe_status()
+            description += "\nEVENT QUERY CRITERIA:\n"
+            description += self._describe_criteria()
+            description += "\nEVENT QUERY RESULTS:\n"
+            description += self._describe_results()
+            return description
 
     # ---------------------------------------------------------------------
     # Evaluation methods
@@ -313,6 +339,34 @@ class EventQuery(ABC):
         :param events: The updated list of events.
         """
 
+    # pylint: disable=no-self-use
+    def _describe_results(self) -> str:
+        """Describe the query results.
+
+        By default, this method returns nothing. You can override
+        this method to provide a custom description of the query results.
+        Consider that ``_describe_status`` is already called before this
+        and that it already tells if the query is ongoing or completed
+        and if it succeeded or failed.
+
+        :return: The description of the query results.
+        """
+        return "Results not described."
+
+    # pylint: disable=no-self-use
+    def _describe_criteria(self) -> str:
+        """Describe the query criteria.
+
+        By default, this method returns nothing. You can override
+        this method to provide a custom description of the query criteria.
+        Consider that ``_describe_status`` is already called before this
+        so things as the timeout and the remaining timeout are already
+        described.
+
+        :return: The description of the query criteria.
+        """
+        return "Criteria not described."
+
     # ---------------------------------------------------------------------
     # Protected thread-unlocked methods
     #
@@ -386,3 +440,40 @@ class EventQuery(ABC):
         assert duration is not None
 
         return max(0.0, self._initial_timeout_value - duration)
+
+    def _describe_status(self) -> str:
+        """Describe the status of the query (thread-unsafe).
+
+        The status is described including the status, the start and end
+        time of the evaluation (if available), the timeout and the
+        remaining timeout. You can override this method to provide a
+        better description of the query status.
+
+        :return: The description of the query status.
+        """
+        description = ""
+        description += f"Status={self._status().value}, "
+
+        if self._evaluation_start:
+            description += f"Start time={self._evaluation_start}, "
+
+        if self._evaluation_end:
+            description += f"End time={self._evaluation_end}, "
+
+        # aproximate the remaining timeout to 3 decimal digits
+        if self._initial_timeout_value is not None:
+            description += (
+                f"Initial timeout={self._initial_timeout_value:.3f}s, "
+            )
+        else:
+            description += f"Initial timeout={float(self._timeout):.3f}s, "
+
+        if self._status() != EventQueryStatus.NOT_STARTED:
+            description += (
+                f"Remaining timeout={self._remaining_timeout():.3f}s, "
+            )
+            description += (
+                f"Evaluation duration={self._evaluation_duration():.3f}s, "
+            )
+
+        return description

@@ -19,6 +19,7 @@ from ska_tango_testing.integration.event_query import (
 )
 from ska_tango_testing.integration.event_storage import EventStorage
 
+from .testing_utils.delayed_store_event import delayed_store_event
 from .testing_utils.received_event_mock import create_test_event
 
 
@@ -66,28 +67,28 @@ class SimpleEventQuery(EventQuery):
                 self.match_found = True
                 break
 
+    def _describe_results(self) -> str:
+        """Describe the query results.
+
+        :return: The description of the query results.
+        """
+        return "Match found: " + str(self.match_found)
+
+    def _describe_criteria(self) -> str:
+        """Describe the query criteria.
+
+        :return: The description of the query criteria.
+        """
+        return (
+            f"Device: {self.device_name}, "
+            f"Attribute: {self.attr_name}, "
+            f"Value: {self.value}"
+        )
+
 
 @pytest.mark.integration_tracer
 class TestEventQuery:
     """Unit tests for the EventQuery class."""
-
-    @staticmethod
-    def delayed_store_event(
-        storage: EventStorage, event: ReceivedEvent, delay: float
-    ) -> None:
-        """Add an event to the storage after a delay.
-
-        :param storage: The storage to add the event to
-        :param event: The event to add
-        :param delay: The delay in seconds
-        """
-
-        def add_event_after_delay() -> None:
-            """Add the event to the storage after the delay."""
-            time.sleep(delay)
-            storage.store(event)
-
-        threading.Thread(target=add_event_after_delay).start()
 
     @staticmethod
     def evaluate_on_separate_thread(
@@ -263,7 +264,8 @@ class TestEventQuery:
             "Query initial timeout should be the one set initially"
         ).is_equal_to(0).is_greater_than_or_equal_to(query.remaining_timeout())
 
-    def test_query_succeeds_with_delayed_event(self) -> None:
+    @staticmethod
+    def test_query_succeeds_with_delayed_event() -> None:
         """The query should succeed when an event is delayed but matches."""
         storage = EventStorage()
         query = SimpleEventQuery(
@@ -272,7 +274,7 @@ class TestEventQuery:
             attr_name="test_attr",
             value=42,
         )
-        self.delayed_store_event(storage, create_test_event(), delay=1)
+        delayed_store_event(storage, create_test_event(), delay=1)
         query.evaluate(storage)
 
         assert_that(query.status()).described_as(
@@ -296,7 +298,8 @@ class TestEventQuery:
             "Query initial timeout should be the one set initially"
         ).is_equal_to(3).is_greater_than(query.remaining_timeout())
 
-    def test_query_timeout(self) -> None:
+    @staticmethod
+    def test_query_timeout() -> None:
         """The query times out when no event matches within timeout."""
         storage = EventStorage()
         query = SimpleEventQuery(
@@ -305,7 +308,7 @@ class TestEventQuery:
             attr_name="test_attr",
             value=42,
         )
-        self.delayed_store_event(storage, create_test_event(), delay=1.5)
+        delayed_store_event(storage, create_test_event(), delay=1.5)
 
         query.evaluate(storage)
         time.sleep(0.5)
@@ -329,3 +332,133 @@ class TestEventQuery:
         assert_that(query.initial_timeout()).described_as(
             "Query initial timeout should be the one set initially"
         ).is_equal_to(1).is_greater_than(query.remaining_timeout())
+
+    # ----------------------------------------------------------------
+    # Tests for the describe method
+
+    @staticmethod
+    def test_query_describe_initial_status() -> None:
+        """Test the describe method for the initial status."""
+        query = SimpleEventQuery(
+            device_name="test/device/1",
+            attr_name="test_attr",
+            value=42,
+            timeout=10,
+        )
+
+        description = query.describe()
+        assert_that(description).described_as(
+            "Description should contain the initial status"
+        ).contains("Status=NOT_STARTED")
+        assert_that(description).described_as(
+            "Description should contain the initial timeout"
+        ).contains("Initial timeout=")
+        assert_that(description).described_as(
+            "Description should contain the criteria"
+        ).contains("Device: test/device/1")
+        assert_that(description).described_as(
+            "Description should contain the criteria"
+        ).contains("Attribute: test_attr")
+        assert_that(description).described_as(
+            "Description should contain the criteria"
+        ).contains("Value: 42")
+        assert_that(description).described_as(
+            "Description should contain the results"
+        ).contains("Match found: False")
+
+    def test_query_describe_ongoing_status(self) -> None:
+        """Test the describe method for the ongoing status."""
+        storage = EventStorage()
+        query = SimpleEventQuery(
+            device_name="test/device/1",
+            attr_name="test_attr",
+            value=42,
+            timeout=10,
+        )
+        self.evaluate_on_separate_thread(query, storage)
+        time.sleep(1)
+
+        description = query.describe()
+        assert_that(description).described_as(
+            "Description should contain the ongoing status"
+        ).contains("Status=IN_PROGRESS")
+        assert_that(description).described_as(
+            "Description should contain the remaining timeout"
+        ).contains("Remaining timeout=")
+        assert_that(description).described_as(
+            "Description should contain the evaluation duration"
+        ).contains("Evaluation duration=")
+        assert_that(description).described_as(
+            "Description should contain the criteria"
+        ).contains("Device: test/device/1")
+        assert_that(description).described_as(
+            "Description should contain the criteria"
+        ).contains("Attribute: test_attr")
+        assert_that(description).described_as(
+            "Description should contain the criteria"
+        ).contains("Value: 42")
+        assert_that(description).described_as(
+            "Description should contain the results"
+        ).contains("Match found: False")
+
+    @staticmethod
+    def test_query_describe_succeeded_status() -> None:
+        """Test the describe method for the succeeded status."""
+        storage = EventStorage()
+        query = SimpleEventQuery(
+            device_name="test/device/1",
+            attr_name="test_attr",
+            value=42,
+        )
+        event = create_test_event()
+        storage.store(event)
+
+        query.evaluate(storage)
+
+        description = query.describe()
+        assert_that(description).described_as(
+            "Description should contain the succeeded status"
+        ).contains("Status=SUCCEEDED")
+        assert_that(description).described_as(
+            "Description should contain the criteria"
+        ).contains("Device: test/device/1")
+        assert_that(description).described_as(
+            "Description should contain the criteria"
+        ).contains("Attribute: test_attr")
+        assert_that(description).described_as(
+            "Description should contain the criteria"
+        ).contains("Value: 42")
+        assert_that(description).described_as(
+            "Description should contain the results"
+        ).contains("Match found: True")
+
+    @staticmethod
+    def test_query_describe_failed_status() -> None:
+        """Test the describe method for the failed status."""
+        storage = EventStorage()
+        query = SimpleEventQuery(
+            device_name="test/device/1",
+            attr_name="test_attr",
+            value=42,
+        )
+        event = create_test_event(device_name="test/device/2")
+        storage.store(event)
+
+        query.evaluate(storage)
+
+        description = query.describe()
+        assert_that(description).described_as(
+            "Description should contain the failed status"
+        ).contains("Status=FAILED")
+        assert_that(description).described_as(
+            "Description should contain the criteria"
+        ).contains("Device: test/device/1")
+        assert_that(description).described_as(
+            "Description should contain the criteria"
+        ).contains("Attribute: test_attr")
+        assert_that(description).described_as(
+            "Description should contain the criteria"
+        ).contains("Value: 42")
+        assert_that(description).described_as(
+            "Description should contain the results"
+        ).contains("Match found: False")

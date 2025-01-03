@@ -25,7 +25,7 @@ from ska_tango_testing.integration.queries import (
     QueryWithFailCondition,
 )
 
-from .test_event_query import TestEventQuery
+from .testing_utils.delayed_store_event import delayed_store_event
 from .testing_utils.received_event_mock import create_test_event
 
 
@@ -123,7 +123,7 @@ class TestNEventsMatchQuery:
         event1 = create_test_event()
         event2 = create_test_event()
         storage.store(event1)
-        TestEventQuery.delayed_store_event(storage, event2, delay=1)
+        delayed_store_event(storage, event2, delay=1)
 
         query.evaluate(storage)
 
@@ -155,8 +155,8 @@ class TestNEventsMatchQuery:
         event2 = create_test_event()
         event3 = create_test_event(device_name="test/device/2")
         storage.store(event1)
-        TestEventQuery.delayed_store_event(storage, event3, delay=0.5)
-        TestEventQuery.delayed_store_event(storage, event2, delay=1.5)
+        delayed_store_event(storage, event3, delay=0.5)
+        delayed_store_event(storage, event2, delay=1.5)
 
         query.evaluate(storage)
 
@@ -263,11 +263,11 @@ class TestQueryWithFailCondition:
         )
         # this event will make the query succeed
         event = create_test_event()
-        TestEventQuery.delayed_store_event(storage, event, delay=1)
+        delayed_store_event(storage, event, delay=1)
         # this event could potentially make the query fail, but it will
         # arrive too late and the query will have already succeeded
         fail_event = create_test_event(device_name="test/device/2")
-        TestEventQuery.delayed_store_event(storage, fail_event, delay=1.5)
+        delayed_store_event(storage, fail_event, delay=1.5)
 
         query.evaluate(storage)
         time.sleep(1)
@@ -306,11 +306,11 @@ class TestQueryWithFailCondition:
         )
         # this event will trigger the stop condition
         fail_event = create_test_event(device_name="test/device/2")
-        TestEventQuery.delayed_store_event(storage, fail_event, delay=1)
+        delayed_store_event(storage, fail_event, delay=1)
         # this event could match the query but it will not be evaluated
         # because the stop condition will be met first
         event = create_test_event()
-        TestEventQuery.delayed_store_event(storage, event, delay=1.5)
+        delayed_store_event(storage, event, delay=1.5)
 
         query.evaluate(storage)
 
