@@ -65,14 +65,20 @@ class NEventsMatchQuery(EventQuery):
 
         :return: A string describing the criteria of the query.
         """
-        return f"N={self.target_n_events} satisfy a given predicate. "
+        return (
+            f"Looking for {self.target_n_events} events"
+            "matching a given predicate."
+        )
 
     def _describe_results(self) -> str:
         """Describe the results of the query.
 
         :return: A string describing the results of the query.
         """
-        desc = f"{len(self.matching_events)} events satisfy the predicate. "
+        desc = (
+            f"Observed {len(self.matching_events)} events "
+            "matching a given predicate. "
+        )
         if self.matching_events:
             desc += "\n" + self._events_to_str()
         return desc
@@ -171,8 +177,12 @@ class QueryWithFailCondition(EventQuery):
         :return: A string describing the reason why the query failed.
         """
         if self.failed_event is not None:
-            return f"Event {str(self.failed_event)} failed the stop condition"
-        return "The query failed because the stop condition was met"
+            return f"Event {str(self.failed_event)} triggered an early stop."
+        
+        if self._evaluation_duration() >= self._initial_timeout_value:
+            return "The query failed because of a timeout."
+        
+        return "The query failed for an unknown reason."
 
 
 class NStateChangesQuery(NEventsMatchQuery):
@@ -313,15 +323,15 @@ class NStateChangesQuery(NEventsMatchQuery):
 
         criteria: list[str] = []
         if self.device_name is not None:
-            criteria += f"device_name='{self._describe_device_name()}'"
+            criteria.append(f"device_name='{self._describe_device_name()}'")
         if self.attribute_name is not None:
-            criteria += f"attribute_name={self.attribute_name}"
+            criteria.append(f"attribute_name={self.attribute_name}")
         if self.attribute_value is not None:
-            criteria += f"attribute_value={self.attribute_value}"
+            criteria.append(f"attribute_value={self.attribute_value}")
         if self.previous_value is not None:
-            criteria += f"previous_value={self.previous_value}"
+            criteria.append(f"previous_value={self.previous_value}")
         if self.custom_matcher is not None:
-            criteria += "a custom matcher function is set"
+            criteria.append("a custom matcher function is set")
 
         if criteria:
             desc += ", ".join(criteria)

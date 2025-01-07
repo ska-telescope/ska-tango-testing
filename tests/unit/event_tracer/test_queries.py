@@ -171,6 +171,37 @@ class TestNEventsMatchQuery:
             "Query should not have collected all expected events"
         ).is_length(1)
 
+    @staticmethod
+    def test_query_describe_includes_n_matching_events() -> None:
+        """The query description includes the number of matching events."""
+        storage = EventStorage()
+        query = NEventsMatchQuery(
+            predicate=lambda e, _: e.has_device("test/device/1")
+            and e.has_attribute("test_attr")
+            and e.attribute_value == 42,
+            target_n_events=2,
+        )
+        event1 = create_test_event()
+        storage.store(event1)
+        query.evaluate(storage)
+
+        description = query.describe()
+
+        assert_that(description).described_as(
+            "Query description should include the expected "
+            " number of matching events"
+        ).contains("Looking for 2 events").described_as(
+            "Query description should include the actual "
+            " number of matching events"
+        ).contains(
+            "Observed 1 events"
+        ).described_as(
+            "The query description should include a string "
+            "representation of the matching events"
+        ).contains(
+            str(event1)
+        )
+
 
 @pytest.mark.integration_tracer
 class TestQueryWithFailCondition:
@@ -359,6 +390,64 @@ class TestQueryWithFailCondition:
             "Query should not store any event that caused the failure"
         ).is_none()
 
+    @staticmethod
+    def test_query_describe_includes_wrapped_query_info() -> None:
+        """The query description includes info from the wrapped query."""
+        storage = EventStorage()
+        wrapped_query = MagicMock()
+        wrapped_query._describe_criteria = MagicMock(return_value="Wrapped query criteria")
+        wrapped_query._describe_results = MagicMock(return_value="Wrapped query results")
+
+        query = QueryWithFailCondition(
+            wrapped_query=wrapped_query,
+            stop_condition=lambda e: False,
+        )
+        event1 = create_test_event()
+        storage.store(event1)
+        query.evaluate(storage)
+
+        description = query.describe()
+
+        assert_that(description).described_as(
+            "Query description should include the wrapped query criteria"
+        ).contains("Wrapped query criteria").described_as(
+            "Query description should include the wrapped query results"
+        ).contains("Wrapped query results").described_as(
+            "An additional message should tell that an early stop "
+            "condition was applied to the criteria"
+        ).contains("An early stop condition is set")
+
+    @staticmethod
+    def test_query_describe_includes_event_that_triggered_early_stop() -> None:
+        """The query description includes the event that triggered the early stop."""
+        storage = EventStorage()
+        wrapped_query = NEventsMatchQuery(
+            predicate=lambda e, _: e.has_device("test/device/1")
+            and e.has_attribute("test_attr")
+            and e.attribute_value == 42,
+            timeout=2,
+        )
+        query = QueryWithFailCondition(
+            wrapped_query=wrapped_query,
+            stop_condition=lambda e: e.has_device("test/device/2"),
+        )
+        event1 = create_test_event()
+        storage.store(event1)
+        event2 = create_test_event(device_name="test/device/2")
+        storage.store(event2)
+        query.evaluate(storage)
+
+        description = query.describe()
+
+        assert_that(description).described_as(
+            "Query description must report that the query was stopped early"
+        ).contains(
+            "triggered an early stop"
+        ).described_as(
+            "Query description should include the event "
+            "that triggered the early stop"
+        ).contains(str(event2))
+
 
 @pytest.mark.integration_tracer
 class TestNStateChangesQuery:
@@ -488,3 +577,26 @@ class TestNStateChangesQuery:
         assert_that(query.matching_events[0]).described_as(
             "Query should collect the correct event"
         ).is_equal_to(event2)
+
+    @staticmethod
+    def test_query_description_includes_passed_criteria() -> None:
+        """The query description includes the passed criteria."""
+        query = NStateChangesQuery(
+            device_name="test/device/1",
+            attribute_name="test_attr",
+            attribute_value=42,
+        )
+
+        description = query.describe()
+
+        assert_that(description).described_as(
+            "Query description should include the passed criteria"
+        ).contains("device_name='test/device/1'").contains(
+            "attribute_name=test_attr"
+        ).contains("attribute_value=42").described_as(
+            "Query description should not include the non-passed criteria"
+        ).does_not_contain(
+            "previous_value="
+        ).does_not_contain(
+            "custom matcher"
+        )
