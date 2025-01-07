@@ -13,11 +13,11 @@ import pytest
 from assertpy import assert_that
 
 from ska_tango_testing.integration.event import ReceivedEvent
-from ska_tango_testing.integration.event_query import (
+from ska_tango_testing.integration.event_storage import EventStorage
+from ska_tango_testing.integration.query.base import (
     EventQuery,
     EventQueryStatus,
 )
-from ska_tango_testing.integration.event_storage import EventStorage
 
 from .testing_utils.delayed_store_event import delayed_store_event
 from .testing_utils.received_event_mock import create_test_event

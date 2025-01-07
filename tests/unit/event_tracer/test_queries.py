@@ -17,11 +17,15 @@ from unittest.mock import MagicMock
 import pytest
 from assertpy import assert_that
 
-from ska_tango_testing.integration.event_query import EventQueryStatus
 from ska_tango_testing.integration.event_storage import EventStorage
-from ska_tango_testing.integration.queries import (
+from ska_tango_testing.integration.query.base import EventQueryStatus
+from ska_tango_testing.integration.query.n_events_match import (
     NEventsMatchQuery,
+)
+from ska_tango_testing.integration.query.n_state_changes import (
     NStateChangesQuery,
+)
+from ska_tango_testing.integration.query.with_fail_condition import (
     QueryWithFailCondition,
 )
 

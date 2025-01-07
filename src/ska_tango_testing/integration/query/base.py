@@ -9,7 +9,7 @@ from typing import List, SupportsFloat
 
 from ska_tango_testing.integration.event_storage import EventStorage
 
-from .event import ReceivedEvent
+from ..event import ReceivedEvent
 
 
 class EventQueryStatus(Enum):

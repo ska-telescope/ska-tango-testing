@@ -29,9 +29,9 @@ from typing import Callable, SupportsFloat
 import tango
 
 from .event import ReceivedEvent
-from .event_query import EventQuery
 from .event_storage import EventStorage
-from .queries import NEventsMatchQuery
+from .query.base import EventQuery
+from .query.n_events_match import NEventsMatchQuery
 from .subscriber import TangoSubscriber
 
 

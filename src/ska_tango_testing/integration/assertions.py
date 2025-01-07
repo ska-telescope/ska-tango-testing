@@ -90,7 +90,9 @@ from ska_tango_testing.integration.assertions_utils import (
     ChainedAssertionsTimeout,
 )
 from ska_tango_testing.integration.event import ReceivedEvent
-from ska_tango_testing.integration.queries import NStateChangesQuery
+from ska_tango_testing.integration.query.n_state_changes import (
+    NStateChangesQuery,
+)
 
 from .tracer import TangoEventTracer
 
