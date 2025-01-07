@@ -7,7 +7,7 @@ from enum import Enum
 from threading import Event, Lock
 from typing import List, SupportsFloat
 
-from ska_tango_testing.integration.event_storage import EventStorage
+from ska_tango_testing.integration.event.storage import EventStorage
 
 from ..event import ReceivedEvent
 

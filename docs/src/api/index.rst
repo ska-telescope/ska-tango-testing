@@ -84,13 +84,6 @@ ska_tango_testing.integration.event
     :members:
     :special-members: __init__
 
-ska_tango_testing.integration.typed_event
---------------------------------------------
-
-.. automodule:: ska_tango_testing.integration.typed_event
-    :members:
-    :special-members: __init__
-
 ska_tango_testing.integration.query
 ----------------------------------------------------
 

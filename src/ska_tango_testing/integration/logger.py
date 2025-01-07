@@ -7,8 +7,8 @@ from typing import Callable
 import tango
 
 from .event import ReceivedEvent
-from .subscriber import TangoSubscriber
-from .typed_event import EventEnumMapper
+from .event.subscriber import TangoSubscriber
+from .event.typed import EventEnumMapper
 
 
 # pylint: disable=duplicate-code
@@ -133,7 +133,7 @@ class TangoEventLogger:
     represented as an integer, but it is semantically a state). To handle
     those cases, when you create an instance of the logger, you can
     provide a mapping of attribute names to enums (see the
-    :py:class:`ska_tango_testing.integration.typed_event.EventEnumMapper`
+    :py:class:`ska_tango_testing.integration.event.EventEnumMapper`
     class). Typed events attribute values will be logged using the
     corresponding Enum labels instead of the raw values.
 

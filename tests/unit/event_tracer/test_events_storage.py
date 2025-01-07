@@ -9,7 +9,7 @@ import pytest
 from assertpy import assert_that
 
 from ska_tango_testing.integration.event import ReceivedEvent
-from ska_tango_testing.integration.event_storage import (
+from ska_tango_testing.integration.event.storage import (
     EventStorage,
     EventStorageObserver,
 )

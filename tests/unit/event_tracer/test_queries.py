@@ -17,7 +17,7 @@ from unittest.mock import MagicMock
 import pytest
 from assertpy import assert_that
 
-from ska_tango_testing.integration.event_storage import EventStorage
+from ska_tango_testing.integration.event.storage import EventStorage
 from ska_tango_testing.integration.query.base import EventQueryStatus
 from ska_tango_testing.integration.query.n_events_match import (
     NEventsMatchQuery,

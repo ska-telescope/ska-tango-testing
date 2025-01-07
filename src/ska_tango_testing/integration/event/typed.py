@@ -9,10 +9,10 @@ readable label, instead of an integer number.
 
 Concretely, this is achieved defining two new classes:
 
-- :py:class:`ska_tango_testing.integration.typed_event.TypedEvent`,
+- :py:class:`ska_tango_testing.integration.event.TypedEvent`,
   which is a subclass of
   :py:class:`ska_tango_testing.integration.event.ReceivedEvent`, and
-- :py:class:`ska_tango_testing.integration.typed_event.EventEnumMapper`,
+- :py:class:`ska_tango_testing.integration.event.EventEnumMapper`,
   which is a class that permits the association of attribute names with
   Enums.
 """
@@ -21,7 +21,7 @@ from enum import Enum
 
 import tango
 
-from .event import ReceivedEvent
+from .base import ReceivedEvent
 
 
 def _fail_if_type_not_enum(enum_class: type) -> None:

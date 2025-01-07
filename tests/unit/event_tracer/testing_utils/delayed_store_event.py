@@ -4,7 +4,7 @@ import threading
 import time
 
 from ska_tango_testing.integration.event import ReceivedEvent
-from ska_tango_testing.integration.event_storage import EventStorage
+from ska_tango_testing.integration.event.storage import EventStorage
 
 
 def delayed_store_event(

@@ -13,7 +13,7 @@ import pytest
 from assertpy import assert_that
 
 from ska_tango_testing.integration.event import ReceivedEvent
-from ska_tango_testing.integration.event_storage import EventStorage
+from ska_tango_testing.integration.event.storage import EventStorage
 from ska_tango_testing.integration.query.base import (
     EventQuery,
     EventQueryStatus,

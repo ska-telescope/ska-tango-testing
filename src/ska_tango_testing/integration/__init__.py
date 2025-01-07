@@ -139,7 +139,7 @@ def log_events(
     those cases, when you call ``log_events(...)``, you can
     provide a mapping of attribute names to enums through the
     ``event_enum_mapping`` parameter (see the
-    :py:class:`ska_tango_testing.integration.typed_event.EventEnumMapper`
+    :py:class:`ska_tango_testing.integration.event.EventEnumMapper`
     class). Typed events attribute values will be logged using the
     corresponding Enum labels instead of the raw values.
 

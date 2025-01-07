@@ -3,7 +3,7 @@ import pytest
 from assertpy import assert_that
 
 from ska_tango_testing.integration.event import ReceivedEvent
-from ska_tango_testing.integration.typed_event import (
+from ska_tango_testing.integration.event.typed import (
     EventEnumMapper,
     TypedEvent,
 )

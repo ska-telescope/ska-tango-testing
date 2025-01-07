@@ -10,8 +10,8 @@ import tango
 
 import ska_tango_testing
 
-from .event import ReceivedEvent
-from .typed_event import EventEnumMapper
+from .base import ReceivedEvent
+from .typed import EventEnumMapper
 
 
 class TangoSubscriber:

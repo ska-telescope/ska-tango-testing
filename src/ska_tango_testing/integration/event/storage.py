@@ -3,7 +3,7 @@
 import threading
 from typing import Protocol
 
-from .event import ReceivedEvent
+from .base import ReceivedEvent
 
 
 # pylint: disable=too-few-public-methods
