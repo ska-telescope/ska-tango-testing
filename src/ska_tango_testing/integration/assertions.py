@@ -90,12 +90,8 @@ from ska_tango_testing.integration.assertions_utils import (
     ChainedAssertionsTimeout,
 )
 from ska_tango_testing.integration.event import ReceivedEvent
+from ska_tango_testing.integration.queries import NStateChangesQuery
 
-from .predicates import (
-    ANY_VALUE,
-    event_has_previous_value,
-    event_matches_parameters,
-)
 from .tracer import TangoEventTracer
 
 
@@ -126,52 +122,6 @@ def _get_tracer(assertpy_context: Any) -> TangoEventTracer:
             "Example: assert_that(tracer).has_change_event_occurred(...)"
         )
     return assertpy_context.val
-
-
-def _print_passed_event_args(
-    device_name: str | None = ANY_VALUE,
-    attribute_name: str | None = ANY_VALUE,
-    attribute_value: Any | None = ANY_VALUE,
-    previous_value: Any | None = ANY_VALUE,
-    custom_matcher: Callable[[ReceivedEvent], bool] | None = None,
-    target_n_events: int = 1,
-) -> str:
-    """Print the arguments passed to the event query.
-
-    Helper method to print the arguments passed to the event query in a
-    human-readable format.
-
-    :param device_name: The device name to match. If not provided, it will
-        match any device name.
-    :param attribute_name: The attribute name to match. If not provided,
-        it will match any attribute name.
-    :param attribute_value: The current value to match. If not provided,
-        it will match any current value.
-    :param previous_value: The previous value to match. If not provided,
-        it will match any previous value.
-    :param custom_matcher: An arbitrary predicate over the event. It is
-        essentially a function or a lambda that takes an event and returns
-        ``True`` if it satisfies your condition.
-    :param target_n_events: The minimum number of events to match.
-        If not provided, it defaults to 1.
-
-    :return: The string representation of the passed arguments.
-    """  # pylint: disable=too-many-arguments
-    res = ""
-    if device_name is not ANY_VALUE:
-        res += f"device_name='{device_name}', "
-    if attribute_name is not ANY_VALUE:
-        res += f"attribute_name='{attribute_name}', "
-    if attribute_value is not ANY_VALUE:
-        res += f"attribute_value={str(attribute_value)}, "
-    if previous_value is not ANY_VALUE:
-        res += f"previous_value={str(previous_value)}, "
-    if custom_matcher is not None:
-        res += "custom_matcher=<custom predicate>, "
-    if target_n_events != 1:
-        res += f"target_n_events={target_n_events}, "
-
-    return res
 
 
 def within_timeout(assertpy_context: Any, timeout: int | float) -> Any:
@@ -257,10 +207,10 @@ def within_timeout(assertpy_context: Any, timeout: int | float) -> Any:
 
 def has_change_event_occurred(
     assertpy_context: Any,
-    device_name: str | None = ANY_VALUE,
-    attribute_name: str | None = ANY_VALUE,
-    attribute_value: Any | None = ANY_VALUE,
-    previous_value: Any | None = ANY_VALUE,
+    device_name: str | None = None,
+    attribute_name: str | None = None,
+    attribute_value: Any | None = None,
+    previous_value: Any | None = None,
     custom_matcher: Callable[[ReceivedEvent], bool] | None = None,
     min_n_events: int = 1,
 ) -> Any:
@@ -355,72 +305,41 @@ def has_change_event_occurred(
 
     # check assertpy_context has a tracer object
     tracer = _get_tracer(assertpy_context)
-
-    # quick trick: if device_name is a device proxy, get the name
-    if isinstance(device_name, tango.DeviceProxy):
-        device_name = device_name.dev_name()
-
-    timeout_util: ChainedAssertionsTimeout | None = getattr(
-        assertpy_context, "event_timeout", None
-    )
-    run_query_time = (
-        timeout_util.start_time if timeout_util else datetime.now()
+    
+    # get the remaining timeout if it exists
+    timeout: ChainedAssertionsTimeout | float = getattr(
+        assertpy_context, "event_timeout", 0.0
     )
 
-    # query and check if any event matches the predicate
-    result = tracer.query_events(
-        lambda e:
-        # the event match passed values
-        event_matches_parameters(
-            target_event=e,
-            device_name=device_name,
-            attribute_name=attribute_name,
-            attribute_value=attribute_value,
-        )
-        and (
-            # if given a previous value, the event must have a previous
-            # event and tue previous value must match
-            event_has_previous_value(
-                target_event=e, tracer=tracer, previous_value=previous_value
-            )
-            if previous_value is not ANY_VALUE
-            else True
-        )
-        and (
-            # if given a further matching rule, apply it
-            custom_matcher(e)
-            if custom_matcher
-            else True
-        ),
+    # Create and evaluate the query with a tracer
+    query = NStateChangesQuery(
+        device_name=device_name,
+        attribute_name=attribute_name,
+        attribute_value=attribute_value,
+        previous_value=previous_value,
+        custom_matcher=custom_matcher,
         target_n_events=min_n_events,
-        # if given use the timeout, else None
-        timeout=timeout_util.get_remaining_timeout() if timeout_util else 0.0,
+        timeout=timeout
     )
+    tracer.evaluate_query(query)
 
     # if not enough events are found, raise an error
-    if len(result) < min_n_events:
-        event_list = "\n".join([str(event) for event in tracer.events])
+    if not query.succeeded():
         msg = (
             f"Expected to find {min_n_events} event(s) "
             + "matching the predicate"
         )
-        if timeout_util:
-            msg += f" within {timeout_util.initial_timeout} seconds"
+        if isinstance(timeout, ChainedAssertionsTimeout):
+            msg += f" within {timeout.initial_timeout} seconds"
         else:
             msg += " in already existing events"
-        msg += f", but only {len(result)} found.\n\n"
-        msg += f"Events captured by TANGO_TRACER:\n{event_list}"
-        msg += "\n\nTANGO_TRACER Query arguments: "
-        msg += _print_passed_event_args(
-            device_name,
-            attribute_name,
-            attribute_value,
-            previous_value,
-            custom_matcher,
-            min_n_events,
-        )
-        msg += "\nQuery start time: " + str(run_query_time)
-        msg += "\nQuery end time: " + str(datetime.now())
+        msg += f", but only {len(query.matching_events)} found.\n\n"
+
+        events_list = "\n".join([str(event) for event in tracer.events])
+        msg += f"Events captured by TANGO_TRACER:\n{events_list}"
+
+        msg += "\n\nTANGO_TRACER Query details:\n"
+        msg += query.describe()
 
         return assertpy_context.error(msg)
 
@@ -429,10 +348,10 @@ def has_change_event_occurred(
 
 def hasnt_change_event_occurred(
     assertpy_context: Any,
-    device_name: str | None = ANY_VALUE,
-    attribute_name: str | None = ANY_VALUE,
-    attribute_value: Any | None = ANY_VALUE,
-    previous_value: Any | None = ANY_VALUE,
+    device_name: str | None = None,
+    attribute_name: str | None = None,
+    attribute_value: Any | None = None,
+    previous_value: Any | None = None,
     custom_matcher: Callable[[ReceivedEvent], bool] | None = None,
     max_n_events: int = 1,
 ) -> Any:
@@ -496,73 +415,43 @@ def hasnt_change_event_occurred(
     # check assertpy_context has a tracer object
     tracer = _get_tracer(assertpy_context)
 
-    # quick trick: if device_name is a device proxy, get the name
-    if isinstance(device_name, tango.DeviceProxy):
-        device_name = device_name.dev_name()
-
-    timeout_util: ChainedAssertionsTimeout | None = getattr(
-        assertpy_context, "event_timeout", None
-    )
-    run_query_time = (
-        timeout_util.start_time if timeout_util else datetime.now()
+    # get the remaining timeout if it exists
+    timeout: ChainedAssertionsTimeout | float = getattr(
+        assertpy_context, "event_timeout", 0.0
     )
 
-    # query and check if any event matches the predicate
-    result = tracer.query_events(
-        lambda e:
-        # the event match passed values
-        event_matches_parameters(
-            target_event=e,
-            device_name=device_name,
-            attribute_name=attribute_name,
-            attribute_value=attribute_value,
-        )
-        and (
-            # if given a previous value, the event must have a previous
-            # event and tue previous value must match
-            event_has_previous_value(
-                target_event=e, tracer=tracer, previous_value=previous_value
-            )
-            if previous_value is not ANY_VALUE
-            else True
-        )
-        and (
-            # if given a further matching rule, apply it
-            custom_matcher(e)
-            if custom_matcher
-            else True
-        ),
+    # Create and evaluate the query
+    query = NStateChangesQuery(
+        device_name=device_name,
+        attribute_name=attribute_name,
+        attribute_value=attribute_value,
+        previous_value=previous_value,
+        custom_matcher=custom_matcher,
         target_n_events=max_n_events,
-        # if given use the timeout, else None
-        timeout=timeout_util.get_remaining_timeout() if timeout_util else 0.0,
+        timeout=timeout
     )
+    tracer.evaluate_query(query)
 
     # if enough events are found, raise an error
-    if len(result) >= max_n_events:
-        event_list = "\n".join([str(event) for event in tracer.events])
+    if query.succeeded():
         msg = (
             f"Expected to NOT find {max_n_events} event(s) "
             + "matching the predicate"
         )
-        if timeout_util:
-            msg += f" within {timeout_util.initial_timeout} seconds"
+        if isinstance(timeout, ChainedAssertionsTimeout):
+            msg += f" within {timeout.initial_timeout} seconds"
         else:
             msg += " in already existing events"
-        msg += f", but {len(result)} were found."
+        msg += f", but {len(query.matching_events)} were found."
+
+        event_list = "\n".join([str(event) for event in tracer.events])
         msg += f"Events captured by TANGO_TRACER:\n{event_list}"
-        msg += "\n\nTANGO_TRACER Query arguments: "
-        msg += _print_passed_event_args(
-            device_name,
-            attribute_name,
-            attribute_value,
-            previous_value,
-            custom_matcher,
-            max_n_events,
-        )
-        msg += "\nQuery start time: " + str(run_query_time)
-        msg += "\nQuery end time: " + str(datetime.now())
-        msg += "\n\nEvents that matched the predicate:\n"
-        msg += "\n".join([str(event) for event in result])
+
+        msg += "\n\nTANGO_TRACER Query details:\n"
+        msg += query.describe()
+
+        msg += "NOTE: the query looks for N events, but in this case, "
+        msg += "you are expecting to find none."
 
         assertpy_context.error(msg)
 
