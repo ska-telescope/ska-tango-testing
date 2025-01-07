@@ -91,10 +91,10 @@ ska_tango_testing.integration.typed_event
     :members:
     :special-members: __init__
 
-ska_tango_testing.integration.predicates
+ska_tango_testing.integration.query
 ----------------------------------------------------
 
-.. automodule:: ska_tango_testing.integration.predicates
+.. automodule:: ska_tango_testing.integration.query
     :members:
     :special-members: __init__
 

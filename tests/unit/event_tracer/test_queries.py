@@ -289,12 +289,11 @@ class TestQueryWithFailCondition:
             predicate=lambda e, _: e.has_device("test/device/1")
             and e.has_attribute("test_attr")
             and e.attribute_value == 42,
-            timeout=0,  # this timeout will be ignored
+            timeout=2,  # this timeout will be used
         )
         query = QueryWithFailCondition(
             wrapped_query=wrapped_query,
             stop_condition=lambda e: False,
-            timeout=2,  # this timeout will be used
         )
         # this event will make the query succeed
         event = create_test_event()
@@ -332,12 +331,11 @@ class TestQueryWithFailCondition:
             predicate=lambda e, _: e.has_device("test/device/1")
             and e.has_attribute("test_attr")
             and e.attribute_value == 42,
-            timeout=2,  # this timeout will be ignored
+            timeout=3,  # this timeout will be used
         )
         query = QueryWithFailCondition(
             wrapped_query=wrapped_query,
             stop_condition=lambda e: e.has_device("test/device/2"),
-            timeout=1,  # this timeout will be used
         )
         # this event will trigger the stop condition
         fail_event = create_test_event(device_name="test/device/2")
@@ -363,6 +361,11 @@ class TestQueryWithFailCondition:
         assert_that(query.failed_event).described_as(
             "Query should store the event that caused the failure"
         ).is_equal_to(fail_event)
+        assert_that(query.remaining_timeout()).described_as(
+            "Query remaining timeout should be nearly 2 seconds "
+            "since the stop condition was met 2 seconds "
+            " before the expected end"
+        ).is_close_to(2, 0.1)
 
     @staticmethod
     def test_query_timeout() -> None:
@@ -378,8 +381,10 @@ class TestQueryWithFailCondition:
             wrapped_query=wrapped_query,
             stop_condition=lambda e: False,
         )
+        delayed_store_event(storage, create_test_event(), delay=1.2)
 
         query.evaluate(storage)
+        time.sleep(0.5)
 
         assert_that(query.succeeded()).described_as(
             "Query should fail when it times out"
@@ -393,6 +398,9 @@ class TestQueryWithFailCondition:
         assert_that(query.failed_event).described_as(
             "Query should not store any event that caused the failure"
         ).is_none()
+        assert_that(query.remaining_timeout()).described_as(
+            "Query remaining timeout should be 0 when it times out"
+        ).is_equal_to(0)
 
     @staticmethod
     def test_query_describe_includes_wrapped_query_info() -> None:
@@ -439,7 +447,6 @@ class TestQueryWithFailCondition:
             predicate=lambda e, _: e.has_device("test/device/1")
             and e.has_attribute("test_attr")
             and e.attribute_value == 42,
-            timeout=2,
         )
         query = QueryWithFailCondition(
             wrapped_query=wrapped_query,

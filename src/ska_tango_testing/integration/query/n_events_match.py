@@ -14,7 +14,35 @@ class NEventsMatchQuery(EventQuery):
     the predicate for each event and store the matching events (avoiding
     duplicates) and will succeed when the number of matching events is
     equal or greater than the target number of events.
-    """
+
+    Here the follows an example of how to use this query:
+
+    .. code-block:: python
+
+        def predicate(event: ReceivedEvent, all_events: list[ReceivedEvent]) -> bool:
+            return (
+                event.has_device("sys/tg_test/1") and
+                event.has_attribute("attr1") and
+                event.attribute_value >= 42
+            )
+
+        # query for 3 events that match from a certain device and attribute
+        # with a value greater or equal to 42
+        query = NEventsMatchQuery(predicate, target_n_events=3, timeout=10)
+
+        # evaluate the query
+        tracer.evaluate_query(query)
+
+        # access the matching events
+        if query.succeeded():
+            first_matching_event = query.matching_events[0]
+
+        # description will include some information about the criteria
+        # (e.g., the target number of events) and the results
+        # (e.g., the number of matching events)
+        logging.info(query.describe())
+
+    """  # pylint: disable=line-too-long # noqa: E501
 
     def __init__(
         self,

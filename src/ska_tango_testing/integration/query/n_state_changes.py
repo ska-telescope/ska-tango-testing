@@ -11,7 +11,9 @@ from .n_events_match import NEventsMatchQuery
 class NStateChangesQuery(NEventsMatchQuery):
     """Query that looks for N state change events.
 
-    This query will succeed when there are received N state change events
+    This query extend
+    :py:class:`~ska_tango_testing.integration.query.NEventsMatchQuery` to
+    will succeed when there are received N state change events
     using the provided criteria. The supported criteria are the following:
 
     - the device name
@@ -28,12 +30,45 @@ class NStateChangesQuery(NEventsMatchQuery):
 
     NOTE: passing ``None`` to any of the criteria will match any value for
     that criterion.
+
+    Here the follows an example of how to use this query:
+
+    .. code-block:: python
+
+        # query to detect a state change from OFF to ON
+        query = NStateChangesQuery(
+            device_name=device, # device name or device proxy, it's the same
+            attribute_name="state",
+            attribute_value=tango.DevState.ON,
+            previous_value=tango.DevState.OFF,
+            timeout=10,
+        )
+
+        # evaluate the query
+        tracer.evaluate_query(query)
+
+        # access the matching events
+        if query.succeeded():
+            first_matching_event = query.matching_events[0]
+
+        # another more elaborate query that replicates the NEventsMatchQuery
+        # example but with state change criteria
+        query2 = NStateChangesQuery(
+            device_name="sys/tg_test/1",
+            attribute_name="attr1",
+            custom_matcher=lambda event: event.attribute_value >= 42,
+            target_n_events=3,
+            timeout=10,
+        )
+
+        # ...
+
     """
 
     # pylint: disable=too-many-arguments
     def __init__(
         self,
-        device_name: str | tango.DeviceProxy | None = None,
+        device_name: "str | tango.DeviceProxy | None" = None,
         attribute_name: str | None = None,
         attribute_value: Any | None = None,
         previous_value: Any | None = None,

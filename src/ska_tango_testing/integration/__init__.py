@@ -63,7 +63,7 @@ For more advanced usage of the event tracer, we recommend reading
 the documentation of the :py:class:`TangoEventTracer` class, and then
 give a look at :py:mod:`ska_tango_testing.integration.assertions`,
 :py:mod:`ska_tango_testing.integration.event`, and
-:py:mod:`ska_tango_testing.integration.predicates`.
+:py:mod:`ska_tango_testing.integration.query`.
 
 For more advanced usage of the event logger, we recommend reading
 the documentation of the

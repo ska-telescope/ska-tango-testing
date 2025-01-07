@@ -108,9 +108,6 @@ class TangoEventTracer:
                 previous_value=INITIAL_STATE,
             )
 
-    See :py:mod:`ska_tango_testing.integration.predicates`
-    for more details.
-
     **NOTE**: some events attributes even if technically they are
     primitive types (like integers or strings), they can be
     semantically typed with an ``Enum`` (e.g., a state machine attribute can be
@@ -380,10 +377,7 @@ class TangoEventTracer:
         The predicate can be as complex as you want, and inside it you can
         also access the list of stored events using :py:attr:`events`.
         Don't worry, everything is thread-safe and this will make you evaluate
-        always the most updated list of events. See
-        :py:mod:`ska_tango_testing.integration.predicates`
-        for good examples of predicates.
-        See also the
+        always the most updated list of events. See the
         :py:class:`~ska_tango_testing.integration.event.ReceivedEvent`
         class to understand how to access the event data.
 
@@ -453,7 +447,7 @@ class TangoEventTracer:
     def evaluate_query(self, query: EventQuery) -> None:
         """Evaluate a query over the current and future captured events.
 
-        A :py:class:`~ska_tango_testing.integration.event_query.EventQuery`
+        A :py:class:`~ska_tango_testing.integration.query.EventQuery`
         is a query over the tracer's present and eventually future events
         (if a timeout is specified). This method takes an already built
         and not yet evaluated query and evaluates it. The evaluation is a
@@ -464,7 +458,7 @@ class TangoEventTracer:
         supposed to be accessed through the query object itself. The most
         basic and common result is it's success status, which can be
         accessed through the
-        :py:meth:`~ska_tango_testing.integration.event_query.EventQuery.succeeded`
+        :py:meth:`~ska_tango_testing.integration.query.EventQuery.succeeded`
 
         :param query: The query to evaluate.
         :raises ValueError: If the query you are trying to evaluate is already

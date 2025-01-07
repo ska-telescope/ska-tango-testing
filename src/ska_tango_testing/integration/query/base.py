@@ -13,7 +13,15 @@ from ..event import ReceivedEvent
 
 
 class EventQueryStatus(Enum):
-    """Enumeration for the status of an events query."""
+    """Enumeration for the status of an events query.
+
+    The status of an events query can be one of the following:
+
+    - NOT_STARTED: the query is created but not evaluated yet.
+    - IN_PROGRESS: the query is being evaluated.
+    - SUCCEEDED: the query evaluation terminated and succeeded.
+    - FAILED: the query evaluation terminated and failed.
+    """
 
     NOT_STARTED = "NOT_STARTED"
     IN_PROGRESS = "IN_PROGRESS"
@@ -27,38 +35,41 @@ class EventQuery(ABC):
     An events query is a mechanism to query a set of events within a timeout.
     A query has the following characteristics:
 
-    - it has a lifecycle (accessible through the ``status`` method):
-        - it is created
-        - it is evaluated through an event tracer
-        - while ongoing, the query will receive events and wait or to reach
-            the success criteria defined in the ``succeeded`` method
-            or for a timeout to expire
-        - when the query is completed, the status is updated and the
-            evaluation end time is set
+    - it has a lifecycle (accessible through the ``status`` method and
+      represented by
+      :py:class:`~ska_tango_testing.integration.query.EventQueryStatus`):
+
+      - it is created
+      - it is evaluated through an event tracer
+      - while ongoing, the query will receive events and wait or to reach
+        the success criteria defined in the ``succeeded`` method
+        or for a timeout to expire
+      - when the query is completed, the status is updated and the
+        evaluation end time is set
 
     - it is an abstract class, so it cannot be instantiated directly
-        and you have to subclass it and implement two key methods:
+      and you have to subclass it and implement two key methods:
 
-        - ``_succeeded`` defines the success criteria of your query, write
-            here some logic to check if your query is satisfied (return True
-            if it is, False otherwise). Consider that by default a timeout
-            will be awaited if the query is not completed yet.
-        - ``_evaluate_events`` is a callback method you can implement to
-            analyze new events and update some kind of your internal state.
-            The same internal state can be used in the ``_succeeded`` method.
-            The method is activated once when the query evaluation begins
-            and every time new events are received. Consider that every time
-            this method is called all the received events are passed to it
-            (not only the new ones). Consider also that both this method and
-            the ``_succeeded`` method are protected by a lock, so you can
-            safely access your internal state.
-        - you may also want to override the ``_is_stop_criteria_met`` method
-            to add more criteria to stop the evaluation (e.g., an early stop
-            condition)
-        - you may also want to override the description private method
-            ``_describe_results`` to provide a custom description of the
-            query results and the ``_describe_criteria`` method to provide
-            a custom description of the query criteria you are using.
+      - ``_succeeded`` defines the success criteria of your query, write
+        here some logic to check if your query is satisfied (return True
+        if it is, False otherwise). Consider that by default a timeout
+        will be awaited if the query is not completed yet.
+      - ``_evaluate_events`` is a callback method you can implement to
+        analyze new events and update some kind of your internal state.
+        The same internal state can be used in the ``_succeeded`` method.
+        The method is activated once when the query evaluation begins
+        and every time new events are received. Consider that every time
+        this method is called all the received events are passed to it
+        (not only the new ones). Consider also that both this method and
+        the ``_succeeded`` method are protected by a lock, so you can
+        safely access your internal state.
+      - you may also want to override the ``_is_stop_criteria_met`` method
+        to add more criteria to stop the evaluation (e.g., an early stop
+        condition)
+      - you may also want to override the description private method
+        ``_describe_results`` to provide a custom description of the
+        query results and the ``_describe_criteria`` method to provide
+        a custom description of the query criteria you are using.
 
     From an user perspective, to evaluate the query you can simply pass it
     to a :py:class:`ska_tango_testing.integration.tracer.TangoEventTracer`
@@ -92,7 +103,8 @@ class EventQuery(ABC):
     def __init__(self, timeout: SupportsFloat = 0.0) -> None:
         """Initialize the events query.
 
-        :param timeout: The timeout for the query in seconds.
+        :param timeout: The timeout for the query in seconds. By default,
+            the query will not wait for any timeout.
         """
         self._evaluation_start: datetime | None = None
         """The evaluation start time. It is set when the evaluation begins."""

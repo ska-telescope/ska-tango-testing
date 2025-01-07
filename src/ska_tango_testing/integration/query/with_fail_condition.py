@@ -1,6 +1,6 @@
 """Implementation of specific event queries."""
 
-from typing import Callable, SupportsFloat
+from typing import Callable
 
 from ..event import ReceivedEvent
 from .base import EventQuery
@@ -13,26 +13,70 @@ class QueryWithFailCondition(EventQuery):
     stop condition is met. The stop condition is a function that takes an event
     as input and returns True if the query should stop evaluating events.
     Each new event is evaluated by the stop condition before being passed to
-    the wrapped query.
+    the wrapped query. A few notes:
 
-    Subscribe just this query to the event storage to evaluate it, not
-    the wrapped query. The timeout of the wrapped query will be ignored.
+    - this query will succeed if the wrapped query succeeds (and the stop
+      condition is not met);
+    - the stop condition is evaluated before the wrapped query, so the wrapped
+      query will not be evaluated if the stop condition is met;
+    - this query timeout is exactly the one of the wrapped query;
+
+    Here follows an example of how to use this query:
+
+    .. code-block:: python
+
+        # define a wrapped query
+        wrapped_query = NStateChangesQuery(
+            device_name="sys/tg_test/1",
+            attribute_name="attr1",
+            custom_matcher=lambda event: event.attribute_value >= 42,
+            target_n_events=3,
+            timeout=10, # this timeout will be used
+        )
+
+        # define a stop condition that detects error events from any device
+        def stop_condition(event: ReceivedEvent) -> bool:
+            return (
+                event.has_attribute("longRunningCommandResult") and
+                "error code 3: exception" in str(event.attribute_value)
+            )
+
+        # wrap the query with the stop condition
+        query = QueryWithFailCondition(wrapped_query, stop_condition)
+
+        # evaluate the query
+        tracer.evaluate_query(query)
+
+        if query.succeeded():
+            # access the matching events
+            first_matching_event = wrapped_query.matching_events[0]
+        elif query.failed_event is not None:
+            # query failed early because of the stop condition
+            # ...
+        else:
+            # query failed for another reason (e.g., timeout)
+            # ...
+
+        # description will combine the wrapped query description with
+        # the stop condition description and the eventual detected
+        # early stop event
+        logging.info(query.describe())
+
     """
 
     def __init__(
         self,
         wrapped_query: EventQuery,
         stop_condition: Callable[[ReceivedEvent], bool],
-        timeout: SupportsFloat = 0.0,
     ) -> None:
         """Initialize the query with the wrapped query and stop condition.
 
         :param wrapped_query: The query to wrap.
         :param stop_condition: A function that takes an event
             as input and returns True if the stop condition is met.
-        :param timeout: The timeout for the query in seconds. Defaults to 0.
         """
-        super().__init__(timeout)
+        # pylint: disable=protected-access
+        super().__init__(wrapped_query._timeout)
         self.wrapped_query = wrapped_query
         self.stop_condition = stop_condition
         self.failed_event: ReceivedEvent | None = None

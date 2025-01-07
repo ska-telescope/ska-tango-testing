@@ -115,11 +115,6 @@ events, it will be updated with the new events that arrive while the query
 is waiting, so every time your predicate will be evaluated it will use
 updated data.
 
-Some meaningful examples of predicates are available in the
-:py:mod:`ska_tango_testing.integration.predicates` module, where are
-defined the predicates that are used to implement
-:py:meth:`~ska_tango_testing.integration.assertions.has_change_event_occurred`.
-
 Timeout in queries
 ~~~~~~~~~~~~~~~~~~
 
