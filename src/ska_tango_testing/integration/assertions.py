@@ -81,9 +81,9 @@ device itself, because it is important to remember that in distributed
 systems the devices' clocks may not be perfectly synchronized).
 """  # pylint: disable=line-too-long
 
-from datetime import datetime
 from typing import Any, Callable
 
+# pylint: disable=unused-import
 import tango
 
 from ska_tango_testing.integration.assertions_utils import (
@@ -207,7 +207,7 @@ def within_timeout(assertpy_context: Any, timeout: int | float) -> Any:
 
 def has_change_event_occurred(
     assertpy_context: Any,
-    device_name: str | None = None,
+    device_name: "str | tango.DeviceProxy | None" = None,
     attribute_name: str | None = None,
     attribute_value: Any | None = None,
     previous_value: Any | None = None,
@@ -305,7 +305,7 @@ def has_change_event_occurred(
 
     # check assertpy_context has a tracer object
     tracer = _get_tracer(assertpy_context)
-    
+
     # get the remaining timeout if it exists
     timeout: ChainedAssertionsTimeout | float = getattr(
         assertpy_context, "event_timeout", 0.0
@@ -319,7 +319,7 @@ def has_change_event_occurred(
         previous_value=previous_value,
         custom_matcher=custom_matcher,
         target_n_events=min_n_events,
-        timeout=timeout
+        timeout=timeout,
     )
     tracer.evaluate_query(query)
 
@@ -348,7 +348,7 @@ def has_change_event_occurred(
 
 def hasnt_change_event_occurred(
     assertpy_context: Any,
-    device_name: str | None = None,
+    device_name: "str | tango.DeviceProxy | None" = None,
     attribute_name: str | None = None,
     attribute_value: Any | None = None,
     previous_value: Any | None = None,
@@ -428,7 +428,7 @@ def hasnt_change_event_occurred(
         previous_value=previous_value,
         custom_matcher=custom_matcher,
         target_n_events=max_n_events,
-        timeout=timeout
+        timeout=timeout,
     )
     tracer.evaluate_query(query)
 

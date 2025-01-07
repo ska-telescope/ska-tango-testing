@@ -395,8 +395,14 @@ class TestQueryWithFailCondition:
         """The query description includes info from the wrapped query."""
         storage = EventStorage()
         wrapped_query = MagicMock()
-        wrapped_query._describe_criteria = MagicMock(return_value="Wrapped query criteria")
-        wrapped_query._describe_results = MagicMock(return_value="Wrapped query results")
+        # pylint: disable=protected-access
+        wrapped_query._describe_criteria = MagicMock(
+            return_value="Wrapped query criteria"
+        )
+        # pylint: disable=protected-access
+        wrapped_query._describe_results = MagicMock(
+            return_value="Wrapped query results"
+        )
 
         query = QueryWithFailCondition(
             wrapped_query=wrapped_query,
@@ -412,14 +418,18 @@ class TestQueryWithFailCondition:
             "Query description should include the wrapped query criteria"
         ).contains("Wrapped query criteria").described_as(
             "Query description should include the wrapped query results"
-        ).contains("Wrapped query results").described_as(
+        ).contains(
+            "Wrapped query results"
+        ).described_as(
             "An additional message should tell that an early stop "
             "condition was applied to the criteria"
-        ).contains("An early stop condition is set")
+        ).contains(
+            "An early stop condition is set"
+        )
 
     @staticmethod
     def test_query_describe_includes_event_that_triggered_early_stop() -> None:
-        """The query description includes the event that triggered the early stop."""
+        """The query description includes the event that triggered the stop."""
         storage = EventStorage()
         wrapped_query = NEventsMatchQuery(
             predicate=lambda e, _: e.has_device("test/device/1")
@@ -441,12 +451,12 @@ class TestQueryWithFailCondition:
 
         assert_that(description).described_as(
             "Query description must report that the query was stopped early"
-        ).contains(
-            "triggered an early stop"
-        ).described_as(
+        ).contains("triggered an early stop").described_as(
             "Query description should include the event "
             "that triggered the early stop"
-        ).contains(str(event2))
+        ).contains(
+            str(event2)
+        )
 
 
 @pytest.mark.integration_tracer
@@ -593,7 +603,9 @@ class TestNStateChangesQuery:
             "Query description should include the passed criteria"
         ).contains("device_name='test/device/1'").contains(
             "attribute_name=test_attr"
-        ).contains("attribute_value=42").described_as(
+        ).contains(
+            "attribute_value=42"
+        ).described_as(
             "Query description should not include the non-passed criteria"
         ).does_not_contain(
             "previous_value="

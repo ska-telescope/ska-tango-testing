@@ -166,22 +166,31 @@ class QueryWithFailCondition(EventQuery):
         # pylint: disable=protected-access
         wrapped_query_results = self.wrapped_query._describe_results()
 
-        if self._succeeded():
-            return wrapped_query_results
+        if self._is_completed() and not self._succeeded():
+            wrapped_query_results += "\n" + self._describe_fail_reason()
 
-        return f"{wrapped_query_results}\n{self._describe_fail_reason()}"
+        return wrapped_query_results
 
     def _describe_fail_reason(self) -> str:
         """Describe the reason why the query failed.
+
+        This method assumes that the query already failed and so
+        that an initial timeout value was set and the duration calculated.
 
         :return: A string describing the reason why the query failed.
         """
         if self.failed_event is not None:
             return f"Event {str(self.failed_event)} triggered an early stop."
-        
-        if self._evaluation_duration() >= self._initial_timeout_value:
+
+        # timeout and duration must be already calculated if this
+        # method is called
+        timeout = self._initial_timeout_value
+        duration = self._evaluation_duration()
+        assert isinstance(timeout, float)
+        assert isinstance(duration, float)
+        if duration >= timeout:
             return "The query failed because of a timeout."
-        
+
         return "The query failed for an unknown reason."
 
 
