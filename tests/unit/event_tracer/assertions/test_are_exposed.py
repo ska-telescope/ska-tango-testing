@@ -1,11 +1,13 @@
 """Verify the custom assertions are exposed by assertpy."""
 
 
+import pytest
 from assertpy import assert_that
 
 from ska_tango_testing.integration.tracer import TangoEventTracer
 
 
+@pytest.mark.integration_tracer
 class TestAssertionsAreExposed:
     """Verify the custom assertions are exposed by assertpy.
 
@@ -42,7 +44,7 @@ class TestAssertionsAreExposed:
     def test_hasnt_change_event_occurred_is_exposed(
         self, tracer: TangoEventTracer
     ) -> None:
-        """The `hasnt_`change_event_occurred` assertion is exposed.
+        """The `hasnt_change_event_occurred` assertion is exposed.
 
         :param tracer: The `TangoEventTracer` instance.
         """
