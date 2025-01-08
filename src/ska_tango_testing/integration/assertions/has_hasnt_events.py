@@ -15,10 +15,16 @@ Concretely, there are exposed two assertions:
 These assertions access a timeout previously set with the
 :py:func:`~ska_tango_testing.integration.assertions.within_timeout` function.
 
+A further utility exposed by this module is the
+:py:func:`~ska_tango_testing.integration.assertions.get_context_tracer`
+function, which retrieves the `TangoEventTracer` instance from the
+`assertpy` context or raises an error if it is not found. It may be
+useful for internal purposes.
+
 """  # pylint: disable=line-too-long # noqa: E501
 
 # pylint: disable=unused-import
-from typing import Any, Callable
+from typing import Any, Callable, SupportsFloat
 
 # pylint: disable=unused-import
 import tango
@@ -26,11 +32,16 @@ import tango
 from ..event import ReceivedEvent
 from ..query import NStateChangesQuery
 from ..tracer import TangoEventTracer
-from .timeout import ChainedAssertionsTimeout
+from .timeout import ChainedAssertionsTimeout, get_context_timeout
+
+# ------------------------------------------------------------------
+# Utility functions
 
 
-def _get_tracer(assertpy_context: Any) -> TangoEventTracer:
+def get_context_tracer(assertpy_context: Any) -> TangoEventTracer:
     """Get the `TangoEventTracer` instance from the `assertpy` context.
+
+    (It is used internally)
 
     Helper method to get the
     :py:class:`~ska_tango_testing.integration.TangoEventTracer`
@@ -56,6 +67,10 @@ def _get_tracer(assertpy_context: Any) -> TangoEventTracer:
             "Example: assert_that(tracer).has_change_event_occurred(...)"
         )
     return assertpy_context.val
+
+
+# ------------------------------------------------------------------
+# Custom assertions
 
 
 def has_change_event_occurred(
@@ -157,12 +172,10 @@ def has_change_event_occurred(
     # pylint: disable=too-many-arguments
 
     # check assertpy_context has a tracer object
-    tracer = _get_tracer(assertpy_context)
+    tracer = get_context_tracer(assertpy_context)
 
     # get the remaining timeout if it exists
-    timeout: ChainedAssertionsTimeout | float = getattr(
-        assertpy_context, "event_timeout", 0.0
-    )
+    timeout: SupportsFloat = get_context_timeout(assertpy_context)
 
     # Create and evaluate the query with a tracer
     query = NStateChangesQuery(
@@ -266,12 +279,10 @@ def hasnt_change_event_occurred(
     # pylint: disable=too-many-arguments
 
     # check assertpy_context has a tracer object
-    tracer = _get_tracer(assertpy_context)
+    tracer = get_context_tracer(assertpy_context)
 
     # get the remaining timeout if it exists
-    timeout: ChainedAssertionsTimeout | float = getattr(
-        assertpy_context, "event_timeout", 0.0
-    )
+    timeout: SupportsFloat = get_context_timeout(assertpy_context)
 
     # Create and evaluate the query
     query = NStateChangesQuery(

@@ -12,16 +12,24 @@ This module exposes:
 - a class :py:class:`~ska_tango_testing.integration.assertions.ChainedAssertionsTimeout`
   to implement a timeout that can be shared between multiple chained
   assertions, that essentially after it's initialised, it provides
-  updated timeout values that decrease over time.
+  updated timeout values that decrease over time. (It is used internally)
+- a function :py:func:`~ska_tango_testing.integration.assertions.get_context_timeout`
+  that from the given assertpy context, retrieves the timeout value.
+  (It is used internally)
 
 """  # pylint: disable=line-too-long # noqa: E501
 
 from datetime import datetime
 from typing import Any, SupportsFloat
 
+# ------------------------------------------------------------------
+# Class to represent a shared timeout for chained assertions
+
 
 class ChainedAssertionsTimeout(SupportsFloat):
     """A utility for using the same timeout for multiple chained assertions.
+
+    (It is used internally)
 
     This class is used to set a timeout once and share it between multiple
     chained assertions. It permits you:
@@ -120,6 +128,10 @@ class ChainedAssertionsTimeout(SupportsFloat):
         return self.get_remaining_timeout()
 
 
+# ------------------------------------------------------------------
+# Assertpy extension to set a timeout for chained assertions
+
+
 def within_timeout(assertpy_context: Any, timeout: int | float) -> Any:
     """Add a timeout for the next chain of tracer assertions.
 
@@ -188,5 +200,25 @@ def within_timeout(assertpy_context: Any, timeout: int | float) -> Any:
         instance stored in the ``event_timeout`` attribute.
     """  # pylint: disable=line-too-long # noqa: E501
     assertpy_context.event_timeout = ChainedAssertionsTimeout(timeout)
-
     return assertpy_context
+
+
+def get_context_timeout(assertpy_context: Any) -> SupportsFloat:
+    """Get the timeout value from the given assertpy context.
+
+    (It is used internally)
+
+    This function retrieves the timeout value from the given assertpy context.
+    It is used internally in the assertions to get the timeout value to use
+    in the next chained assertions. To set the timeout, you should use the
+    :py:func:`~ska_tango_testing.integration.assertions.within_timeout`
+    assertion.
+
+    (It is used internally)
+
+    :param assertpy_context: The `assertpy` context object
+
+    :return: An object that supports float operations, representing the
+        timeout value in seconds for this context.
+    """
+    return getattr(assertpy_context, "event_timeout", 0.0)
