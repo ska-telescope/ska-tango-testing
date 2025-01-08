@@ -63,11 +63,6 @@ Custom assertions and related utilities for integration tests.
     :members:
     :special-members: __init__
 
-.. automodule:: ska_tango_testing.integration.assertions_utils
-    :members:
-    :special-members: __init__
-
-
 .. _integration_logger_api:
 
 ska_tango_testing.integration.logger

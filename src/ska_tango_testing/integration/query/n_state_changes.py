@@ -1,3 +1,5 @@
+# pylint: disable=duplicate-code
+
 """Query that looks for N state change events."""
 
 from typing import Any, Callable, SupportsFloat

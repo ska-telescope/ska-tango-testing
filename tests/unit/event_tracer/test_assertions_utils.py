@@ -1,4 +1,4 @@
-"""Unit tests for the event_tracer.assertions_utils module."""
+"""Unit tests for the assertions utils."""
 
 
 # Unit tests using pytest and assertpy
@@ -9,9 +9,7 @@ from datetime import datetime
 import pytest
 from assertpy import assert_that
 
-from ska_tango_testing.integration.assertions_utils import (
-    ChainedAssertionsTimeout,
-)
+from ska_tango_testing.integration.assertions import ChainedAssertionsTimeout
 
 
 @pytest.mark.integration_tracer
