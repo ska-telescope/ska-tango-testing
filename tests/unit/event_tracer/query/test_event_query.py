@@ -19,8 +19,8 @@ from ska_tango_testing.integration.query.base import (
     EventQueryStatus,
 )
 
-from .testing_utils.delayed_store_event import delayed_store_event
-from .testing_utils.received_event_mock import create_test_event
+from ..testing_utils.delayed_store_event import delayed_store_event
+from ..testing_utils.received_event_mock import create_test_event
 
 
 class SimpleEventQuery(EventQuery):
@@ -211,8 +211,7 @@ class TestEventQuery:
             attr_name="test_attr",
             value=42,
         )
-        event = create_test_event()
-        storage.store(event)
+        create_test_event(store=storage)
 
         query.evaluate(storage)
 
@@ -242,8 +241,7 @@ class TestEventQuery:
             attr_name="test_attr",
             value=42,
         )
-        event = create_test_event(device_name="test/device/2")
-        storage.store(event)
+        create_test_event(device_name="test/device/2", store=storage)
 
         query.evaluate(storage)
 
@@ -410,8 +408,7 @@ class TestEventQuery:
             attr_name="test_attr",
             value=42,
         )
-        event = create_test_event()
-        storage.store(event)
+        create_test_event(store=storage)
 
         query.evaluate(storage)
 
@@ -441,8 +438,7 @@ class TestEventQuery:
             attr_name="test_attr",
             value=42,
         )
-        event = create_test_event(device_name="test/device/2")
-        storage.store(event)
+        create_test_event(device_name="test/device/2", store=storage)
 
         query.evaluate(storage)
 
