@@ -1,5 +1,3 @@
-# pylint: disable=duplicate-code
-
 """Custom assertions for event-based testing with `assertpy`.
 
 This module provides custom assertions for `assertpy` to be used with
@@ -19,7 +17,7 @@ These assertions access a timeout previously set with the
 
 """  # pylint: disable=line-too-long # noqa: E501
 
-
+# pylint: disable=unused-import
 from typing import Any, Callable
 
 # pylint: disable=unused-import
@@ -63,12 +61,12 @@ def _get_tracer(assertpy_context: Any) -> TangoEventTracer:
 def has_change_event_occurred(
     assertpy_context: Any,
     device_name: "str | tango.DeviceProxy | None" = None,
-    attribute_name: str | None = None,
-    attribute_value: Any | None = None,
-    previous_value: Any | None = None,
-    custom_matcher: Callable[[ReceivedEvent], bool] | None = None,
+    attribute_name: "str | None" = None,
+    attribute_value: "Any | None" = None,
+    previous_value: "Any | None" = None,
+    custom_matcher: "Callable[[ReceivedEvent], bool] | None" = None,
     min_n_events: int = 1,
-) -> Any:  # pylint: disable=duplicate-code
+) -> Any:
     """Verify that an event matching a given predicate occurs.
 
     Custom `assertpy` assertion to verify that a certain event occurs,
@@ -204,10 +202,10 @@ def has_change_event_occurred(
 def hasnt_change_event_occurred(
     assertpy_context: Any,
     device_name: "str | tango.DeviceProxy | None" = None,
-    attribute_name: str | None = None,
-    attribute_value: Any | None = None,
-    previous_value: Any | None = None,
-    custom_matcher: Callable[[ReceivedEvent], bool] | None = None,
+    attribute_name: "str | None" = None,
+    attribute_value: "Any | None" = None,
+    previous_value: "Any | None" = None,
+    custom_matcher: "Callable[[ReceivedEvent], bool] | None" = None,
     max_n_events: int = 1,
 ) -> Any:  # pylint: disable=duplicate-code
     """Verify that an event matching a given predicate does not occur.
