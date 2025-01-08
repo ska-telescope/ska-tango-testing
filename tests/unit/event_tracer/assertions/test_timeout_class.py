@@ -1,4 +1,4 @@
-"""Unit tests for the assertions utils."""
+"""Test the ChainedAssertionsTimeout class."""
 
 
 # Unit tests using pytest and assertpy

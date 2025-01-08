@@ -7,7 +7,7 @@ from assertpy import assert_that
 
 from ska_tango_testing.integration.tracer import TangoEventTracer
 
-from .testing_utils.populate_tracer import add_event, delayed_add_event
+from ..testing_utils.populate_tracer import add_event, delayed_add_event
 
 
 @pytest.mark.integration_tracer
