@@ -1,10 +1,21 @@
-"""Utilities for testing custom assertions."""
+"""Utilities for testing custom assertions.
+
+It includes:
+
+- regex generators for assertion error messages
+- helper functions to verify the elapsed time
+"""
+
+
+from datetime import datetime
+
+from assertpy import assert_that
 
 
 def expected_error_message_has_event(
     detected_n_events: int = 0,
     expected_n_events: int = 1,
-    timeout: int | None = None,
+    timeout: float | None = None,
 ) -> str:
     """Create a regular expression for error message validation.
 
@@ -67,3 +78,19 @@ def expected_error_message_hasnt_event(
     res += f", but {detected_n_events} were found.)"
 
     return res
+
+
+def assert_timeout_in_between(
+    start_time: datetime, greater_than_or_equal: float, less_than: float
+) -> None:
+    """Assert that the timeout is in the expected range.
+
+    :param start_time: The start time of the timeout.
+    :param greater_than_or_equal: The lower bound of the timeout.
+    :param less_than: The upper bound of the timeout.
+    """
+    assert_that((datetime.now() - start_time).total_seconds()).described_as(
+        f"Expected wait time to be >={greater_than_or_equal} and <{less_than}"
+    ).is_greater_than_or_equal_to(greater_than_or_equal).is_less_than(
+        less_than
+    )

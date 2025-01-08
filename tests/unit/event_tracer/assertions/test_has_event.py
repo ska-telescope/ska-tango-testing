@@ -8,7 +8,7 @@ from assertpy import assert_that
 from ska_tango_testing.integration.tracer import TangoEventTracer
 
 from ..testing_utils.populate_tracer import add_event, delayed_add_event
-from .utils import expected_error_message_has_event
+from .utils import assert_timeout_in_between, expected_error_message_has_event
 
 
 @pytest.mark.integration_tracer
@@ -202,15 +202,7 @@ class TestAssertionsHasEvent:
                 attribute_value=101,
             )
 
-        assert_that(
-            (datetime.now() - start_time).total_seconds()
-        ).described_as(
-            "Expected wait time to be >=2s and <3s"
-        ).is_greater_than_or_equal_to(
-            1
-        ).is_less_than(
-            2
-        )
+        assert_timeout_in_between(start_time, 1, 2)
 
     @staticmethod
     def test_assert_that_evt_occurred_fails_when_not_all_events_within_timeout(
@@ -224,16 +216,16 @@ class TestAssertionsHasEvent:
 
         :param tracer: The `TangoEventTracer` instance.
         """
-        delayed_add_event(tracer, "device1", 101, 1)
-        delayed_add_event(tracer, "device1", 202, 2)
-        delayed_add_event(tracer, "device1", 404, 4)
+        delayed_add_event(tracer, "device1", 101, 0.5)
+        delayed_add_event(tracer, "device1", 202, 1)
+        delayed_add_event(tracer, "device1", 404, 2)
 
         start_time = datetime.now()
         with pytest.raises(
             AssertionError,
-            match=expected_error_message_has_event(timeout=3),
+            match=expected_error_message_has_event(timeout=1.5),
         ):
-            assert_that(tracer).within_timeout(3).has_change_event_occurred(
+            assert_that(tracer).within_timeout(1.5).has_change_event_occurred(
                 device_name="device1",
                 attribute_value=101,
             ).has_change_event_occurred(
@@ -244,15 +236,7 @@ class TestAssertionsHasEvent:
                 attribute_value=404,  # TODO: this one should fail
             )
 
-        assert_that(
-            (datetime.now() - start_time).total_seconds()
-        ).described_as(
-            "Expected wait time to be >=3s and <4s"
-        ).is_greater_than_or_equal_to(
-            3
-        ).is_less_than(
-            4
-        )
+        assert_timeout_in_between(start_time, 1.5, 2)
 
     @staticmethod
     def test_assert_that_n_events_occurred_fails_when_less_than_n_events(
