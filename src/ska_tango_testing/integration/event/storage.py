@@ -8,7 +8,13 @@ from .base import ReceivedEvent
 
 # pylint: disable=too-few-public-methods
 class EventStorageObserver(Protocol):
-    """Observer interface for EventStorage changes."""
+    """Observer interface for EventStorage changes.
+
+    This class is a protocol that must be implemented by classes that
+    want to observe changes in the
+    :py:class:`~ska_tango_testing.integration.event.storage.EventStorage`
+    class. See the class documentation for more information.
+    """
 
     def on_events_change(self, events: list[ReceivedEvent]) -> None:
         """Handle events list change.
@@ -20,10 +26,25 @@ class EventStorageObserver(Protocol):
 class EventStorage:
     """Thread-safe storage for Tango events.
 
-    This class provides thread-safe storage and retrieval of ReceivedEvents.
-    It handles the concurrent access to events from different threads through
-    a lock mechanism.
-    """
+    This class provides a thread-safe storage for
+    :py:class:`~ska_tango_testing.integration.event.base.ReceivedEvent`
+    instances. An instance of this class can be used to store the events
+    that are somehow received from multiple tango devices
+    concurrently.
+
+    This class also offers a subscription mechanism to notify observers
+    of changes in the stored events. An observer must implement the
+    :py:class:`~ska_tango_testing.integration.event.storage.EventStorageObserver`
+    interface. The observer will be notified of changes in the events list
+    1) the first time it subscribes, and 2) every time a new event is stored.
+    Every notification will include a full copy of the current events list
+    (maybe in future we will pass also the new event separately).
+
+    Both the storing and the notification mechanisms are thread-safe.
+
+    The subscription mechanism is inspired from the
+    `Observer Design Pattern <https://refactoring.guru/design-patterns/observer>`_.
+    """  # pylint: disable=line-too-long # noqa: E501
 
     def __init__(self) -> None:
         """Initialize the events storage."""

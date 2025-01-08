@@ -1,14 +1,36 @@
 """Basic custom event-based assertions for `TangoEventTracer`.
 
-This module provides some example of basic custom
+This module provides some basic custom
 `assertpy <https://assertpy.github.io/index.html>`_ assertions
 to be used with :py:class:`~ska_tango_testing.integration.TangoEventTracer`
-instances. These assertions can be
-used to verify properties about the events captured by the tracer.
+instances to assert that certain events have occurred or not occurred.
 
-Essentially they are query calls to the tracer, within
+Essentially assertions are query calls to the tracer, within
 a timeout, to check if there are events which match an expected more or less
-complex predicate.
+complex predicate, which include:
+
+- specifics about the source of the event (device name and attribute name);
+- specifics about the event value (e.g., the event value is 5);
+- specifics about the event value change (e.g., the event value changes from
+  "old_value" to "new_value");
+- specifics about how many events with certain characteristics
+  you expect to have occurred;
+- further custom matching rules;
+- a way to define a timeout and share it between all the successive assertions
+  (i.e., verify that multiple conditions are met within the same timeout).
+
+Assertions are designed to be used in a chain (in a classic *assertpy* style),
+where each assertion is called after the previous one,
+and the timeout is shared between all
+them. At the moment, the main assertions you can use are:
+
+- :py:func:`~ska_tango_testing.integration.assertions.has_change_event_occurred`,
+  which asserts that one or more events have occurred (within a timeout);
+- :py:func:`~ska_tango_testing.integration.assertions.hasnt_change_event_occurred`,
+  which is the negation of the previous one and so asserts that no events
+  occurs within a timeout;
+- :py:func:`~ska_tango_testing.integration.assertions.within_timeout`,
+  which is the way you have to set a timeout for the next chain of assertions.
 
 Usage example:
 
@@ -51,11 +73,24 @@ Usage example:
             previous_value="old_value",
         )
 
-You can and you are encouraged to take those assertions as a starting point
-to create more complex ones, as needed by your test cases. If you want to do
-that we suggest to check `assertpy` documentation to understand
-how to create custom assertions (https://assertpy.github.io/docs.html).
+If you feel those assertions aren't enough for your test cases, you can
+create your own custom assertions. The assertions provided here may serve
+as examples. If you are willing to create your own assertions, we
+suggest:
 
+- to give a look to all the support function and classes we provide
+  in this module (in particular, to
+  :py:class:`~ska_tango_testing.integration.assertions.ChainedAssertionsTimeout`,
+  :py:func:`~ska_tango_testing.integration.assertions.get_context_timeout` and
+  :py:func:`~ska_tango_testing.integration.assertions.get_context_tracer`);
+- to inform yourself well about the internal mechanisms of the
+  :py:class:`~ska_tango_testing.integration.TangoEventTracer` class (we suggest
+  to read the class documentation and the following modules:
+  :py:mod:`ska_tango_testing.integration.event` to understand how the tracer
+  captures events and :py:mod:`ska_tango_testing.integration.query` to
+  understand how those events can be queried and evaluated);
+- to read the `assertpy` documentation to understand how to create and export
+  custom assertions (https://assertpy.github.io/docs.html).
 
 **NOTE**: Custom assertions of this module are already exported
 to the `assertpy` context in :py:mod:`ska_tango_testing.integration`, so
@@ -78,7 +113,7 @@ it would be better to use that instead of the reception time as a way to
 compare events (if it comes from a centralized server and not from the
 device itself, because it is important to remember that in distributed
 systems the devices' clocks may not be perfectly synchronized).
-"""  # pylint: disable=line-too-long
+"""  # pylint: disable=line-too-long # noqa: E501
 
 from .has_hasnt_events import (
     get_context_tracer,

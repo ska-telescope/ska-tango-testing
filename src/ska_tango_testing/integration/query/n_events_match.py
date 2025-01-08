@@ -42,6 +42,12 @@ class NEventsMatchQuery(EventQuery):
         # (e.g., the number of matching events)
         logging.info(query.describe())
 
+    **IMPORTANT NOTE**: : at the moment, the internal matching events
+    list is not protected from external modifications with a lock, so if
+    an user modifies the list while the query is being evaluated,
+    there may be unexpected results. But this is not likely to happen
+    if the client is using the query as intended.
+
     """  # pylint: disable=line-too-long # noqa: E501
 
     def __init__(

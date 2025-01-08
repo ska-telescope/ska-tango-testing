@@ -5,17 +5,17 @@ be made to the tracer to verify conditions on the events that have been
 recorded and/or to retrieve events.
 
 The main base class for the query hierarchy is
-:py:class:`ska_tango_testing.integration.query.EventQuery`, which provides
+:py:class:`~ska_tango_testing.integration.query.EventQuery`, which provides
 the basic interface for a query.
 
 Some useful queries are provided in this module, such as:
 
-- :py:class:`ska_tango_testing.integration.query.NEventsMatchQuery`:
+- :py:class:`~ska_tango_testing.integration.query.NEventsMatchQuery`:
   Query to check if a certain number of events match a given predicate.
-- :py:class:`ska_tango_testing.integration.query.NStateChangesQuery`:
+- :py:class:`~ska_tango_testing.integration.query.NStateChangesQuery`:
   Query to check if a certain number of changes in an attribute value
   are recorded.
-- :py:class:`ska_tango_testing.integration.query.QueryWithFailCondition`:
+- :py:class:`~ska_tango_testing.integration.query.QueryWithFailCondition`:
   A sort of decorator query that adds a fail condition to another query
   to make it fail early if some kind of event is detected.
 

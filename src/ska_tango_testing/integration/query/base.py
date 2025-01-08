@@ -31,23 +31,35 @@ class EventQueryStatus(Enum):
 class EventQuery(ABC):
     """Abstract class for querying events with a timeout mechanism.
 
-    An events query is a mechanism to query a set of events within a timeout.
-    A query has the following characteristics:
+    An events query is a mechanism to query a set of events within a timeout
+    and succeed if some criteria are met or fail otherwise.
+    A query has the following characteristics.
 
-    - it has a lifecycle (accessible through the ``status`` method and
+    - It has a lifecycle (accessible through the ``status`` method and
       represented by
       :py:class:`~ska_tango_testing.integration.query.EventQueryStatus`):
 
-      - it is created
+      - it is instantiated and initialised with all the needed parameters
+        (such as the timeout)
       - it is evaluated through an event tracer
-      - while ongoing, the query will receive events and wait or to reach
-        the success criteria defined in the ``succeeded`` method
-        or for a timeout to expire
-      - when the query is completed, the status is updated and the
-        evaluation end time is set
+      - if it has a >0 timeout, it will wait for the timeout to expire
+        or for the success criteria to be met; if it has a 0 timeout, it
+        will just evaluate the events once and return immediately;
+        in both cases, the success criteria is defined by the
+        ``succeeded`` method
+      - when the query is completed (because the timeout expired or the
+        success criteria is met), the evaluation ends and the query
+        expose it's success or failed status (through the ``succeeded``
+        method) and further information about the evaluation (like
+        the duration, the initial and remaining timeout and a description
+        of the results and the criteria) through the other methods
+        (``evaluation_duration``, ``initial_timeout``, ``remaining_timeout``,
+        ``describe``)
 
-    - it is an abstract class, so it cannot be instantiated directly
-      and you have to subclass it and implement two key methods:
+    - it is an abstract class, so it cannot be instantiated directly. Instead,
+      a subclass has to be created to define which are exactly the success
+      criteria and the evaluation logic. The subclass must implement the
+      following protected methods:
 
       - ``_succeeded`` defines the success criteria of your query, write
         here some logic to check if your query is satisfied (return True
@@ -61,7 +73,7 @@ class EventQuery(ABC):
         this method is called all the received events are passed to it
         (not only the new ones). Consider also that both this method and
         the ``_succeeded`` method are protected by a lock, so you can
-        safely access your internal state.
+        safely access your internal state
       - you may also want to override the ``_is_stop_criteria_met`` method
         to add more criteria to stop the evaluation (e.g., an early stop
         condition)
@@ -89,13 +101,73 @@ class EventQuery(ABC):
                 # (your logic here, that checks if the query is satisfied
                 # using the state saved in the _evaluate_events method)
 
+            def _describe_results(self):
+                # (your logic here, that describes the results of the query)
+                # (optional but recommended)
+
+            def _describe_criteria(self):
+                # (your logic here, that describes the criteria of the query)
+                # (optional but recommended)
+
         # simple evaluation without timeout (non blocking)
         query = MyQuery()
         tracer.evaluate_query(query)
 
-        # evaluation with timeout (blocking)
+        # evaluation with timeout (blocking, for at most 10 seconds)
         query_with_timeout = MyQuery(timeout=10.0)
         tracer.evaluate_query(query_with_timeout)
+
+    **A SMALL DESCRIPTION OF THE QUERY EVALUATION MECHANISM**:
+    the query is evaluated connecting it to an
+    :py:class:`~ska_tango_testing.integration.event.storage.EventStorage`,
+    through a subscription mechanism. The query is then notified when
+    new events are received and it can evaluate them. The query is
+    also notified once when the evaluation begins. This way, when the
+    ``evaluate`` method is called, the query is put in evaluation mode,
+    it receives at least once all the events that are in the storage
+    and every time a new event is stored it updates its internal state
+    and checks if the success criteria are met. The timeout mechanism
+    is implemented using a signal that is set when the timeout expires
+    or when the success criteria are met (this way a client can be
+    blocked until the evaluation completes or the timeout expires).
+
+    Important inspiration for the query mechanism comes from:
+
+    - the `Observer Design Pattern <https://refactoring.guru/design-patterns/observer>`_,
+      for the way a query receives events from the storage and updates
+      its internal state;
+    - the `Template Method Design Pattern <https://refactoring.guru/design-patterns/template-method>`_,
+      because it is just a skeleton class that requires subclasses to
+      implement a few key steps of the algorithm.
+
+    **IMPORTANT NOTE**: the query is internally thread safe,
+    since all the attributes access are protected by a lock.
+    As you may notice, the protected
+    internal methods are not thread safe by themselves, but the lock
+    is always and only acquired in the public methods. If you implement
+    your own query:
+
+    - **do not acquire the lock in the protected methods**, because it is
+      already acquired in the public methods and that would cause a
+      deadlock;
+    - **do not call query public methods from the protected template methods**
+      (like ``_succeeded`` and ``_evaluate_events``)
+      you implement, because they may acquire the lock again and
+      cause a deadlock (instead, limit yourself to access the internal
+      state and eventually the protected methods, you will already
+      have the lock acquired, so don't worry about acquiring it again).
+
+    Essentially, you can not worry about concurrent access
+    to your internal state, because it is protected by the lock (at least
+    from eventual concurrent internal calls). The only tricky case may be
+    if you wish to expose a your internal state to the outside world
+    and you think that some external client may access it concurrently
+    to the evaluation phase. In this case, it's recommended that your
+    internal state is protected in the same way as the query internal
+    state is protected (with a lock, called just by public methods, that
+    acquire the lock and orchestrate other unprotected private methods).
+    If you think no client will access your state during the evaluation
+    (which is the most common case), you can also not worry about it.
 
     """
 
