@@ -73,7 +73,7 @@ class QueryWithFailCondition(EventQuery):
     there may be unexpected results. But this is not likely to happen
     if the client is using the query as intended.
 
-    """
+    """  # pylint: disable=line-too-long # noqa: E501
 
     def __init__(
         self,

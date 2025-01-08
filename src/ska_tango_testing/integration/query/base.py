@@ -169,7 +169,7 @@ class EventQuery(ABC):
     If you think no client will access your state during the evaluation
     (which is the most common case), you can also not worry about it.
 
-    """
+    """  # pylint: disable=line-too-long # noqa: E501
 
     def __init__(self, timeout: SupportsFloat = 0.0) -> None:
         """Initialize the events query.
