@@ -13,14 +13,14 @@ from ska_tango_testing.integration.query.n_events_match import (
 from ska_tango_testing.integration.query.with_fail_condition import (
     QueryWithFailCondition,
 )
-from tests.unit.event_tracer.query.utils import (
+
+from ..testing_utils.delayed_store_event import delayed_store_event
+from ..testing_utils.received_event_mock import create_test_event
+from .utils import (
     assert_n_events_are_collected,
     assert_query_failed,
     assert_query_succeeded,
 )
-
-from ..testing_utils.delayed_store_event import delayed_store_event
-from ..testing_utils.received_event_mock import create_test_event
 
 
 @pytest.mark.integration_tracer

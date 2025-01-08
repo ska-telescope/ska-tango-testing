@@ -86,14 +86,9 @@ from typing import Any, Callable
 # pylint: disable=unused-import
 import tango
 
-from ska_tango_testing.integration.assertions_utils import (
-    ChainedAssertionsTimeout,
-)
-from ska_tango_testing.integration.event import ReceivedEvent
-from ska_tango_testing.integration.query.n_state_changes import (
-    NStateChangesQuery,
-)
-
+from .assertions_utils import ChainedAssertionsTimeout
+from .event import ReceivedEvent
+from .query import NStateChangesQuery
 from .tracer import TangoEventTracer
 
 
