@@ -8,8 +8,8 @@ from ska_tango_testing.integration.event.typed import (
     TypedEvent,
 )
 
-from .testing_utils.dummy_state_enum import DummyNonEnumClass, DummyStateEnum
-from .testing_utils.eventdata_mock import create_eventdata_mock
+from ..testing_utils.dummy_state_enum import DummyNonEnumClass, DummyStateEnum
+from ..testing_utils.eventdata_mock import create_eventdata_mock
 
 
 @pytest.mark.integration_tracer

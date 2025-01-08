@@ -14,7 +14,7 @@ from ska_tango_testing.integration.event.storage import (
     EventStorageObserver,
 )
 
-from .testing_utils.received_event_mock import create_test_event
+from ..testing_utils.received_event_mock import create_test_event
 
 
 # pylint: disable=too-few-public-methods

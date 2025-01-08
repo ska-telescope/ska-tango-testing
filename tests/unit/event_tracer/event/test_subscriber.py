@@ -18,8 +18,8 @@ from tests.unit.event_tracer.testing_utils.patch_context_devproxy import (
     patch_context_device_proxy,
 )
 
-from .testing_utils import DeviceProxyMock, create_eventdata_mock
-from .testing_utils.dummy_state_enum import DummyStateEnum
+from ..testing_utils import DeviceProxyMock, create_eventdata_mock
+from ..testing_utils.dummy_state_enum import DummyStateEnum
 
 
 @pytest.mark.integration_tracer
