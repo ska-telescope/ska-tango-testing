@@ -52,6 +52,7 @@ in the :ref:`API reference <integration_tracer_api>`.
    :caption: Integration tests with TangoEventTracer
 
    getting_started
+   advanced_use_cases
    custom_queries_and_assertions
    event_logger
 

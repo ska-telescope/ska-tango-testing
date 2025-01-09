@@ -152,8 +152,6 @@ In the code above, we used two custom methods:
   - and with a specific previous value (determined by the most recent previous
     event on the same attribute and on the same device).
 
-
-
   **ANOTHER NOTE**: a further parameter called ``min_n_events`` permits you
   to specify a minimum number of events that must be present in the tracer
   to make the assertion pass. This is useful when you want to check repeated
@@ -177,54 +175,21 @@ and permits you to write very readable tests. Moreover, as we will see
 in the next section, it permits also to provide very detailed error messages
 in case of failure. 
 
-Some further guidelines on the usage of ``has_change_event_occurred``
+Two notes on the usage of assertions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Here there are some further guidelines on how to use
-:py:func:`~ska_tango_testing.integration.assertions.has_change_event_occurred`.
 
 - **OPTIONALITY OF PARAMETERS**: all those parameters are optional,
   so you can use the method to
   make more generic checks (e.g., assert presence of events with
-  any previous value, any device, any attribute name, etc.).
-
-- **CUSTOM PREDICATE**: we are aware that sometimes
-  a simple `==` check between an expected value and and event value is not
-  enough to perform a meaningful check. For example, maybe you are dealing
-  with a complex attribute value (e.g., a composed tuple of things) and you
-  want to check only a part of it. To address this issue, you can provide
-  as a parameter a custom predicate (``custom_matcher``) to the
-  assertion method, which will be put in ``and`` with the other checks
-  and which can be used to perform an arbitrary complex check. Example:
+  any previous value, any device, any attribute name, etc.). Example:
 
   .. code-block:: python
 
+    # check that at least one event with a state change from OFF to ON
+    # is present in the tracer, from any device and any attribute
     assert_that(tracer).has_change_event_occurred(
-        device_name="sys/tg_test/1",
-        attribute_name="tupleAttribute",
-        custom_matcher=lambda event:
-            len(event.attribute_value) >= 2
-            and event.attribute_value[1] == 123
-    )
-
-  Before using this advanced feature, we suggest to read the documentation
-  of :py:mod:`ska_tango_testing.integration.assertions` and
-  :py:class:`~ska_tango_testing.integration.event.ReceivedEvent`.
-
-- **MIN N EVENTS**: a further parameter called ``min_n_events`` permits you
-  to specify a minimum number of events that must be present in the tracer
-  to make the assertion pass. This is useful when you want to check repeated
-  events. Example:
-
-  .. code-block:: python
-
-    # at least 3 times there must be a transition from OFF to ON
-    assert_that(tracer).has_change_event_occurred(
-        device_name="sys/tg_test/1",
-        attribute_name="State",
         current_value="ON",
         previous_value="OFF",
-        min_n_events=3
     )
 
 - **CHAINING OF ASSERTIONS**: `assertpy` permits you to chain multiple
@@ -270,9 +235,6 @@ Here there are some further guidelines on how to use
   using an older version, to each of the chained assertions the initial timeout
   (not decreased by the previous assertions) will be applied.
 
-For more details on this and on other assertion methods,
-see the documentation of
-:py:mod:`ska_tango_testing.integration.assertions`.
 
 Error messages and debugging
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~

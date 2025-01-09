@@ -22,11 +22,15 @@ class ReceivedEvent:
 
     Since in SKAO tests not always the developers use the (string) device
     name, it's provided a method :py:meth:`has_device` to check if the
-    event comes from a given device (the same method accepts a string too)
+    event comes from a given device (the same method accepts a string too).
 
     Since the attribute name received by the Tango event is always lower
     case, it's provided a method :py:meth:`has_attribute` to check if the
     event comes from a given attribute (to make it case insensitive).
+
+    A ReceivedEvent when printed as string will show the device name, the
+    attribute name, the attribute value, and the reception time in
+    a synthetic and human-readable way.
     """
 
     event_data: tango.EventData
