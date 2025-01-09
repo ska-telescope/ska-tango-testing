@@ -125,12 +125,15 @@ from .timeout import (
     get_context_timeout,
     within_timeout,
 )
+from .early_stop import with_early_stop, get_context_early_stop
 
 __all__ = [
-    "within_timeout",
-    "ChainedAssertionsTimeout",
     "has_change_event_occurred",
     "hasnt_change_event_occurred",
+    "within_timeout",
+    "with_early_stop",
+    "ChainedAssertionsTimeout",
     "get_context_timeout",
     "get_context_tracer",
+    "get_context_early_stop",
 ]

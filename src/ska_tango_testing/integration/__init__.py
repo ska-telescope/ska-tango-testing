@@ -81,6 +81,7 @@ from .assertions import (
     has_change_event_occurred,
     hasnt_change_event_occurred,
     within_timeout,
+    with_early_stop
 )
 from .logger import TangoEventLogger
 from .tracer import TangoEventTracer
@@ -89,6 +90,7 @@ from .tracer import TangoEventTracer
 add_extension(has_change_event_occurred)
 add_extension(hasnt_change_event_occurred)
 add_extension(within_timeout)
+add_extension(with_early_stop)
 
 
 # provide a quick utility function to log events

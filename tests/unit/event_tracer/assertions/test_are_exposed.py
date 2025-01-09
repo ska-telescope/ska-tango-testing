@@ -56,3 +56,10 @@ class TestAssertionsAreExposed:
         :param tracer: The `TangoEventTracer` instance.
         """
         self._assert_exposes(tracer, "within_timeout")
+
+    def test_with_early_stop_is_exposed(self, tracer: TangoEventTracer) -> None:
+        """The ``with_early_stop`` assertion is exposed.
+
+        :param tracer: The `TangoEventTracer` instance.
+        """
+        self._assert_exposes(tracer, "with_early_stop")
