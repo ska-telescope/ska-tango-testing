@@ -80,8 +80,8 @@ from assertpy import add_extension
 from .assertions import (
     has_change_event_occurred,
     hasnt_change_event_occurred,
+    with_early_stop,
     within_timeout,
-    with_early_stop
 )
 from .logger import TangoEventLogger
 from .tracer import TangoEventTracer

@@ -115,6 +115,7 @@ device itself, because it is important to remember that in distributed
 systems the devices' clocks may not be perfectly synchronized).
 """  # pylint: disable=line-too-long # noqa: E501
 
+from .early_stop import get_context_early_stop, with_early_stop
 from .has_hasnt_events import (
     get_context_tracer,
     has_change_event_occurred,
@@ -125,7 +126,6 @@ from .timeout import (
     get_context_timeout,
     within_timeout,
 )
-from .early_stop import with_early_stop, get_context_early_stop
 
 __all__ = [
     "has_change_event_occurred",
