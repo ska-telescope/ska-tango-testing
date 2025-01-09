@@ -100,6 +100,24 @@ def _get_n_events_from_query(query: EventQuery) -> int:
     )
 
 
+def _early_stop_triggered_failure(query: EventQuery) -> bool:
+    """Check if an early stop condition triggered a failure.
+
+    This method navigates a query structure and checks if an early stop
+    condition triggered a failure.
+
+    :param query: The query that may or may not have an early stop condition.
+    :return: True if an early stop condition triggered a failure. False
+        if it didn't or if the query has no early stop condition set.
+    """
+    # if a query has an early stop condition set, check if it activated
+    if isinstance(query, QueryWithFailCondition):
+        return query.failed_event is not None
+
+    # the query has no early stop condition set
+    return False
+
+
 # ------------------------------------------------------------------
 # Custom assertions
 
@@ -228,6 +246,8 @@ def has_change_event_occurred(
 
     tracer.evaluate_query(query)
 
+    # TODO: better messaging in case of early stop
+
     # if not enough events are found, raise an error
     if not query.succeeded():
         msg = (
@@ -343,8 +363,11 @@ def hasnt_change_event_occurred(
 
     tracer.evaluate_query(query)
 
-    # if enough events are found, raise an error
-    if query.succeeded():
+    # TODO: better messaging in case of early stop
+
+    # if enough events are found (or an early stop is triggered),
+    # raise an error
+    if query.succeeded() or _early_stop_triggered_failure(query):
         msg = (
             f"Expected to NOT find {max_n_events} event(s) "
             + "matching the predicate"
