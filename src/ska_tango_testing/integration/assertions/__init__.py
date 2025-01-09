@@ -16,8 +16,11 @@ complex predicate, which include:
 - specifics about how many events with certain characteristics
   you expect to have occurred;
 - further custom matching rules;
-- a way to define a timeout and share it between all the successive assertions
-  (i.e., verify that multiple conditions are met within the same timeout).
+- a way to define a timeout (a maximum time to wait for an assertion
+  to pass or fail) and share it between all the chained assertions
+  (i.e., verify that multiple conditions are met within the same timeout);
+- a way to stop early the evaluation of some assertions and trigger
+  a special failure if a certain condition is met.
 
 Assertions are designed to be used in a chain (in a classic *assertpy* style),
 where each assertion is called after the previous one,
@@ -31,6 +34,9 @@ them. At the moment, the main assertions you can use are:
   occurs within a timeout;
 - :py:func:`~ska_tango_testing.integration.assertions.within_timeout`,
   which is the way you have to set a timeout for the next chain of assertions.
+- :py:func:`~ska_tango_testing.integration.assertions.with_early_stop`,
+  which is a way to stop the evaluation of the chain of assertions
+  early if a certain condition is met.
 
 Usage example:
 
@@ -61,12 +67,18 @@ Usage example:
         )
 
         # Check that an attr change from "old_value" to "new_value"
-        # has occurred or will occur within 5 seconds in any device.
+        # has occurred or will occur within 5 seconds in any device
+        # without errors.
         # Describe the eventual failure with an evocative message.
         assert_that(tracer).described_as(
             "An event from 'old_value' to 'new_value' for 'attr2' should have"
             " been occurred within 5 seconds in some device."
-        ).within_timeout(5).has_change_event_occurred(
+        ).within_timeout(5).with_early_stop(
+           # if I detect an event that contains the "error" keyword,
+           # the evaluation will fail.
+           # if there is a timeout, the evaluation will be interrupted
+           lambda event: str(event.attribute_value).contains("error")
+        ).has_change_event_occurred(
             # (if I don't care about the device name, ANY will match)
             attribute_name="attr2",
             attribute_value="new_value",

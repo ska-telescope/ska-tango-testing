@@ -43,12 +43,13 @@ def with_early_stop(
     chained assertions immediately stops and a failure is raised.
 
     This is particularly useful when a long timeout is set (e.g., because of
-    network delays, slow systems)
-    but occasionally you are able to detect an error early and so
-    specifying a sentinel predicate can save you a lot of time. If you use
-    it without a timeout, it will still evaluate all the events once
-    and fail if the sentinel predicate is met (even if your
-    assertions are correct, the sentinel always has the last word).
+    network delays, slow systems, etc.) but occasionally you are able
+    to detect an error early and so save you a lot of time of avoiding
+    a useless long wait. If you use the early stop sentinel without
+    a timeout it, it will still evaluate all the events once
+    and fail if the sentinel predicate is met, even if your assertion
+    would not have failed (in other words, the early stop criteria has
+    always the priority).
 
     Usage example:
 
