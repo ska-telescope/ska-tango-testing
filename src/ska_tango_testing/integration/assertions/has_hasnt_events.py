@@ -30,8 +30,9 @@ from typing import Any, Callable, SupportsFloat
 import tango
 
 from ..event import ReceivedEvent
-from ..query import NStateChangesQuery
+from ..query import EventQuery, NStateChangesQuery, QueryWithFailCondition
 from ..tracer import TangoEventTracer
+from .early_stop import get_context_early_stop
 from .timeout import ChainedAssertionsTimeout, get_context_timeout
 
 # ------------------------------------------------------------------
@@ -67,6 +68,36 @@ def get_context_tracer(assertpy_context: Any) -> TangoEventTracer:
             "Example: assert_that(tracer).has_change_event_occurred(...)"
         )
     return assertpy_context.val
+
+
+def _get_n_events_from_query(query: EventQuery) -> int:
+    """Get the number of matching events from the query.
+
+    This method navigates a query structure and extacts - if possible -
+    the number of found matching event. This method will raise an error
+    if the query (or some other wrapped query) does not have the
+    `matching_events` attribute.
+
+    :param query: The query to extract the number of matching events from.
+        It can be a simple query or a wrapped query. Somewhere, it must
+        have the `matching_events` attribute.
+    :return: The number of matching events found in the query.
+    :raises ValueError: If the query or some wrapped one
+        does not have the `matching_events`
+        attribute (i.e., the query structure is not as expected).
+    """
+    if isinstance(query, QueryWithFailCondition):
+        return _get_n_events_from_query(query.wrapped_query)
+
+    if hasattr(query, "matching_events") and isinstance(
+        query.matching_events, list
+    ):
+        return len(query.matching_events)
+
+    raise ValueError(
+        "The query structure is not as expected. "
+        "It should have the 'matching_events' attribute."
+    )
 
 
 # ------------------------------------------------------------------
@@ -177,8 +208,8 @@ def has_change_event_occurred(
     # get the remaining timeout if it exists
     timeout: SupportsFloat = get_context_timeout(assertpy_context)
 
-    # Create and evaluate the query with a tracer
-    query = NStateChangesQuery(
+    # Create a query
+    query: EventQuery = NStateChangesQuery(
         device_name=device_name,
         attribute_name=attribute_name,
         attribute_value=attribute_value,
@@ -187,6 +218,14 @@ def has_change_event_occurred(
         target_n_events=min_n_events,
         timeout=timeout,
     )
+
+    # if given, wrap the query with the early stop condition
+    early_stop_predicate = get_context_early_stop(assertpy_context)
+    if early_stop_predicate is not None:
+        query = QueryWithFailCondition(
+            wrapped_query=query, stop_condition=early_stop_predicate
+        )
+
     tracer.evaluate_query(query)
 
     # if not enough events are found, raise an error
@@ -199,7 +238,7 @@ def has_change_event_occurred(
             msg += f" within {timeout.initial_timeout} seconds"
         else:
             msg += " in already existing events"
-        msg += f", but only {len(query.matching_events)} found.\n\n"
+        msg += f", but only {_get_n_events_from_query(query)} found.\n\n"
 
         events_list = "\n".join([str(event) for event in tracer.events])
         msg += f"Events captured by TANGO_TRACER:\n{events_list}"
@@ -285,7 +324,7 @@ def hasnt_change_event_occurred(
     timeout: SupportsFloat = get_context_timeout(assertpy_context)
 
     # Create and evaluate the query
-    query = NStateChangesQuery(
+    query: EventQuery = NStateChangesQuery(
         device_name=device_name,
         attribute_name=attribute_name,
         attribute_value=attribute_value,
@@ -294,6 +333,14 @@ def hasnt_change_event_occurred(
         target_n_events=max_n_events,
         timeout=timeout,
     )
+
+    # if given, wrap the query with the early stop condition
+    early_stop_predicate = get_context_early_stop(assertpy_context)
+    if early_stop_predicate is not None:
+        query = QueryWithFailCondition(
+            wrapped_query=query, stop_condition=early_stop_predicate
+        )
+
     tracer.evaluate_query(query)
 
     # if enough events are found, raise an error
@@ -306,7 +353,7 @@ def hasnt_change_event_occurred(
             msg += f" within {timeout.initial_timeout} seconds"
         else:
             msg += " in already existing events"
-        msg += f", but {len(query.matching_events)} were found."
+        msg += f", but {_get_n_events_from_query(query)} were found."
 
         event_list = "\n".join([str(event) for event in tracer.events])
         msg += f"Events captured by TANGO_TRACER:\n{event_list}"
