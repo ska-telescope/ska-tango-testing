@@ -1,4 +1,4 @@
-"""The `hasnt_change_event_occurred` detects absence of events."""
+"""The ``hasnt_change_event_occurred`` detects absence of events."""
 
 from datetime import datetime
 

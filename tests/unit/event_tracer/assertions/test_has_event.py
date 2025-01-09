@@ -1,4 +1,4 @@
-"""The `has_change_event_occurred` detects presence of events."""
+"""The ``has_change_event_occurred`` detects presence of events."""
 
 from datetime import datetime
 

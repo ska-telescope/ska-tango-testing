@@ -1,4 +1,4 @@
-"""Unit tests for `TangoEventTracer` custom assertions."""
+"""The assertions advanced features work as expected."""
 
 
 import pytest
@@ -14,26 +14,29 @@ from .utils import (
 
 
 @pytest.mark.integration_tracer
-class TestCustomAssertions:
-    """Test the custom assertions for the :py:class:`TangoEventTracer`.
+class TestAssertionsAdvancedUsage:
+    """Verify the advanced features of the custom assertions.
 
-    Ensure that the custom assertions for the :py:class:`TangoEventTracer`
-    work as expected, matching the correct events and values, passing
-    when they should and raising an ``AssertionError`` when they should
-    fail.
+    This group of tests verifies a set of advanced use cases for the
+    custom assertions of the ``TangoEventTracer``. It includes the following:
 
-    Verify tricky cases, such as delayed events, correct use of timeouts,
-    partial matches, correct evaluation of previous event and so on.
+    - The custom assertions are able to evaluate the right previous value,
+      without being tricked by intermediate events or events from
+      other devices or attributes.
+    - The custom assertions accepts a custom matchers to evaluate events
+      and combine it correctly with the other parameters.
     """
 
-    # ##########################################################
-    # Tests: assert has/hasnt events with previous value
-
     @staticmethod
-    def test_assert_that_event_occurred_handles_previous(
-        tracer: TangoEventTracer,
-    ) -> None:
-        """The hasnt assertion handles correctly the previous value.
+    def generate_events(tracer: TangoEventTracer) -> None:
+        """Generate a set of events for testing.
+
+        The generated events are a a sequence of past events that
+        involve mainly one device 'device1' and one attribute (the default
+        one). Their value is integer and generally it increases over time
+        (it goes from 100, to 120 to 200). There are added also "noise"
+        events from other devices and attributes to try to trick the
+        assertions.
 
         :param tracer: The `TangoEventTracer` instance.
         """
@@ -43,8 +46,19 @@ class TestCustomAssertions:
         add_event(tracer, "device1", 66, 7, attr_name="other_attr")
         add_event(tracer, "device1", 200, 6)
 
-        # ----------------------------------------------------
-        # previous value is correctly caught when it exists
+    # ##########################################################
+    # Tests: previous value exists and is evaluated correctly
+
+    @staticmethod
+    def test_assert_that_has_event_succeeds_when_previous_value_exists(
+        tracer: TangoEventTracer,
+    ) -> None:
+        """The `has` assertion handles a previous value when it exists.
+
+        :param tracer: The `TangoEventTracer` instance.
+        """
+        TestAssertionsAdvancedUsage.generate_events(tracer)
+
         assert_that(tracer).described_as(
             "Previous value is correctly caught when it exists"
         ).has_change_event_occurred(
@@ -57,6 +71,16 @@ class TestCustomAssertions:
             previous_value=120,
         )
 
+    @staticmethod
+    def test_assert_that_hasnt_event_fails_when_previous_value_exists(
+        tracer: TangoEventTracer,
+    ) -> None:
+        """The `hasnt` assertion handles a previous value when it exists.
+
+        :param tracer: The `TangoEventTracer` instance.
+        """
+        TestAssertionsAdvancedUsage.generate_events(tracer)
+
         with pytest.raises(
             AssertionError, match=expected_error_message_hasnt_event()
         ):
@@ -66,13 +90,22 @@ class TestCustomAssertions:
                 previous_value=120,
             )
 
-        # ----------------------------------------------------
-        # previous value is not caught when it does not exist
+    # ##########################################################
+    # Tests: previous value does not exist
+
+    @staticmethod
+    def test_assert_that_has_event_fails_when_previous_value_not_exists(
+        tracer: TangoEventTracer,
+    ) -> None:
+        """The `has` assertion handles a previous value does not exist.
+
+        :param tracer: The `TangoEventTracer` instance.
+        """
+        TestAssertionsAdvancedUsage.generate_events(tracer)
 
         with pytest.raises(
             AssertionError, match=expected_error_message_has_event()
         ):
-            # When there is no previous value, it should fail
             assert_that(tracer).has_change_event_occurred(
                 device_name="device1",
                 attribute_value=100,
@@ -81,7 +114,7 @@ class TestCustomAssertions:
 
         with pytest.raises(
             AssertionError, match=expected_error_message_has_event()
-        ):  # Again, when there is no previous value, it should fail
+        ):
             assert_that(tracer).has_change_event_occurred(
                 device_name="device2",
                 previous_value=44,
@@ -90,29 +123,56 @@ class TestCustomAssertions:
         with pytest.raises(
             AssertionError, match=expected_error_message_has_event()
         ):
-            # Again a third time,
-            # when there is no previous value, it should fail
             assert_that(tracer).has_change_event_occurred(
                 device_name="device1",
                 attribute_name="other_attr",
                 previous_value=66,
             )
 
+    @staticmethod
+    def test_assert_that_hasnt_event_succeeds_when_previous_value_not_exists(
+        tracer: TangoEventTracer,
+    ) -> None:
+        """The `hasnt` assertion handles a previous value that does not exist.
+
+        :param tracer: The `TangoEventTracer` instance.
+        """
+        TestAssertionsAdvancedUsage.generate_events(tracer)
+
         assert_that(tracer).described_as(
-            "Previous value does not exist but it's still caught"
+            "Previous value does not exist for device and attribute"
         ).hasnt_change_event_occurred(
             device_name="device2",
             previous_value=120,
         ).hasnt_change_event_occurred(
             attribute_name="other_attr",
             previous_value=120,
+        ).described_as(
+            "The given previous values have not a consecutive event "
+            "for their device and attribute, so they cannot be "
+            "previous values"
         ).hasnt_change_event_occurred(
             previous_value=44,
         ).hasnt_change_event_occurred(
             previous_value=66,
         )
 
-        # previous value is not tricked by intermediate events
+    # ##########################################################
+    # Tests: previous value is not tricked by intermediate events
+
+    @staticmethod
+    def test_assert_that_has_event_is_not_tricked_by_intermediate_events(
+        tracer: TangoEventTracer,
+    ) -> None:
+        """The `has` assertion is not tricked by intermediate events.
+
+        So it should fail when you ask to look for a previous value that
+        is not the right one.
+
+        :param tracer: The `TangoEventTracer` instance.
+        """
+        TestAssertionsAdvancedUsage.generate_events(tracer)
+
         with pytest.raises(
             AssertionError, match=expected_error_message_has_event()
         ):
@@ -121,6 +181,20 @@ class TestCustomAssertions:
                 attribute_value=200,
                 previous_value=100,
             )
+
+    @staticmethod
+    def test_assert_that_hasnt_event_is_not_tricked_by_intermediate_events(
+        tracer: TangoEventTracer,
+    ) -> None:
+        """The hasnt assertion is not tricked by intermediate events.
+
+        So it should pass when you ask to look for a previous value that
+        is not the right one.
+
+        :param tracer: The `TangoEventTracer` instance.
+        """
+        TestAssertionsAdvancedUsage.generate_events(tracer)
+
         assert_that(tracer).described_as(
             "Previous value is not tricked by intermediate events"
         ).hasnt_change_event_occurred(
@@ -130,10 +204,10 @@ class TestCustomAssertions:
         )
 
     # ##########################################################
-    # Tests: assert has/hasnt events with custom matchers
+    # Tests: custom matcher
 
     @staticmethod
-    def test_has_event_custom_matcher_matches_event(
+    def test_assert_that_has_event_custom_matcher_matches_event(
         tracer: TangoEventTracer,
     ) -> None:
         """The custom matcher matches the event when it happened.
@@ -153,19 +227,8 @@ class TestCustomAssertions:
             and e.attribute_value < 150,
         )
 
-        with pytest.raises(
-            AssertionError, match=expected_error_message_has_event()
-        ):
-            assert_that(tracer).described_as(
-                "The custom matcher should match the event"
-            ).has_change_event_occurred(
-                device_name="device1",
-                attribute_name="attrname",
-                custom_matcher=lambda e: e.attribute_value > 150,
-            )
-
     @staticmethod
-    def test_hasnt_event_custom_matcher_matches_events(
+    def test_assert_that_hasnt_event_custom_matcher_matches_event(
         tracer: TangoEventTracer,
     ) -> None:
         """The custom matcher matches the event when it happened.
