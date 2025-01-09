@@ -138,5 +138,69 @@ Before using this advanced feature, we suggest to read the
 Early Stop Sentinel (``with_early_stop``)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-TODO: describe
+As we already seen in the rest of this guide, the main purpose of the
+assertions and the event tracer is to check that a certain set of events
+occur. In distributed systems, it is common that some events may
+take a long time to happen because of external factors (e.g., network
+delays, slow devices, etc.) or also because of the slowness of the system
+itself. The naive approach to deal with those slow events is to define
+a long timeout and wait for the events to happen or fail if the timeout
+is reached. However, if the timeout is too long, your tests may fail very
+slowly and this may be a problem in your CI/CD pipelines. Shortening
+the timeout is not always a good idea because it may lead to
+false negatives (i.e., the system is working correctly but the timeout is
+reached before the events happen).
 
+To face this problem, we introduce the concept of an "early stop sentinel".
+An early stop sentinel is a function that monitors your events and, if it
+detects a certain condition, it stops the evaluation early, it makes
+the assertion fail and it permits you to avoid to wait for the timeout to
+be reached. Think about all the exception events you may already rise in
+your system: with an early stop sentinel you can catch them and stop the
+evaluation immediately, making your tests fail faster.
+
+The :py:func:`~ska_tango_testing.integration.assertions.with_early_stop`
+method permits you to define in a tracer assertions a stop condition
+through a lambda function that takes a
+:py:class:`~ska_tango_testing.integration.event.ReceivedEvent` object as input
+and returns a boolean value. If the function returns ``True``, the evaluation
+stops immediately and the assertion fails. If the function returns ``False``,
+the evaluation continues as usual. We can say that the early sentinel
+is very similar to a custom matcher, but it has the opposite effect. Example:
+
+.. code-block:: python
+
+  LONG_TIMEOUT = 250  # seconds
+  assert_that(event_tracer).described_as(
+      "A set of events must occur within a long timeout "
+      "AND no error code is detected in the meantime."
+  ).within_timeout(LONG_TIMEOUT).with_early_stop(
+      lambda event: event.has_attribute("longRunningCommandResult") and
+          "error code 3: exception" in str(event.attribute_value)
+  ).has_change_event_occurred(
+      # (...) your assertions here
+  ).has_change_event_occurred(
+      # (...)
+  ).has_change_event_occurred(
+      # (...)
+  )
+
+In this example, the assertion chain will stop immediately if an event
+with the attribute "longRunningCommandResult" containing the string
+"error code 3: exception" is detected. This is a very simple example, but
+you can define more complex early stop sentinels as you need.
+
+**NOTE**: the early stop sentinel is evaluated for each event in the tracer
+every time a new event is received and has always the priority over
+the regular evaluation. Concretely this means that if in any moment
+the early stop sentinel returns ``True``, the evaluation stops
+immediately and fails, even if your query succeeds. This also means
+that if at the beginning of the evaluation the early stop sentinel
+detects something in the current events, the evaluation will fail. If you
+use this without a timeout the behaviour is very similar to a
+:py:func:`~ska_tango_testing.integration.assertions.hasnt_change_event_occurred`
+assertion (but they are separate things, and they can actually be
+combined together).
+
+**NOTE**: currently if you concatenate more early stop sentinels, only
+the last one is considered. This may change in the future.
