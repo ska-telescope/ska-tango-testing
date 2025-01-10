@@ -13,9 +13,9 @@ from .n_events_match import NEventsMatchQuery
 class NStateChangesQuery(NEventsMatchQuery):
     """Query that looks for N state change events.
 
-    This query extend
-    :py:class:`~ska_tango_testing.integration.query.NEventsMatchQuery` to
-    will succeed when there are received N state change events
+    This query extends
+    :py:class:`~ska_tango_testing.integration.query.NEventsMatchQuery` and
+    will succeed when N state change events are received
     using the provided criteria. The supported criteria are the following:
 
     - the device name
@@ -27,13 +27,13 @@ class NStateChangesQuery(NEventsMatchQuery):
     All the criteria are optional and can be combined to define the state
     change events you are looking for. The query will evaluate the criteria
     for each event and store the matching events (avoiding duplicates) and
-    will succeed when the number of matching events is equal or greater than
+    will succeed when the number of matching events is equal to or greater than
     the target number of events.
 
     NOTE: passing ``None`` to any of the criteria will match any value for
     that criterion.
 
-    Here the follows an example of how to use this query:
+    Here follows an example of how to use this query:
 
     .. code-block:: python
 
@@ -65,9 +65,9 @@ class NStateChangesQuery(NEventsMatchQuery):
 
         # ...
 
-    **IMPORTANT NOTE**: at the moment, the internal matching events list is not
+    **IMPORTANT NOTE**: At the moment, the internal matching events list is not
     protected from external modifications with a lock, so if
-    an user modifies the list while the query is being evaluated,
+    a user modifies the list while the query is being evaluated,
     there may be unexpected results. But this is not likely to happen
     if the client is using the query as intended.
 
@@ -84,7 +84,7 @@ class NStateChangesQuery(NEventsMatchQuery):
         target_n_events: int = 1,
         timeout: SupportsFloat = 0.0,
     ) -> None:
-        """Initialize the query with the state change parameters.
+        """Initialise the query with the state change parameters.
 
         :param device_name: The name of the device to match.
             Optional, by default it will match any device.
@@ -160,7 +160,7 @@ class NStateChangesQuery(NEventsMatchQuery):
                 # the event is from the same device and attribute
                 evt.has_device(event.device_name)
                 and evt.has_attribute(event.attribute_name)
-                # the is previous to the target event
+                # the event is previous to the target event
                 and evt.reception_time < event.reception_time
                 # no previous event was found or the current one
                 # is more recent than the previous one

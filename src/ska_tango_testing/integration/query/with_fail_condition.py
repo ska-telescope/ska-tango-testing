@@ -19,7 +19,7 @@ class QueryWithFailCondition(EventQuery):
       condition is not met);
     - the stop condition is evaluated before the wrapped query, so the wrapped
       query will not be evaluated if the stop condition is met;
-    - this query timeout is exactly the one of the wrapped query.
+    - this query's timeout is exactly the same as the wrapped query's timeout.
 
     Here follows an example of how to use this query:
 
@@ -65,11 +65,11 @@ class QueryWithFailCondition(EventQuery):
     The general idea of this kind of query comes from the
     `Decorator Design Pattern <https://refactoring.guru/design-patterns/decorator>`_,
     because this query is a subclass that wraps a generic query to
-    add a new behavior (the early stop condition).
+    add a new behaviour (the early stop condition).
 
-    **IMPORTANT NOTE**: at the moment, the internal fail event variable is not
+    **IMPORTANT NOTE**: At the moment, the internal fail event variable is not
     protected from external modifications with a lock, so if
-    an user modifies the value while the query is being evaluated,
+    a user modifies the value while the query is being evaluated,
     there may be unexpected results. But this is not likely to happen
     if the client is using the query as intended.
 
@@ -80,7 +80,7 @@ class QueryWithFailCondition(EventQuery):
         wrapped_query: EventQuery,
         stop_condition: Callable[[ReceivedEvent], bool],
     ) -> None:
-        """Initialize the query with the wrapped query and stop condition.
+        """Initialise the query with the wrapped query and stop condition.
 
         :param wrapped_query: The query to wrap.
         :param stop_condition: A function that takes an event

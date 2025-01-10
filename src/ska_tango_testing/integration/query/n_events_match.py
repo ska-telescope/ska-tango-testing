@@ -9,13 +9,13 @@ from .base import EventQuery
 class NEventsMatchQuery(EventQuery):
     """Query that looks for N events that match a given predicate.
 
-    This query will succeed when there are received N events that match
+    This query will succeed when there are N received events that match
     a certain predicate (without duplicates). The query will evaluate
     the predicate for each event and store the matching events (avoiding
     duplicates) and will succeed when the number of matching events is
-    equal or greater than the target number of events.
+    equal to or greater than the target number of events.
 
-    Here the follows an example of how to use this query:
+    Here follows an example of how to use this query:
 
     .. code-block:: python
 
@@ -42,9 +42,9 @@ class NEventsMatchQuery(EventQuery):
         # (e.g., the number of matching events)
         logging.info(query.describe())
 
-    **IMPORTANT NOTE**: : at the moment, the internal matching events
+    **IMPORTANT NOTE**: At the moment, the internal matching events
     list is not protected from external modifications with a lock, so if
-    an user modifies the list while the query is being evaluated,
+    a user modifies the list while the query is being evaluated,
     there may be unexpected results. But this is not likely to happen
     if the client is using the query as intended.
 
@@ -56,11 +56,11 @@ class NEventsMatchQuery(EventQuery):
         target_n_events: int = 1,
         timeout: SupportsFloat = 0.0,
     ) -> None:
-        """Initialize the query with the predicate and target number of events.
+        """Initialise the query with the predicate and target number of events.
 
         :param predicate: A function that takes an event
             and the list of all events as input and returns True
-            if the event matches the desired criteria. the predicate
+            if the event matches the desired criteria. The predicate
             can evaluate just the event in isolation or also the
             event in the context of the other events. The list of events
             is supposed to be ordered by the time they were received.
@@ -98,7 +98,7 @@ class NEventsMatchQuery(EventQuery):
         :return: A string describing the criteria of the query.
         """
         return (
-            f"Looking for {self.target_n_events} events"
+            f"Looking for {self.target_n_events} events "
             "matching a given predicate."
         )
 

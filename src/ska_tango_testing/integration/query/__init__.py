@@ -11,9 +11,9 @@ the basic interface for a query.
 Some useful queries are provided in this module, such as:
 
 - :py:class:`~ska_tango_testing.integration.query.NEventsMatchQuery`:
-  Query to check if a certain number of events match a given predicate.
+  A query to check if a certain number of events match a given predicate.
 - :py:class:`~ska_tango_testing.integration.query.NStateChangesQuery`:
-  Query to check if a certain number of changes in an attribute value
+  A query to check if a certain number of changes in an attribute value
   are recorded.
 - :py:class:`~ska_tango_testing.integration.query.QueryWithFailCondition`:
   A sort of decorator query that adds a fail condition to another query

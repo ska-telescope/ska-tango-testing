@@ -45,11 +45,11 @@ class EventQuery(ABC):
       - if it has a >0 timeout, it will wait for the timeout to expire
         or for the success criteria to be met; if it has a 0 timeout, it
         will just evaluate the events once and return immediately;
-        in both cases, the success criteria is defined by the
+        in both cases, the success criteria are defined by the
         ``succeeded`` method
       - when the query is completed (because the timeout expired or the
-        success criteria is met), the evaluation ends and the query
-        expose it's success or failed status (through the ``succeeded``
+        success criteria are met), the evaluation ends and the query
+        exposes its success or failed status (through the ``succeeded``
         method) and further information about the evaluation (like
         the duration, the initial and remaining timeout and a description
         of the results and the criteria) through the other methods
@@ -66,7 +66,7 @@ class EventQuery(ABC):
         if it is, False otherwise). Consider that by default a timeout
         will be awaited if the query is not completed yet.
       - ``_evaluate_events`` is a callback method you can implement to
-        analyze new events and update some kind of your internal state.
+        analyse new events and update some kind of your internal state.
         The same internal state can be used in the ``_succeeded`` method.
         The method is activated once when the query evaluation begins
         and every time new events are received. Consider that every time
@@ -82,7 +82,7 @@ class EventQuery(ABC):
         query results and the ``_describe_criteria`` method to provide
         a custom description of the query criteria you are using.
 
-    From an user perspective, to evaluate the query you can simply pass it
+    From a user's perspective, to evaluate the query you can simply pass it
     to a :py:class:`ska_tango_testing.integration.tracer.TangoEventTracer`
     instance. Inside it, the query will automatically subscribe to the
     events storage and wait for the evaluation to complete. Example:
@@ -118,7 +118,7 @@ class EventQuery(ABC):
         tracer.evaluate_query(query_with_timeout)
 
     **A SMALL DESCRIPTION OF THE QUERY EVALUATION MECHANISM**:
-    the query is evaluated connecting it to an
+    the query is evaluated by connecting it to an
     :py:class:`~ska_tango_testing.integration.event.storage.EventStorage`,
     through a subscription mechanism. The query is then notified when
     new events are received and it can evaluate them. The query is
@@ -160,7 +160,7 @@ class EventQuery(ABC):
     Essentially, you can not worry about concurrent access
     to your internal state, because it is protected by the lock (at least
     from eventual concurrent internal calls). The only tricky case may be
-    if you wish to expose a your internal state to the outside world
+    if you wish to expose your internal state to the outside world
     and you think that some external client may access it concurrently
     to the evaluation phase. In this case, it's recommended that your
     internal state is protected in the same way as the query internal
@@ -172,7 +172,7 @@ class EventQuery(ABC):
     """  # pylint: disable=line-too-long # noqa: E501
 
     def __init__(self, timeout: SupportsFloat = 0.0) -> None:
-        """Initialize the events query.
+        """Initialise the events query.
 
         :param timeout: The timeout for the query in seconds. By default,
             the query will not wait for any timeout.
@@ -273,9 +273,9 @@ class EventQuery(ABC):
         By default the status is described including the status, the
         start and end time of the evaluation (if available), the timeout
         and the remaining timeout. You can override this method to
-        provide a custom description of the query results overriding
+        provide a custom description of the query results by overriding
         the ``_describe_results`` method and the query criteria
-        overriding the ``_describe_criteria`` method.
+        by overriding the ``_describe_criteria`` method.
 
         :return: The description of the query. It is a 6 lines string divided
             in 3 sections: status, criteria and results.
@@ -337,7 +337,7 @@ class EventQuery(ABC):
 
         # If a timeout is set, start a timer and wait for it to expire
         # or for the query to be completed (succeeded or failed)
-        # If the timeout is 0.0, the query will not wait for nothing and
+        # If the timeout is 0.0, the query will not wait for anything and
         # will return immediately
         if self._initial_timeout_value > 0.0:
             self._timeout_signal.wait(self._initial_timeout_value)
@@ -397,7 +397,7 @@ class EventQuery(ABC):
         """Check if the query succeeded.
 
         NOTE: this method should be implemented in subclasses. By default,
-        if is protected by the a lock, so whatever data structure
+        it is protected by a lock, so whatever data structure
         you use to store events, you can safely access it.
 
         IMPORTANT: do not call public methods from this method implementation,
@@ -442,7 +442,7 @@ class EventQuery(ABC):
         By default, this method returns nothing. You can override
         this method to provide a custom description of the query criteria.
         Consider that ``_describe_status`` is already called before this
-        so things as the timeout and the remaining timeout are already
+        so things such as the timeout and the remaining timeout are already
         described.
 
         :return: The description of the query criteria.
@@ -542,7 +542,7 @@ class EventQuery(ABC):
         if self._evaluation_end:
             description += f"End time={self._evaluation_end}, "
 
-        # aproximate the remaining timeout to 3 decimal digits
+        # approximate the remaining timeout to 3 decimal digits
         if self._initial_timeout_value is not None:
             description += (
                 f"Initial timeout={self._initial_timeout_value:.3f}s, "
