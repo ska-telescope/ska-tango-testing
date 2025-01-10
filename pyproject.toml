@@ -57,5 +57,7 @@ markers = [
 
 [tool.coverage.run]
 omit = [
-    "src/ska_tango_testing/integration/assertions/legacy.py"
+    # omit legacy code from coverage
+    "src/ska_tango_testing/integration/assertions/legacy.py", 
+    "src/ska_tango_testing/integration/predicates.py"
 ]

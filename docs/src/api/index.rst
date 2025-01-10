@@ -86,3 +86,9 @@ ska_tango_testing.integration.query
     :members:
     :special-members: __init__
 
+ska_tango_testing.integration.predicates (DEPRECATED)
+------------------------------------------------------
+
+.. automodule:: ska_tango_testing.integration.predicates
+    :members:
+    :special-members: __init__
