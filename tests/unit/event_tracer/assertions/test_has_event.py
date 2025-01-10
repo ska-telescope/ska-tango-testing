@@ -146,23 +146,23 @@ class TestAssertionsHasEvent:
         :param tracer: The `TangoEventTracer` instance.
         """
         add_event(tracer, "device1", 101, 5)
-        delayed_add_event(tracer, "device1", 303, 1)
+        delayed_add_event(tracer, "device1", 301, 1)
         delayed_add_event(tracer, "device1", 202, 2)
 
         start_time = datetime.now()
         assert_that(tracer).described_as(
             "The events should match the predicates"
             " if they occur within the same timeout."
-        ).within_timeout(3).has_change_event_occurred(
+        ).within_timeout(4).has_change_event_occurred(
             device_name="device1",
             attribute_value=101,
-            # NOTE: here we show that order is clearly not important
         ).has_change_event_occurred(
             device_name="device1",
             attribute_value=202,
+            # NOTE: here we show that order is clearly not important
         ).has_change_event_occurred(
             device_name="device1",
-            attribute_value=303,
+            attribute_value=301,
         )
 
         assert_elapsed_time(start_time, 2)

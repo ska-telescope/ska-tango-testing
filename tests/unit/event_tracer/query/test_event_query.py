@@ -455,3 +455,48 @@ class TestEventQuery:
         assert_timeout_and_duration_consistency(query2, 4, 0)
         assert_timeout_and_duration_consistency(query3, 4, 2)
         assert_elapsed_time(start_time, 3)
+
+    @staticmethod
+    def test_multiple_queries_handle_weird_event_order() -> None:
+        """A timeout object can be shared among different queries."""
+        storage = EventStorage()
+        timeout = ChainedAssertionsTimeout(5)
+
+        delayed_store_event(storage, create_test_event(), delay=1)
+        delayed_store_event(
+            storage, create_test_event(device_name="test/device/3"), delay=2
+        )
+        delayed_store_event(
+            storage, create_test_event(device_name="test/device/2"), delay=3
+        )
+
+        start_time = datetime.now()
+        query1 = SimpleEventQuery(
+            device_name="test/device/1",
+            attr_name="test_attr",
+            value=42,
+            timeout=timeout,
+        )
+        query1.evaluate(storage)
+        query2 = SimpleEventQuery(
+            device_name="test/device/2",
+            attr_name="test_attr",
+            value=42,
+            timeout=timeout,
+        )
+        query2.evaluate(storage)
+        query3 = SimpleEventQuery(
+            device_name="test/device/3",
+            attr_name="test_attr",
+            value=42,
+            timeout=timeout,
+        )
+        query3.evaluate(storage)
+
+        assert_query_succeeded(query1)
+        assert_query_succeeded(query2)
+        assert_query_succeeded(query3)
+        assert_timeout_and_duration_consistency(query1, 5, 1)
+        assert_timeout_and_duration_consistency(query2, 4, 2)
+        assert_timeout_and_duration_consistency(query3, 2, 0)
+        assert_elapsed_time(start_time, 3)
