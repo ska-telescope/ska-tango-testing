@@ -340,7 +340,6 @@ class EventQuery(ABC):
         # If the timeout is 0.0, the query will not wait for nothing and
         # will return immediately
         if self._initial_timeout_value > 0.0:
-            self._timeout_signal.clear()
             self._timeout_signal.wait(self._initial_timeout_value)
 
         # Unsubscribe the query from the storage
