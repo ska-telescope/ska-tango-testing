@@ -7,21 +7,29 @@ and correct event handling.
 
 import threading
 import time
+from datetime import datetime
 from typing import Any, List, SupportsFloat
 
 import pytest
 from assertpy import assert_that
 
+from ska_tango_testing.integration.assertions.timeout import (
+    ChainedAssertionsTimeout,
+)
 from ska_tango_testing.integration.event import ReceivedEvent
 from ska_tango_testing.integration.event.storage import EventStorage
 from ska_tango_testing.integration.query.base import (
     EventQuery,
     EventQueryStatus,
 )
+from tests.unit.event_tracer.assertions.utils import assert_elapsed_time
 
 from ..testing_utils.delayed_store_event import delayed_store_event
 from ..testing_utils.received_event_mock import create_test_event
-from .utils import assert_timeout_and_duration_consistency
+from .utils import (
+    assert_query_succeeded,
+    assert_timeout_and_duration_consistency,
+)
 
 
 class SimpleEventQuery(EventQuery):
@@ -399,3 +407,51 @@ class TestEventQuery:
         assert_that(description).described_as(
             "Description should contain the results"
         ).contains("Match found: False")
+
+    # ----------------------------------------------------------------
+    # Test for shared timeout concept
+
+    @staticmethod
+    def test_multiple_queries_can_share_a_timeout_object() -> None:
+        """A timeout object can be shared among different queries."""
+        storage = EventStorage()
+        timeout = ChainedAssertionsTimeout(5)
+
+        delayed_store_event(storage, create_test_event(), delay=1)
+        delayed_store_event(
+            storage, create_test_event(device_name="test/device/2"), delay=1
+        )
+        delayed_store_event(
+            storage, create_test_event(device_name="test/device/3"), delay=3
+        )
+
+        start_time = datetime.now()
+        query1 = SimpleEventQuery(
+            device_name="test/device/1",
+            attr_name="test_attr",
+            value=42,
+            timeout=timeout,
+        )
+        query1.evaluate(storage)
+        query2 = SimpleEventQuery(
+            device_name="test/device/2",
+            attr_name="test_attr",
+            value=42,
+            timeout=timeout,
+        )
+        query2.evaluate(storage)
+        query3 = SimpleEventQuery(
+            device_name="test/device/3",
+            attr_name="test_attr",
+            value=42,
+            timeout=timeout,
+        )
+        query3.evaluate(storage)
+
+        assert_query_succeeded(query1)
+        assert_query_succeeded(query2)
+        assert_query_succeeded(query3)
+        assert_timeout_and_duration_consistency(query1, 5, 1)
+        assert_timeout_and_duration_consistency(query2, 4, 0)
+        assert_timeout_and_duration_consistency(query3, 4, 2)
+        assert_elapsed_time(start_time, 3)

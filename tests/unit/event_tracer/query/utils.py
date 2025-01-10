@@ -139,17 +139,18 @@ def assert_duration_is_close_to_the_expected_value(
 
 
 def assert_initial_timeout_is_the_expected_value(
-    query: EventQuery, expected_timeout: float
+    query: EventQuery, expected_timeout: float, tolerance: float = 0.1
 ) -> None:
-    """Assert that the query initial timeout is the expected value.
+    """Assert that the query initial timeout is close to the expected value.
 
     :param query: The query to check
     :param expected_timeout: The expected timeout
+    :param tolerance: The tolerance to use for the timeout
     """
     assert_that(query.initial_timeout()).described_as(
-        "Query initial timeout is expected to be exactly the "
+        "Query initial timeout is expected to be very close to the "
         f"value of {expected_timeout}"
-    ).is_equal_to(expected_timeout)
+    ).is_close_to(expected_timeout, tolerance)
 
 
 def assert_query_remaining_timeout_is_close_to_the_expected_value(
@@ -198,7 +199,9 @@ def assert_timeout_and_duration_consistency(
     :param tolerance: The tolerance to use for the duration and remaining
         timeout assertions
     """
-    assert_initial_timeout_is_the_expected_value(query, initial_timeout)
+    assert_initial_timeout_is_the_expected_value(
+        query, initial_timeout, tolerance
+    )
     assert_duration_is_close_to_the_expected_value(
         query, expected_duration, tolerance
     )
