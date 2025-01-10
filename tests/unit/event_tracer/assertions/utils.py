@@ -94,3 +94,17 @@ def assert_timeout_in_between(
     ).is_greater_than_or_equal_to(greater_than_or_equal).is_less_than(
         less_than
     )
+
+
+def assert_elapsed_time(
+    start_time: datetime, expected_passed_time: float, tolerance: float = 0.1
+) -> None:
+    """Assert that the elapsed time is close to the expected value.
+
+    :param start_time: The start time of the event.
+    :param expected_passed_time: The expected elapsed time.
+    :param tolerance: The tolerance to use for the duration assertion.
+    """
+    assert_that((datetime.now() - start_time).total_seconds()).described_as(
+        f"Expected elapsed time to be very close to {expected_passed_time}"
+    ).is_close_to(expected_passed_time, tolerance)

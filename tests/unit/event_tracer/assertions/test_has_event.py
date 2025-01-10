@@ -8,7 +8,7 @@ from assertpy import assert_that
 from ska_tango_testing.integration.tracer import TangoEventTracer
 
 from ..testing_utils.populate_tracer import add_event, delayed_add_event
-from .utils import assert_timeout_in_between, expected_error_message_has_event
+from .utils import assert_elapsed_time, expected_error_message_has_event
 
 
 @pytest.mark.integration_tracer
@@ -78,13 +78,16 @@ class TestAssertionsHasEvent:
         """
         delayed_add_event(tracer, "device1", 101, 1)
 
+        start_time = datetime.now()
         assert_that(tracer).described_as(
             "The event should match the predicate"
             " if the future value matches within the timeout."
-        ).within_timeout(2).has_change_event_occurred(
+        ).within_timeout(3).has_change_event_occurred(
             device_name="device1",
             attribute_value=101,
         )
+
+        assert_elapsed_time(start_time, 1)
 
     @staticmethod
     def test_assert_that_n_events_occurred_captures_n_events(
@@ -119,14 +122,17 @@ class TestAssertionsHasEvent:
         add_event(tracer, "device1", 99, 2)
         delayed_add_event(tracer, "device1", 101, 1)
 
+        start_time = datetime.now()
         assert_that(tracer).described_as(
             "The event should match the predicate"
             " if the future value matches within the timeout."
-        ).within_timeout(2).has_change_event_occurred(
+        ).within_timeout(3).has_change_event_occurred(
             device_name="device1",
             attribute_value=101,
             min_n_events=2,
         )
+
+        assert_elapsed_time(start_time, 1)
 
     @staticmethod
     def test_assert_that_has_change_event_occurred_chain_under_same_timeout(
@@ -143,6 +149,7 @@ class TestAssertionsHasEvent:
         delayed_add_event(tracer, "device1", 303, 1)
         delayed_add_event(tracer, "device1", 202, 2)
 
+        start_time = datetime.now()
         assert_that(tracer).described_as(
             "The events should match the predicates"
             " if they occur within the same timeout."
@@ -157,6 +164,8 @@ class TestAssertionsHasEvent:
             device_name="device1",
             attribute_value=303,
         )
+
+        assert_elapsed_time(start_time, 2)
 
     # ##########################################################
     # Unhappy Path Tests
@@ -202,7 +211,7 @@ class TestAssertionsHasEvent:
                 attribute_value=101,
             )
 
-        assert_timeout_in_between(start_time, 1, 2)
+        assert_elapsed_time(start_time, 1)
 
     @staticmethod
     def test_assert_that_evt_occurred_fails_when_not_all_events_within_timeout(
@@ -236,7 +245,7 @@ class TestAssertionsHasEvent:
                 attribute_value=404,  # TODO: this one should fail
             )
 
-        assert_timeout_in_between(start_time, 1.5, 2)
+        assert_elapsed_time(start_time, 1.5)
 
     @staticmethod
     def test_assert_that_n_events_occurred_fails_when_less_than_n_events(
@@ -250,6 +259,7 @@ class TestAssertionsHasEvent:
         add_event(tracer, "device1", 99, 2)
         delayed_add_event(tracer, "device1", 101, 1)
 
+        start_time = datetime.now()
         with pytest.raises(
             AssertionError,
             match=expected_error_message_has_event(
@@ -264,3 +274,5 @@ class TestAssertionsHasEvent:
                 attribute_value=101,
                 min_n_events=3,
             )
+
+        assert_elapsed_time(start_time, 2)
