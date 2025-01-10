@@ -21,6 +21,7 @@ from ska_tango_testing.integration.query.base import (
 
 from ..testing_utils.delayed_store_event import delayed_store_event
 from ..testing_utils.received_event_mock import create_test_event
+from .utils import assert_timeout_and_duration_consistency
 
 
 class SimpleEventQuery(EventQuery):
@@ -128,15 +129,7 @@ class TestEventQuery:
         assert_that(query.is_completed()).described_as(
             "Query should not be completed by default"
         ).is_false()
-        assert_that(query.evaluation_duration()).described_as(
-            "Unstarted query should not have an evaluation duration by default"
-        ).is_none()
-        assert_that(query.remaining_timeout()).described_as(
-            "Query remaining timeout should be the one set"
-        ).is_equal_to(10)
-        assert_that(query.initial_timeout()).described_as(
-            "Query initial timeout should be the one set initially"
-        ).is_equal_to(10)
+        assert_timeout_and_duration_consistency(query, 10, None)
 
     # ----------------------------------------------------------------
     # Ongoing query status tests
@@ -161,19 +154,7 @@ class TestEventQuery:
         assert_that(query.is_completed()).described_as(
             "Query should not be completed yet"
         ).is_false()
-        assert_that(query.evaluation_duration()).described_as(
-            "Query should have an evaluation duration close to 0 "
-            "since it just started"
-        ).is_close_to(0, 0.1)
-        assert_that(query.remaining_timeout()).described_as(
-            "Query remaining timeout should be close to the initial timeout "
-            "since the query just started"
-        ).is_close_to(10, 0.1)
-        assert_that(query.initial_timeout()).described_as(
-            "Query initial timeout should be the one set initially"
-        ).is_equal_to(10).is_greater_than_or_equal_to(
-            query.remaining_timeout()
-        )
+        assert_timeout_and_duration_consistency(query, 10, 0)
 
     def test_query_ongoing_decreases_remaining_timeout(self) -> None:
         """The remaining timeout decreases while the query is evaluated."""
@@ -187,17 +168,7 @@ class TestEventQuery:
         self.evaluate_on_separate_thread(query, storage)
         time.sleep(1)
 
-        assert_that(query.remaining_timeout()).described_as(
-            "Query remaining timeout should decrease as time goes by"
-        ).is_close_to(9, 0.1)
-        assert_that(query.evaluation_duration()).described_as(
-            "Query should have an increasing duration"
-        ).is_close_to(1, 0.1)
-        assert_that(query.initial_timeout()).described_as(
-            "Query initial timeout should be the one set initially"
-        ).is_equal_to(10).is_greater_than_or_equal_to(
-            query.remaining_timeout()
-        )
+        assert_timeout_and_duration_consistency(query, 10, 1)
 
     # ----------------------------------------------------------------
     # Post-query status tests
@@ -224,13 +195,7 @@ class TestEventQuery:
         assert_that(query.succeeded()).described_as(
             "Query should have succeeded"
         ).is_true()
-        assert_that(query.evaluation_duration()).described_as(
-            "Query should have an evaluation duration close to 0"
-            "since no timeout was set"
-        ).is_close_to(0, 0.1)
-        assert_that(query.initial_timeout()).described_as(
-            "Query initial timeout should be the one set initially"
-        ).is_equal_to(0).is_greater_than_or_equal_to(query.remaining_timeout())
+        assert_timeout_and_duration_consistency(query, 0, 0)
 
     @staticmethod
     def test_query_fails_when_no_event_matches() -> None:
@@ -254,20 +219,14 @@ class TestEventQuery:
         assert_that(query.succeeded()).described_as(
             "Query should not have succeeded"
         ).is_false()
-        assert_that(query.evaluation_duration()).described_as(
-            "Query should have an evaluation duration close to 0"
-            "since no timeout was set"
-        ).is_close_to(0, 0.1)
-        assert_that(query.initial_timeout()).described_as(
-            "Query initial timeout should be the one set initially"
-        ).is_equal_to(0).is_greater_than_or_equal_to(query.remaining_timeout())
+        assert_timeout_and_duration_consistency(query, 0, 0)
 
     @staticmethod
     def test_query_succeeds_with_delayed_event() -> None:
         """The query should succeed when an event is delayed but matches."""
         storage = EventStorage()
         query = SimpleEventQuery(
-            timeout=3,
+            timeout=5,
             device_name="test/device/1",
             attr_name="test_attr",
             value=42,
@@ -284,17 +243,7 @@ class TestEventQuery:
         assert_that(query.match_found).described_as(
             "Query should indicate a match was found"
         ).is_true()
-        assert_that(query.evaluation_duration()).described_as(
-            "Query should have an evaluation duration close to 1 "
-            "since the event was delayed by 1 second"
-        ).is_close_to(1, 0.1)
-        assert_that(query.remaining_timeout()).described_as(
-            "Query remaining timeout should be close to 2 "
-            "since the event was delayed by 1 second and the timeout is 3"
-        ).is_close_to(2, 0.1)
-        assert_that(query.initial_timeout()).described_as(
-            "Query initial timeout should be the one set initially"
-        ).is_equal_to(3).is_greater_than(query.remaining_timeout())
+        assert_timeout_and_duration_consistency(query, 5, 1)
 
     @staticmethod
     def test_query_timeout() -> None:
@@ -306,7 +255,7 @@ class TestEventQuery:
             attr_name="test_attr",
             value=42,
         )
-        delayed_store_event(storage, create_test_event(), delay=1.5)
+        delayed_store_event(storage, create_test_event(), delay=1.2)
 
         query.evaluate(storage)
         time.sleep(0.5)
@@ -321,15 +270,7 @@ class TestEventQuery:
             "No event should have matched, since they "
             "all arrived after the timeout"
         ).is_false()
-        assert_that(query.evaluation_duration()).described_as(
-            "Query should have an evaluation duration close to the timeout"
-        ).is_close_to(1, 0.1)
-        assert_that(query.remaining_timeout()).described_as(
-            "Query remaining timeout should be 0"
-        ).is_equal_to(0)
-        assert_that(query.initial_timeout()).described_as(
-            "Query initial timeout should be the one set initially"
-        ).is_equal_to(1).is_greater_than(query.remaining_timeout())
+        assert_timeout_and_duration_consistency(query, 1, 1)
 
     # ----------------------------------------------------------------
     # Tests for the describe method

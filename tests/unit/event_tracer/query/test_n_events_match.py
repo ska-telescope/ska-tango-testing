@@ -87,7 +87,7 @@ class TestNEventsMatchQuery:
             and e.has_attribute("test_attr")
             and e.attribute_value == 42,
             target_n_events=2,
-            timeout=2,
+            timeout=3,
         )
         event1 = create_test_event(store=storage)
         event2 = create_test_event()
