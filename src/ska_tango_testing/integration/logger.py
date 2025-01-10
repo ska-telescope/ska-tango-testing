@@ -19,7 +19,7 @@ def DEFAULT_LOG_ALL_EVENTS(  # pylint: disable=invalid-name
 
     This is the default filtering rule for
     :py:class:`TangoEventLogger`. It logs all events without any filtering.
-    You can write custom rules defining a function that takes a
+    You can write custom rules by defining a function that takes a
     received event and returns a boolean. For example:
 
     .. code-block:: python
@@ -59,7 +59,7 @@ def DEFAULT_LOG_MESSAGE_BUILDER(  # pylint: disable=invalid-name
     It logs the events in a human-readable format, including the device name,
     attribute name, and the new value of the attribute.
 
-    You can write custom message builders defining a function that takes a
+    You can write custom message builders by defining a function that takes a
     received event and returns a string. For example:
 
     .. code-block:: python
