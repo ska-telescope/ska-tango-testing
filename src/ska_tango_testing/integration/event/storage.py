@@ -29,8 +29,7 @@ class EventStorage:
     This class provides a thread-safe storage for
     :py:class:`~ska_tango_testing.integration.event.base.ReceivedEvent`
     instances. An instance of this class can be used to store the events
-    that are somehow received from multiple tango devices
-    concurrently.
+    that are received from multiple Tango devices concurrently.
 
     This class also offers a subscription mechanism to notify observers
     of changes in the stored events. An observer must implement the
@@ -38,16 +37,16 @@ class EventStorage:
     interface. The observer will be notified of changes in the events list
     1) the first time it subscribes, and 2) every time a new event is stored.
     Every notification will include a full copy of the current events list
-    (maybe in future we will pass also the new event separately).
+    (maybe in future we will also pass the new event separately).
 
     Both the storing and the notification mechanisms are thread-safe.
 
-    The subscription mechanism is inspired from the
+    The subscription mechanism is inspired by the
     `Observer Design Pattern <https://refactoring.guru/design-patterns/observer>`_.
     """  # pylint: disable=line-too-long # noqa: E501
 
     def __init__(self) -> None:
-        """Initialize the events storage."""
+        """Initialise the events storage."""
         self._events: list[ReceivedEvent] = []
         self._lock = threading.Lock()
         self._observers: list[EventStorageObserver] = []

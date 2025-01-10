@@ -1,19 +1,19 @@
-"""Extension of the event system to permit to "type" the event with Enums.
+"""Extension of the event system to allow typing the event with Enums.
 
-Many Tango devices attributes in the SKA project are state machines, and
+Many Tango device attributes in the SKA project are state machines, and
 their states are represented as Enums. This module extends the event system
-to permit to "type" the event with Enums, so when the event is received, the
+to allow typing the event with Enums, so when the event is received, the
 state is automatically converted to the corresponding Enum. This is useful
 so when you print the event as a string, you can see the state as a human
 readable label, instead of an integer number.
 
-Concretely, this is achieved defining two new classes:
+Concretely, this is achieved by defining two new classes:
 
 - :py:class:`ska_tango_testing.integration.event.TypedEvent`,
   which is a subclass of
   :py:class:`ska_tango_testing.integration.event.ReceivedEvent`, and
 - :py:class:`ska_tango_testing.integration.event.EventEnumMapper`,
-  which is a class that permits the association of attribute names with
+  which is a class that allows the association of attribute names with
   Enums.
 """
 
@@ -83,11 +83,11 @@ class TypedEvent(ReceivedEvent):
 
     @property
     def attribute_value(self) -> Enum:
-        """The attribute value, eventually casted to the given enum.
+        """The attribute value, eventually cast to the given enum.
 
         NOTE: remember that if you want to have it printed with the Enum
         label instead of the integer value, you need to cast it to a string,
-        like done here:
+        as shown here:
 
         .. code-block:: python
 
@@ -112,7 +112,7 @@ class TypedEvent(ReceivedEvent):
 class EventEnumMapper:
     """A class to map attribute names to Enums.
 
-    This class permits to associate attribute names with Enums. This is
+    This class allows the association of attribute names with Enums. This is
     useful for state machine attributes, so when the event is received, the
     state is automatically converted to the corresponding Enum. This is
     useful so when you print the event as a string, you can see the state

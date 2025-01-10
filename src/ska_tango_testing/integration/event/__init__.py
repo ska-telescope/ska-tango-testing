@@ -1,13 +1,13 @@
-"""Event-mechanism on the basis of the tracer and the logger.
+"""Event mechanism forming the basis of the tracer and the logger.
 
-The basis of the TangoEventTracer and the related logging mechanism
-are the capturing, the storing and the reacting to Tango events. In practice,
+The foundation of the TangoEventTracer and the related logging mechanism
+is the capturing, storing, and reacting to Tango events. In practice,
 the tracer and the logging core mechanism are both based on the following
 classes and concepts:
 
 - :py:class:`~ska_tango_testing.integration.event.ReceivedEvent` is the base
   class to represent a received event from a Tango device.
-- A ReceivedEvent, usually is generated through a subscription to a Tango
+- A ReceivedEvent is usually generated through a subscription to a Tango
   device and attribute; the subscription is managed by a
   :py:class:`~ska_tango_testing.integration.event.TangoSubscriber`.
 - Particular kinds of events can be represented by ReceivedEvent subclasses,

@@ -1,4 +1,4 @@
-"""A Tango change event received by some device to notify a change."""
+"""A Tango change event received by a device to notify a change."""
 
 from datetime import datetime
 from typing import Any
@@ -7,7 +7,7 @@ import tango
 
 
 class ReceivedEvent:
-    """A Tango change event received by some device to notify a change.
+    """A Tango change event received by a device to notify a change.
 
     This class represents a received change event from a Tango device
     :py:attr:`device_name`, regarding an attribute :py:attr:`attribute_name`
@@ -20,17 +20,17 @@ class ReceivedEvent:
     purposes. If you need to access the original Tango event data, you
     can use the :py:attr:`event_data` attribute.
 
-    Since in SKAO tests not always the developers use the (string) device
-    name, it's provided a method :py:meth:`has_device` to check if the
+    Since in SKAO tests developers do not always use the (string) device
+    name, a method :py:meth:`has_device` is provided to check if the
     event comes from a given device (the same method accepts a string too).
 
     Since the attribute name received by the Tango event is always lower
-    case, it's provided a method :py:meth:`has_attribute` to check if the
+    case, a method :py:meth:`has_attribute` is provided to check if the
     event comes from a given attribute (to make it case insensitive).
 
-    A ReceivedEvent when printed as string will show the device name, the
+    When printed as a string, a ReceivedEvent will show the device name, the
     attribute name, the attribute value, and the reception time in
-    a synthetic and human-readable way.
+    a concise and human-readable way.
     """
 
     event_data: tango.EventData
@@ -155,7 +155,7 @@ class ReceivedEvent:
         """Check if the event comes from a given attribute.
 
         **IMPORTANT NOTE**: A lower case comparison is used to avoid
-        case sensitivity. This is preferred because attribute name
+        case sensitivity. This is preferred because the attribute name
         in :py:class:`tango.EventData` is always lower case.
 
         Example: an event from an attribute 'State'

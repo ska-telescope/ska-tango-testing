@@ -56,7 +56,7 @@ class TangoSubscriber:
     def __init__(
         self, event_enum_mapping: dict[str, type[Enum]] | None = None
     ) -> None:
-        """Initialize the subscriber.
+        """Initialise the subscriber.
 
         :param event_enum_mapping: Optional mapping of attribute names
             to event types (Enum). If you specify this, the event data
@@ -78,7 +78,7 @@ class TangoSubscriber:
         # subscription ids
         self._subscriptions_lock = threading.Lock()
 
-        # Logger to log weird things
+        # Logger to log unusual occurrences
         self._logger = logging.getLogger(self.__class__.__name__)
 
     def __del__(self) -> None:
