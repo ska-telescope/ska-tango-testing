@@ -9,10 +9,12 @@ from ska_tango_testing.integration.query.n_state_changes import (
     NStateChangesQuery,
 )
 
+from ..testing_utils.delayed_store_event import delayed_store_event
 from ..testing_utils.received_event_mock import create_test_event
 from .utils import (
     assert_n_events_match_query_failed,
     assert_n_events_match_query_succeeded,
+    assert_timeout_and_duration_consistency,
 )
 
 
@@ -41,6 +43,26 @@ class TestNStateChangesQuery:
         query.evaluate(storage)
 
         assert_n_events_match_query_succeeded(query, [matching_event])
+
+    @staticmethod
+    def test_query_succeeds_with_multiple_matching_events() -> None:
+        """Test that the query succeeds with multiple matching events."""
+        storage = EventStorage()
+        query = NStateChangesQuery(
+            device_name="test/device/1",
+            attribute_name="test_attr",
+            attribute_value=42,
+            target_n_events=2,
+            timeout=5,
+        )
+        event1 = create_test_event(store=storage)
+        event2 = create_test_event()
+        delayed_store_event(storage, event2, delay=1)
+
+        query.evaluate(storage)
+
+        assert_n_events_match_query_succeeded(query, [event1, event2])
+        assert_timeout_and_duration_consistency(query, 5, 1)
 
     @staticmethod
     def test_query_fails_when_no_event_matches_when_prev_value_miss() -> None:

@@ -18,6 +18,7 @@ from .utils import (
     assert_n_events_match_query_failed,
     assert_n_events_match_query_succeeded,
     assert_query_failed,
+    assert_timeout_and_duration_consistency,
 )
 
 
@@ -96,6 +97,7 @@ class TestNEventsMatchQuery:
         query.evaluate(storage)
 
         assert_n_events_match_query_succeeded(query, [event1, event2])
+        assert_timeout_and_duration_consistency(query, 3, 1)
 
     @staticmethod
     def test_query_timeout() -> None:
@@ -115,13 +117,14 @@ class TestNEventsMatchQuery:
         delayed_store_event(storage, non_matching_event, delay=0.5)
         # one matching event is stored after the timeout (too late)
         late_matching_event = create_test_event()
-        delayed_store_event(storage, late_matching_event, delay=1.5)
+        delayed_store_event(storage, late_matching_event, delay=1.2)
 
         query.evaluate(storage)
         time.sleep(0.3)
 
         assert_query_failed(query)
         assert_n_events_are_collected(query, [matching_event])
+        assert_timeout_and_duration_consistency(query, 1, 1)
 
     @staticmethod
     def test_query_describe_includes_n_matching_events() -> None:
