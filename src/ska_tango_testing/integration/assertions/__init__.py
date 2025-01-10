@@ -133,6 +133,7 @@ from .has_hasnt_events import (
     has_change_event_occurred,
     hasnt_change_event_occurred,
 )
+from .legacy import _get_tracer, _print_passed_event_args
 from .timeout import (
     ChainedAssertionsTimeout,
     get_context_timeout,
@@ -148,4 +149,6 @@ __all__ = [
     "get_context_timeout",
     "get_context_tracer",
     "get_context_early_stop",
+    "_get_tracer",
+    "_print_passed_event_args",
 ]

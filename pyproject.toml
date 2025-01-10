@@ -14,6 +14,7 @@ python = "^3.10"
 pytango = ">=9.4.2 <11.0.0"
 numpy = "^1.23.2"
 assertpy = "^1.1"
+deprecation = "^2.1.0"
 
 [tool.poetry.group.dev.dependencies]
 black = "^22.1.0"
@@ -46,3 +47,13 @@ url = 'https://pypi.org/simple'
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+markers = [
+    "integration_tracer: mark a test as related to the integration tracer"
+]
+
+[tool.coverage.run]
+omit = [
+    "src/ska_tango_testing/integration/assertions/legacy.py"
+]

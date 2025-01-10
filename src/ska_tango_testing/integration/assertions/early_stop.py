@@ -80,6 +80,11 @@ def with_early_stop(
     if you chain a ``with_early_stop(None)`` assertion after other
     ``with_early_stop`` assertions, it will deactivate them.
 
+    NOTE: the behavior of the early stop sentinel will likely not work
+    for your old custom assertions. If you have some, please update them
+    to use the new mechanisms and explicitly check the sentinel predicate
+    as done in the new assertions.
+
     :param assertpy_context: The `assertpy` context object
         (It is passed automatically)
     :param sentinel_predicate: The sentinel predicate to stop early the
