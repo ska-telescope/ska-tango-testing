@@ -1,9 +1,9 @@
 """Legacy deprecated assertions code.
 
-I keep it for retro-compatibility with old custom assertions that
-may be still using it, but:
+This module is kept for backward compatibility with old custom assertions that
+may still be using it, but:
 
-- it is not recommended to use it in new code
+- it is not recommended for use in new code
 - it is marked as deprecated
 - it is not covered by tests
 - it will not receive updates, be guaranteed to work, or be supported
@@ -55,7 +55,7 @@ def _get_tracer(assertpy_context: Any) -> TangoEventTracer:
 @deprecation.deprecated(
     deprecated_in="0.8.0",
     details="This method is deprecated and will likely be removed in future. "
-    "It is replaced by queries objects, which are able to print by "
+    "It is replaced by query objects, which are able to print by "
     "themselves their details; see "
     "`ska_tango_testing.integration.query`.",
 )
@@ -70,8 +70,8 @@ def _print_passed_event_args(
     """Print the arguments passed to the event query.
 
     **WARNING**: This method is deprecated and will be removed in future.
-    The assertions mechanism now is based on queries objects, which are
-    able to print by themselves their details; see
+    The assertions mechanism now is based on query objects, which are
+    able to print their details; see
     :py:mod:`~ska_tango_testing.integration.query`.
 
     Helper method to print the arguments passed to the event query in a

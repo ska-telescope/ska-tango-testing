@@ -3,7 +3,7 @@
 This module provides custom assertions for `assertpy` to be used with
 :py:class:`~ska_tango_testing.integration.TangoEventTracer` instances.
 
-Concretely, there are exposed two assertions:
+Specifically, two assertions are exposed:
 
 - :py:func:`~ska_tango_testing.integration.assertions.has_change_event_occurred`,
   to verify that N or more events matching a given predicate occur
@@ -73,8 +73,8 @@ def get_context_tracer(assertpy_context: Any) -> TangoEventTracer:
 def _get_n_events_from_query(query: EventQuery) -> int:
     """Get the number of matching events from the query.
 
-    This method navigates a query structure and extacts - if possible -
-    the number of found matching event. This method will raise an error
+    This method navigates a query structure and extracts - if possible -
+    the number of found matching events. This method will raise an error
     if the query (or some other wrapped query) does not have the
     `matching_events` attribute.
 
@@ -154,7 +154,7 @@ def has_change_event_occurred(
     - the previous value of the attribute (the value that the attribute
       had before the event is captured - pretty useful to catch state
       transitions from a value to another)
-    - an arbitrary predicate over the event (to deal tricky cases where
+    - an arbitrary predicate over the event (to deal with tricky cases where
       a simple value comparison is not enough or is not possible)
 
     Usage example:

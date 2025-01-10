@@ -1,20 +1,20 @@
 """Timeout for chained assertions in the integration tests.
 
-This module provides a utilities to set a timeout for multiple chained
+This module provides utilities to set a timeout for multiple chained
 assertions. The timeout is shared between all the chained assertions,
 so that the total time to wait for all the events to occur is the same.
 
 This module exposes:
 
 - a function :py:func:`~ska_tango_testing.integration.assertions.within_timeout`
-  which is an assertpy extension that permits to set a timeout for the next
+  which is an assertpy extension that permits setting a timeout for the next
   chain of assertions.
 - a class :py:class:`~ska_tango_testing.integration.assertions.ChainedAssertionsTimeout`
   to implement a timeout that can be shared between multiple chained
-  assertions, that essentially after it's initialised, it provides
-  updated timeout values that decrease over time. (It is used internally)
+  assertions, essentially providing updated timeout values that decrease
+  over time. (It is used internally)
 - a function :py:func:`~ska_tango_testing.integration.assertions.get_context_timeout`
-  that from the given assertpy context, retrieves the timeout value.
+  that retrieves the timeout value from the given assertpy context.
   (It is used internally)
 
 """  # pylint: disable=line-too-long # noqa: E501
@@ -32,13 +32,13 @@ class ChainedAssertionsTimeout(SupportsFloat):
     (It is used internally)
 
     This class is used to set a timeout once and share it between multiple
-    chained assertions. It permits you:
+    chained assertions. It permits you to:
 
-    - Init the timeout once, with a specified value in seconds.
+    - Initialise the timeout once, with a specified value in seconds.
     - In various moments, get an updated timeout value that is the remaining
       time from the initial timeout.
 
-    By default, the init is done when
+    By default, the initialisation is done when
     :py:func:`~ska_tango_testing.integration.assertions.within_timeout`
     is called. The updated timeout should then be used in the next chained
     assertions. When you print an error message, you can also access the
@@ -46,8 +46,8 @@ class ChainedAssertionsTimeout(SupportsFloat):
 
     Usage example:
 
-    if this is the assertion code you want to achieve (where the tree events
-    must occur in the same ``10`` seconds timeout):
+    if this is the assertion code you want to achieve (where the three events
+    must occur within the same ``10`` seconds timeout):
 
     .. code-block:: python
 
@@ -79,7 +79,7 @@ class ChainedAssertionsTimeout(SupportsFloat):
     """
 
     def __init__(self, timeout: float) -> None:
-        """Initialize a new timeout for chained assertions.
+        """Initialise a new timeout for chained assertions.
 
         :param timeout: The initial timeout value in seconds.
         """
@@ -136,7 +136,7 @@ def within_timeout(assertpy_context: Any, timeout: int | float) -> Any:
     """Add a timeout for the next chain of tracer assertions.
 
     :py:class:`~ska_tango_testing.integration.TangoEventTracer`
-    allows to query events within a timeout. In other words, you can
+    allows querying events within a timeout. In other words, you can
     make assertions about events that will occur in the future within
     a certain time frame and "await" for them (if they didn't occur yet).
     This method when called inside an assertion context permits
@@ -164,7 +164,7 @@ def within_timeout(assertpy_context: Any, timeout: int | float) -> Any:
             attribute_value="DONE",
         )
 
-    Alteratively, when you want to verify a set of events occurring
+    Alternatively, when you want to verify a set of events occurring
     within a certain shared timeout:
 
     .. code-block:: python
