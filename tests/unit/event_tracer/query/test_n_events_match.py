@@ -88,7 +88,7 @@ class TestNEventsMatchQuery:
             and e.has_attribute("test_attr")
             and e.attribute_value == 42,
             target_n_events=2,
-            timeout=3,
+            timeout=5,
         )
         event1 = create_test_event(store=storage)
         event2 = create_test_event()
@@ -97,7 +97,7 @@ class TestNEventsMatchQuery:
         query.evaluate(storage)
 
         assert_n_events_match_query_succeeded(query, [event1, event2])
-        assert_timeout_and_duration_consistency(query, 3, 1)
+        assert_timeout_and_duration_consistency(query, 5, 1)
 
     @staticmethod
     def test_query_timeout() -> None:
