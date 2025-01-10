@@ -15,7 +15,7 @@ events. Example:
 .. code-block:: python
 
   assert_that(tracer).described_as(
-    "Tree ON/OFF events must be detected for a certain device"
+    "Three ON/OFF events must be detected for a certain device"
   ).has_change_event_occurred(
       device_name="sys/tg_test/1",
       attribute_name="State",
@@ -40,7 +40,7 @@ check an attribute value is valid JSON and then parse it and compare it
 with a ground truth value). Or also maybe, you just have a numeric value
 and you want to check it fits in a certain range.
 
-To address easily these cases, you can use the ``custom_matcher`` parameter
+To address these cases easily, you can use the ``custom_matcher`` parameter
 to define a further condition that must be satisfied by the event to make
 the assertion pass. This parameter is a function that takes a
 :py:class:`~ska_tango_testing.integration.event.ReceivedEvent` object as input
@@ -48,7 +48,7 @@ and returns a boolean value. If the function returns ``True``, the event
 is considered valid and the assertion passes. If the function returns
 ``False``, the event is considered invalid and the assertion fails. The
 ``custom_matcher`` function is called for each event in the tracer and
-is put in ``and`` with the other checks you defined. Example:
+is combined with the other checks you defined. Example:
 
 .. code-block:: python
 
@@ -59,7 +59,7 @@ is put in ``and`` with the other checks you defined. Example:
   assert_that(tracer).described_as(
     "A certain numeric value must be in a given range"
   ).has_change_event_occurred(
-      # custom matched can be combined with other more simple checks
+      # custom matcher can be combined with other more simple checks
       device_name="sys/tg_test/1",
       attribute_name="NumericValue",
       # a python lambda function is a very handy way to define a custom matcher
@@ -128,7 +128,7 @@ you can cross-reference other tracer events:
           e.attribute_value < 100
   )
 
-Before using this advanced feature, we suggest to read the 
+Before using this advanced feature, we suggest reading the 
 :py:mod:`~ska_tango_testing.integration.event` module documentation
 (in particular, the
 :py:class:`~ska_tango_testing.integration.event.ReceivedEvent` class API).
@@ -138,7 +138,7 @@ Before using this advanced feature, we suggest to read the
 Early Stop Sentinel (``with_early_stop``)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-As we already seen in the rest of this guide, the main purpose of the
+As we have already seen in the rest of this guide, the main purpose of the
 assertions and the event tracer is to check that a certain set of events
 occur. In distributed systems, it is common that some events may
 take a long time to happen because of external factors (e.g., network
@@ -153,14 +153,14 @@ reached before the events happen).
 
 To face this problem, we introduce the concept of an "early stop sentinel".
 An early stop sentinel is a function that monitors your events and, if it
-detects a certain condition, it stops the evaluation early, it makes
-the assertion fail and it permits you to avoid to wait for the timeout to
-be reached. Think about all the exception events you may already rise in
+detects a certain condition, it stops the evaluation early, makes
+the assertion fail and permits you to avoid waiting for the timeout to
+be reached. Think about all the exception events you may already raise in
 your system: with an early stop sentinel you can catch them and stop the
 evaluation immediately, making your tests fail faster.
 
 The :py:func:`~ska_tango_testing.integration.assertions.with_early_stop`
-method permits you to define in a tracer assertions a stop condition
+method permits you to define in a tracer assertion a stop condition
 through a lambda function that takes a
 :py:class:`~ska_tango_testing.integration.event.ReceivedEvent` object as input
 and returns a boolean value. If the function returns ``True``, the evaluation
@@ -191,8 +191,8 @@ with the attribute "longRunningCommandResult" containing the string
 you can define more complex early stop sentinels as you need.
 
 **NOTE**: the early stop sentinel is evaluated for each event in the tracer
-every time a new event is received and has always the priority over
-the regular evaluation. Concretely this means that if in any moment
+every time a new event is received and always has priority over
+the regular evaluation. Concretely this means that if at any moment
 the early stop sentinel returns ``True``, the evaluation stops
 immediately and fails, even if your query succeeds. This also means
 that if at the beginning of the evaluation the early stop sentinel
