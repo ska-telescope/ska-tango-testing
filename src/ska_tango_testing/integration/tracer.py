@@ -78,7 +78,7 @@ class TangoEventTracer:
                 lambda e:
                     e.has_device("sys/tg_test/1") and
                     e.has_attribute("State") and
-                    e.current_value == TARGET_STATE,
+                    e.attribute_value == TARGET_STATE,
                 timeout=10)) == 1
 
     **Usage Example 2**: as an end-user of this module, you can combine
@@ -103,39 +103,58 @@ class TangoEventTracer:
             ).within_timeout(10).has_change_event_occurred(
                 device_name="sys/tg_test/1",
                 attribute_name="State",
-                current_value=TARGET_STATE,
+                attribute_value=TARGET_STATE,
                 previous_value=INITIAL_STATE,
             )
 
-    **Usage Example 3**: evaluate a query. TODO: continue
+    **Usage Example 3**: evaluate any kind of query. The usage shown
+    in the first example is just a quick shortcut to use the tracer in
+    a simplified way. The tracer, potentially, can evaluate any kind of
+    query object, given it is a subclass of
+    :py:class:`~ska_tango_testing.integration.query.base.EventQuery`.
+    You can find a collection of (configurable) query objects
+    in the :py:mod:`~ska_tango_testing.integration.query` module.
+    Here an example of how you can make the same exact interrogation
+    of the first example, but using query objects:
 
-    **ANOTHER NOTE**: just a note about how event handling and queries with
-    timeouts are implemented. The event collection is implemented through
-    the tango ``subscribe_event`` method, which activates a callback
-    that updates the internal list of events. Since the callback is
-    asynchronous,
-    the access to the events is protected by a lock (to avoid that
-    different callbacks access the events at the same time, or indeed
-    that a query accesses the events while they are being updated).
-    The queries with timeouts are implemented by creating a sort of
-    "pending query" object and waiting for its conditions to be satisfied
-    through a signal. The pending queries are updated every time a new
-    event happens and, when the conditions are met, the signal is set
-    and the waiting thread is unlocked. Since the queries are accessed
-    asynchronously by the main test thread and by the various callbacks,
-    a further lock to protect them is added.
-    A third (not essential) lock is used to protect the
-    subscriptions, so they can potentially
-    be created and deleted from different
-    threads (it is not a primary use case, but it is technically possible).
+    .. code-block:: python
 
-    *To prevent the risk of deadlock we purposely avoided the acquiring of two
-    locks together (in each point of the code it is acquired at most one
-    of the three locks). To prevent the risk of infinite signal waits, when a
-    wait happen, it's ensured that it has been specified a timeout. Moreover,
-    waits don't ever keep locks. For now, locks aren't reentrant, so if you
-    modify this code be careful to not acquire a lock that you already have.*
-    """
+        query = NSateChangesQuery(
+            device_name="sys/tg_test/1",
+            attribute_name="State",
+            attribute_value=TARGET_STATE,
+            timeout=10,
+        )
+        tracer.evaluate_query(query)
+
+    **Tracer Mechanics**: here it follows a brief explanation of how the
+    tracer works internally. The tracer is a tool that captures, stores and
+    interrogates events. It does so by using four main support classes:
+
+    - :py:class:`~ska_tango_testing.integration.event.ReceivedEvent` is the
+      class that represents the events captured by the tracer;
+    - :py:class:`~ska_tango_testing.integration.event.subscriber.TangoSubscriber`
+      is used to subscribe to the events and react to new events by storing
+      them in the event storage;
+    - :py:class:`~ska_tango_testing.integration.event.storage.EventStorage`
+      is used to store the events in a thread-safe way and to update all
+      the pending queries when a new event is received;
+    - :py:class:`~ska_tango_testing.integration.query.base.EventQuery`
+      and its subclasses are the interrogations on the stored events.
+
+    The queries are reactive objects capable of put the process in a
+    waiting state until the query is satisfied or the timeout is reached
+    and in the meantime auto-update themselves when new events are received.
+
+    **Thread Safety**: the tracer is thread-safe. It uses a thread-safe
+    storage for the events and a thread-safe subscriber to the events.
+    The only part that is not yet fully thread-safe are the queries. The
+    queries base class is thread-safe, but the custom queries you can
+    write may expose variables that could be not thread-safe (so, don't
+    access queries variables from outside until the evaluation is done
+    and you will be safe; query base method such as ``status()``,
+    ``describe()``, etc. are instead thread safe and can be accessed).
+    """  # pylint: disable=line-too-long # noqa: E501
 
     def __init__(
         self, event_enum_mapping: dict[str, type[Enum]] | None = None
