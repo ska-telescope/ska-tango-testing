@@ -142,7 +142,7 @@ class TangoEventTracer:
     - :py:class:`~ska_tango_testing.integration.query.base.EventQuery`
       and its subclasses are the interrogations on the stored events.
 
-    The queries are reactive objects capable of put the process in a
+    The queries are reactive objects capable of putting the process in a
     waiting state until the query is satisfied or the timeout is reached
     and in the meantime auto-update themselves when new events are received.
 
@@ -261,7 +261,7 @@ class TangoEventTracer:
     def _add_event(self, event: ReceivedEvent) -> None:
         """Store an event and update all pending queries.
 
-        NOTE: all pending queries are updated trough a subscription mechanism
+        NOTE: all pending queries are updated through a subscription mechanism
         to the events storage. Every time this method is called, all the
         pending queries are notified and can evaluate the new event.
 
@@ -285,9 +285,10 @@ class TangoEventTracer:
     ) -> list[ReceivedEvent]:
         """Query stored and future events with a predicate and a timeout.
 
-        Queries are a tool to retrieve events that match a certain criteria
-        (predicate), optionally waiting for a certain time span (timeout) if
-        the criteria are not satisfied immediately. The method returns
+        This method is a shortcut that lets you select the events that match
+        a certain criteria (predicate), optionally waiting for a certain time
+        span (timeout) if the criteria are not satisfied immediately.
+        The method returns
         all the matching events or an empty list if there are any. The
         predicate is essentially a function that takes a
         :py:class:`~ska_tango_testing.integration.event.ReceivedEvent`
@@ -295,14 +296,11 @@ class TangoEventTracer:
         matches the desired criteria (returning `True` if it does)
         or not (`False` otherwise).
 
-        The timeout is optional but highly recommended, because it allows
-        you to wait for a certain event to happen (e.g., a state change)
-        within a certain time span. Essentially, the query will "attend"
-        that in :py:attr:`events` there will be at least `target_n_events`
-        (which defaults to 1) that match the predicate.
-        If the query is already satisfied, the method
-        returns immediately. If not, the method waits for the timeout to be
-        reached or the query to be satisfied.
+        **NOTE**: If you don't provide a timeout, the method will evaluate
+        all the events that are already stored and return immediately the
+        matching ones. If you provide a timeout, the method will act as a
+        a blocking operation that waits ``target_n_events`` to
+        match the predicate or the timeout to be reached.
 
         Usage example:
 
@@ -331,19 +329,9 @@ class TangoEventTracer:
                 timeout=10
             )
 
-        To write good queries you have to understand the predicate mechanism.
-        The predicate can be as complex as you want, and inside it you can
-        also access the list of stored events using :py:attr:`events`.
-        Don't worry, everything is thread-safe and this will make you evaluate
-        always the most updated list of events. See the
-        :py:class:`~ska_tango_testing.integration.event.ReceivedEvent`
-        class to understand how to access the event data.
-
-        **IMPORTANT NOTE**: As an alternative to queries, for most of
-        end-users we recommend using the already implemented
-        `assertpy <https://assertpy.github.io/index.html>`_
-        custom assertions provided by
-        :py:mod:`ska_tango_testing.integration.assertions`.
+        **FINAL NOTE**: this method is a shortcut to use the tracer in a
+        simplified way. The tracer, potentially, can evaluate any kind of
+        query object. Please check :py:meth:`evaluate_query` for more.
 
         :param predicate: A function that takes an event as input and returns.
             True if the event matches the desired criteria.
@@ -355,7 +343,7 @@ class TangoEventTracer:
             If it is something that can be casted to a float, it must be
             greater than 0 and not infinite.
 
-            **TECHNICAL NOTE**: Timeout may non be always a number but
+            **TECHNICAL NOTE**: Timeout may not always be a number but
             something that can be casted to a float. This is useful for
             guaranteeing retro-compatibility in custom assertions written
             before 0.7.2, where the timeout was a number and not an object
@@ -363,7 +351,7 @@ class TangoEventTracer:
             the timeout object, ignoring that now it is not a number anymore.
 
         :param target_n_events: How many events do you expect to find with this
-            query? If in past events (events which happens prior to the moment
+            query? If in past events (events which happen prior to the moment
             in which the query is evaluated) you don't reach the target number,
             the method will wait till you reach the target number or you reach
             the timeout. Defaults to 1 so in case of a waiting loop, the method
@@ -408,15 +396,21 @@ class TangoEventTracer:
         A :py:class:`~ska_tango_testing.integration.query.EventQuery`
         is a query over the tracer's present and eventually future events
         (if a timeout is specified). This method takes an already built
-        and not yet evaluated query and evaluates it. The evaluation is a
-        blocking operation that waits for the query to be satisfied or for
-        the timeout to be reached.
+        and not yet evaluated query object and evaluates it.
+        The evaluation is a blocking operation that waits for the query
+        to be satisfied or for the timeout to be reached.
+
+        To know more about the queries, please check the
+        :py:mod:`~ska_tango_testing.integration.query` module, where you
+        will find the base class and some already built query objects
+        you can use.
 
         This method returns nothing, because eventual query results are
         supposed to be accessed through the query object itself. The most
-        basic and common result is it's success status, which can be
+        basic and common result is its success status, which can be
         accessed through the
         :py:meth:`~ska_tango_testing.integration.query.EventQuery.succeeded`
+        method.
 
         :param query: The query to evaluate.
         :raises ValueError: If the query you are trying to evaluate is already
@@ -434,7 +428,7 @@ class TangoEventTracer:
         A timeout can be None or something that can be casted to a float. If
         it is something that can be casted to a float, it must be greater than
         0 and not infinite. This method performs these checks and returns the
-        timeout as a float (or None).
+        timeout as a float.
 
         :param timeout: The timeout to validate.
         :return: The timeout as a float.
