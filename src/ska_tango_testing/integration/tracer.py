@@ -53,9 +53,14 @@ class TangoEventTracer:
     - query the stored events based on a predicate function that
       selects which events satisfy some criteria and a timeout,
       which permits you to wait for that criteria to be satisfied
-      (see :py:meth:`query_events`).
+      (see :py:meth:`query_events`) or based on any custom query
+      (see :py:meth:`evaluate_query`).
 
-    Usage example 1: test where you subscribe to a device
+    Here there follows 3 key usage examples: a first very minimal one,
+    a second one more suitable for most of the end-users, and a third
+    one that shows how you can evaluate any kind of custom object-queries.
+
+    **Usage Example 1**: test where you subscribe to a device
     and assert that it exists exactly one state change event
     to a TARGET_STATE within 10 seconds:
 
@@ -76,17 +81,11 @@ class TangoEventTracer:
                     e.current_value == TARGET_STATE,
                 timeout=10)) == 1
 
-    Queries are a powerful tool to make assertions on specific complex
-    behaviours of a device. For example, you may want to check that
-    a certain event is sent after another event, or that a certain
-    event is sent only when a certain condition is satisfied.
-
-    **IMPORTANT NOTE**: If you are an end-user of this module, you will
-    probably use the tracer together with the already provided
-    `assertpy <https://assertpy.github.io/index.html>`_
-    custom assertions, which are implemented in
-    :py:mod:`ska_tango_testing.integration.assertions`.
-    Your code will likely look like this:
+    **Usage Example 2**: as an end-user of this module, you can combine
+    this tracer with `assertpy <https://assertpy.github.io/index.html>`_
+    custom assertions to write readable and powerful tests. Here is an example
+    of how to use the assertions we provide in
+    :py:mod:`ska_tango_testing.integration.assertions`:
 
     .. code-block:: python
 
@@ -108,67 +107,7 @@ class TangoEventTracer:
                 previous_value=INITIAL_STATE,
             )
 
-    **NOTE**: some events attributes even if technically they are
-    primitive types (like integers or strings), they can be
-    semantically typed with an ``Enum`` (e.g., a state machine attribute can be
-    represented as an integer, but it is semantically a state). To handle
-    those cases, when you create an instance of the tracer, you can
-    provide a mapping of attribute names to enums (see the
-    :py:class:`ska_tango_testing.integration.event.EventEnumMapper`
-    class). When you subscribe to an event, the tracer will automatically
-    convert the received event to the corresponding enum, so when you
-    print the event as a string, you can see the state as a human readable
-    label, instead of a raw value.
-
-    Usage example 2: test where you subscribe to a device with a typed event
-
-    .. code-block:: python
-
-        import pytest
-        from assertpy import assert_that
-        from enum import Enum
-
-        # define the enum (or import it from somewhere)
-        class MyEnum(Enum):
-            STATE1 = 1
-            STATE2 = 2
-
-
-        @pytest.fixture
-        def typed_tracer():
-            return TangoEventTracer(
-                event_enum_mapping={
-                    "State": MyEnum
-                }
-            )
-
-        def test_attribute_change(typed_tracer):
-
-            typed_tracer.subscribe_event("sys/tg_test/1", "State")
-
-            # do something that triggers the event
-
-            assert_that(tracer).described_as(
-                "There must be a state change from "
-                "STATE1 to STATE2 within 10 seconds."
-            ).within_timeout(10).has_change_event_occurred(
-                device_name="sys/tg_test/1",
-                attribute_name="State",
-                current_value=MyEnum.STATE2,
-                previous_value=MyEnum.STATE1,
-            )
-
-            # If there you have a failure, the error message will
-            # be more human readable:
-            # - without the enum mapping, you would see the raw values
-            #  of the states (e.g., "attribute_value=2")
-            # - with the enum mapping, you see the enum labels
-            #  (e.g., "attribute_value=MyEnum.STATE2")
-
-    **NOTE**: when you subscribe to an event, you will automatically
-    receive the current attribute value as an event (or, in other words,
-    the last "change" that happened). Take this into account when you
-    write your queries.
+    **Usage Example 3**: evaluate a query. TODO: continue
 
     **ANOTHER NOTE**: just a note about how event handling and queries with
     timeouts are implemented. The event collection is implemented through
