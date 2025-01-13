@@ -1,27 +1,4 @@
-"""Tango proxy client which can trace change events from Tango devices.
-
-MISSION: to represent a tango proxy client that can subscribe to
-change events from multiple attributes and multiple devices,
-store the received events as
-they are notified (in a thread-safe way), and support queries
-with timeouts to check if and when and who sent certain events.
-
-The main class to do so is
-:py:class:`~ska_tango_testing.integration.TangoEventTracer`, which
-collects :py:class:`~ska_tango_testing.integration.event.ReceivedEvent`
-instances and allows you to query them, directly or through custom
-assertions
-(:py:mod:`ska_tango_testing.integration.assertions`). To do so, it
-uses a few supporting classes:
-
-- :py:class:`~ska_tango_testing.integration.event_storage.EventStorage`
-    to store the events in a thread-safe way and to notify the
-    queries when new events are received;
-- :py:class:`~ska_tango_testing.integration.subscriber.TangoSubscriber`
-    to subscribe to the events and store them in the event storage.
-- :py:class:`~ska_tango_testing.integration.queries.NEventsMatchQuery`
-    to query the events with a predicate and a timeout.
-"""
+"""Tango proxy client which can trace change events from Tango devices."""
 
 from enum import Enum
 from typing import Callable, SupportsFloat
@@ -56,7 +33,7 @@ class TangoEventTracer:
       (see :py:meth:`query_events`) or based on any custom query
       (see :py:meth:`evaluate_query`).
 
-    Here there follows 3 key usage examples: a first very minimal one,
+    Here there follows 3 usage examples: a first very minimal one,
     a second one more suitable for most of the end-users, and a third
     one that shows how you can evaluate any kind of custom object-queries.
 
