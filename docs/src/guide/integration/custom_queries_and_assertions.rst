@@ -7,7 +7,11 @@ Custom queries and assertions using TangoEventTracer
 In :ref:`Getting Started <getting_started_tracer>` we saw how to use the
 :py:class:`~ska_tango_testing.integration.TangoEventTracer` to capture events
 and then use `assertpy <https://assertpy.github.io/index.html>`_ (custom)
-assertions to verify the events. But how are they implemented?
+assertions to verify the events. But how is all this implemented?
+
+
+TODO: update this section according to the new class structure, summarise
+very briefly this and mark it as legacy.
 
 Queries and predicates
 ~~~~~~~~~~~~~~~~~~~~~~
