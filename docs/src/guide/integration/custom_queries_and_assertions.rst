@@ -14,7 +14,7 @@ user-friendly and allow you to write clean and readable test code. They will
 likely suffice for most of your needs.
 
 However, there may be situations where you need to interact with the tracer
-more directly. This could be for example because you need to implement an
+more directly. This could be, for example, because you need to implement an
 assertion that is not covered by the provided assertions, or because you
 want to use the tracer as a more fine-grained event synchronisation tool.
 To do this, we propose two methods of interacting with the tracer:
@@ -22,12 +22,12 @@ To do this, we propose two methods of interacting with the tracer:
 1. Using predicates to filter events.
 2. Using queries to define more complex interactions.
 
-Before adventuring into these methods, think well if you really need them
-or there may already be some :ref:`Advanced Features <advanced_use_cases>`
+Before venturing into these methods, consider if you really need them or if
+there may already be some :ref:`Advanced Features <advanced_use_cases>`
 that can help you achieve your goal in a simpler way. If you implement
-custom assertions, consider that during time the way assertions are implemented
+custom assertions, consider that over time the way assertions are implemented
 may change and so 1) you may not benefit from future improvements and 2) in
-some case you may suffer from backward compatibility issues (although we
+some cases you may suffer from backward compatibility issues (although we
 strive to keep them to a minimum).
 
 
@@ -40,8 +40,8 @@ method.
 
 :py:meth:`~ska_tango_testing.integration.TangoEventTracer.query_events`
 allows you to query events collected by the tracer using a predicate as
-filter to select only the events that match specific criteria.
-Concretely, this methods requires a parameter called ``predicate``,
+a filter to select only the events that match specific criteria.
+Concretely, this method requires a parameter called ``predicate``,
 which accepts lambda functions or named functions. These
 functions take an event as input and return a boolean value indicating
 whether the event matches the criteria.
@@ -191,7 +191,7 @@ documentation.
 predicates depends on the complexity of the logic you need to implement and
 the context where you are doing it. If you need a simple shortcut to get
 events that match a specific criterion, predicates are the way to go. If you
-need more complex logic that go beyond simple filtering, or you are
+need more complex logic that goes beyond simple filtering, or you are
 implementing some sort of structured test harness (e.g., that deals with
 synchronisation) probably queries are the best choice, as they provide a
 more structured and customisable way to interact with the tracer
@@ -231,7 +231,7 @@ contexts, please consider contributing it to the library by submitting a
 merge request.
 
 **NOTE**: consider that the assertions we provide evolve over time, and
-so some your custom assertions may become redundant or may need to be
+so some of your custom assertions may become redundant or may need to be
 updated to reflect changes in the library. We strive to keep backward
 compatibility issues to a minimum, but they may still occur.
 

@@ -7,10 +7,9 @@ Advanced Use Cases for the Assertions
 Minimum number of Events (``min_n_events``)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-A parameter called ``min_n_events`` permits you
-to specify a minimum number of events that must be present in the tracer
-to make the assertion pass. This is useful when you want to check repeated
-events. Example:
+A parameter called ``min_n_events`` allows you to specify a minimum number of
+events that must be present in the tracer to make the assertion pass. This is
+useful when you want to check repeated events. Example:
 
 .. code-block:: python
 
@@ -28,17 +27,15 @@ events. Example:
 Custom predicate (``custom_matcher``)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-We are aware that sometimes event matching and comparisons
-are not trivial and that in some cases
-a simple `==` check between an expected value and an event value is not
-enough. For example, maybe you are dealing
-with a complex attribute internal structure
-(e.g., a composed tuple of things) and you
-want to check only a part of it. Or maybe, you want to make some type
-checking and casting before performing the comparison (e.g., you want to
-check an attribute value is valid JSON and then parse it and compare it
-with a ground truth value). Or also maybe, you just have a numeric value
-and you want to check it fits in a certain range.
+We are aware that sometimes event matching and comparisons are not trivial and
+that in some cases a simple `==` check between an expected value and an event
+value is not enough. For example, you may be dealing with a complex attribute
+internal structure (e.g., a composed tuple of things) and you want to check
+only a part of it. Or perhaps you want to make some type checking and casting
+before performing the comparison (e.g., you want to check an attribute value
+is valid JSON and then parse it and compare it with a ground truth value). Or
+maybe you just have a numeric value and you want to check it fits in a certain
+range.
 
 To address these cases easily, you can use the ``custom_matcher`` parameter
 to define a further condition that must be satisfied by the event to make
@@ -195,4 +192,4 @@ needed. Potential use cases may be:
   but they are two distinct features (in fact, you can actually combine them).
 
 **NOTE:** Currently, if multiple sentinels are defined, only the last one
-is used. This behavior may change in future updates.
+is used. This behaviour may change in future updates.

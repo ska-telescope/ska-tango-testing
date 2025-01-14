@@ -3,29 +3,29 @@
 Getting started with TangoEventTracer
 -------------------------------------
 
-Testing tango devices and systems can be a challenging task. One of the
-most common problems is to verify that in the SUT certain events occur
-and that they happen in the right order. This is particularly true when
-you are dealing with integration tests, where you have multiple devices
-and potentially multiple sub-systems that interact with each other.
-To address that challenge, in
+Testing Tango devices and systems can be a challenging task. One of the
+most common problems is verifying that certain events occur in the SUT
+and that they happen in the correct order. This is particularly true when
+dealing with integration tests, where you have multiple devices
+and potentially multiple subsystems interacting with each other.
+To address this challenge, in
 :py:mod:`ska_tango_testing.integration` we provide a set of
 tools to help you with that. 
 
 The main tool is a class called
 :py:class:`~ska_tango_testing.integration.TangoEventTracer`
-that permits you to:
+that allows you to:
 
-- subscribe to change events on Tango devices attributes;
-- automatically collect the events in background, and store them, handling
+- subscribe to change events on Tango device attributes;
+- automatically collect the events in the background, and store them, handling
   them in a thread-safe way;
 - query them, using a predicate to filter the
-  events you are interested in and a timeout mechanism to eventually wait
+  events you are interested in and a timeout mechanism to wait
   for them to happen if they are not already there;
 - make assertions over them, with the support of the customizable
   assertion library
   `assertpy <https://assertpy.github.io/index.html>`_ and some additional
-  assertions methods provided by
+  assertion methods provided by
   :py:mod:`ska_tango_testing.integration.assertions`.
 
 
@@ -34,7 +34,7 @@ Basic usage
 
 The most basic usage of :class:`~ska_tango_testing.integration.TangoEventTracer`
 is to create an instance of it, subscribe to the events you are interested in,
-and then use the assertions methods to verify that the events happened as
+and then use the assertion methods to verify that the events happened as
 you expected.
 
 .. code-block:: python
@@ -54,7 +54,7 @@ you expected.
         # 2. subscribe to change events from a device and an attribute
         tracer.subscribe_event("sys/tg_test/1", "obsState")
 
-        # (or alternatively, do it passing directly a device proxy)
+        # (or alternatively, do it by passing directly a device proxy)
         tracer.subscribe_event(other_device_proxy, "otherAttribute")
         tracer.subscribe_event(other_device_proxy, "otherAttribute2")
 
@@ -72,7 +72,7 @@ you expected.
             previous_value="OFF",
         )
 
-        # (we can also check only past events wihout using a timeout)
+        # (we can also check only past events without using a timeout)
         # (descriptor is optional too)
         assert_that(tracer).has_change_event_occurred(
             device_name=other_device_proxy,  # name can be a device proxy
@@ -86,13 +86,13 @@ you expected.
             # and with any previous value
         )
 
-**Comments to the code**
+**Comments on the code**
 
 1. We create an instance of
    :py:class:`~ska_tango_testing.integration.TangoEventTracer` (which is the
-   main tool we provide to trace events from tango devices).
+   main tool we provide to trace events from Tango devices).
 2. We subscribe to the events we are interested in, using a very similar
-   syntax you would use with :py:mod:`tango` ``subscribe_event``
+   syntax you would use with the :py:mod:`tango` ``subscribe_event``
    method (in detail, we are subscribing to ``CHANGE_EVENT`` on the specified
    attribute). All the received events are stored in the tracer, 
    and you can query them later.
@@ -109,23 +109,23 @@ you expected.
    (optionally specified with the method
    :py:func:`~ska_tango_testing.integration.assertions.within_timeout`
    ). If it fails, it will raise an assertion error with a detailed message
-   which include a description of the context (provided with ``described_as``)
-   and of the state of the tracer at the moment of the assertion. More on
+   which includes a description of the context (provided with ``described_as``)
+   and the state of the tracer at the moment of the assertion. More on
    this in the next section.
 
 Quick explanation of the assertion
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Since not everyone is familiar with it, let's spend a few words to explain how
-we make an assertion on the code above.
+we make an assertion in the code above.
 
 `assertpy <https://assertpy.github.io/index.html>`_ is a powerful assertion
-library that permits you to write expressive assertions. Essentially:
+library that allows you to write expressive assertions. Essentially:
 
 - through the entry point ``assert_that`` (the only thing you need to import),
   you point to the object of your assertion (the thing you want to check);
 - through the method ``described_as`` you can optionally specify a custom
-  message be printed when the assertion fails (usually to describe the
+  message to be printed when the assertion fails (usually to describe the
   expected behaviour, the context and the motivation of the assertion);
 - after that construct, you can chain other assertions, each of which
   will check a specific condition on the object of the assertion.
@@ -172,15 +172,15 @@ In the code above, we used two custom methods:
 We chose this approach for the assertions because of its intuitive
 and expressive syntax, which is very close to natural language
 and permits you to write very readable tests. Moreover, as we will see
-in the next section, it permits also to provide very detailed error messages
+in the next section, it also allows for very detailed error messages
 in case of failure. 
 
 Two notes on the usage of assertions
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 - **OPTIONALITY OF PARAMETERS**: all those parameters are optional,
   so you can use the method to
-  make more generic checks (e.g., assert presence of events with
+  make more generic checks (e.g., assert the presence of events with
   any previous value, any device, any attribute name, etc.). Example:
 
   .. code-block:: python
@@ -192,8 +192,8 @@ Two notes on the usage of assertions
         previous_value="OFF",
     )
 
-- **CHAINING OF ASSERTIONS**: `assertpy` permits you to chain multiple
-  assertions on the same object. In this context we used that feature to
+- **CHAINING OF ASSERTIONS**: `assertpy` allows you to chain multiple
+  assertions on the same object. In this context, we used that feature to
   permit the sharing of the timeout between multiple assertions. When you chain
   multiple
   :py:func:`~ska_tango_testing.integration.assertions.has_change_event_occurred`
@@ -224,16 +224,16 @@ Two notes on the usage of assertions
 
   When you call this, concretely:
   
-  - to the first event it's applied the whole timeout of 10 seconds,
-  - to the next assertion it's applied the remaining time (if any),
+  - the first event is given the whole timeout of 10 seconds,
+  - the next assertion is given the remaining time (if any),
   - if there is no remaining time, the assertion will have a timeout of 0
     seconds and will fail immediately if the condition is not satisfied
     with the already present events.
 
   *IMPORTANT NOTE*: the sharing of a timeout between multiple assertions
   is supported only since version 0.7.2 of `ska-tango-testing`. If you are
-  using an older version, to each of the chained assertions the initial timeout
-  (not decreased by the previous assertions) will be applied.
+  using an older version, each of the chained assertions will be given the initial timeout
+  (not decreased by the previous assertions).
 
 
 Error messages and debugging
@@ -244,11 +244,11 @@ and :py:class:`~ska_tango_testing.integration.TangoEventTracer`
 is the possibility to provide very detailed, evocative and context-rich
 error messages in case of failure.
 
-As we have already seen, ``described_as`` method permits you to specify
+As we have already seen, the ``described_as`` method allows you to specify
 a custom message to describe the assertion, its meaning and the
-expected behaviour on an high level. Our custom assertions instead
-permit creating very detailed error messages, that will include
-all the detail of the passed parameters and the state of the tracer. 
+expected behaviour at a high level. Our custom assertions, on the other hand,
+allow for very detailed error messages, that will include
+all the details of the passed parameters and the state of the tracer. 
 
 Let's see a real example of a failed assertion taken from
 `ska-tmc-mid-integration <https://gitlab.com/ska-telescope/ska-tmc/ska-tmc-mid-integration/>`_
