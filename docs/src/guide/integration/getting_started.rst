@@ -336,6 +336,7 @@ when printed as a string is just a number,
 and it is not very informative.
 
 To address this issue, we provide a mechanism to associate *enums* types
+(python ``Enum``)
 to events, so that when you print them, you can see the value as a
 human-readable label instead of a number. 
 This is done by passing the a mapping when
@@ -383,6 +384,11 @@ label instead of the number. For example:
   E   TANGO_TRACER Query arguments: device_name='ska_mid/tm_subarray_node/1', attribute_name='obsstate', attribute_value=ObsState.IDLE, 
   E   Query start time: 2024-05-15 10:38:13.140957
   E   Query end time: 2024-05-15 10:38:23.141256
+
+**NOTE**: it's not necessary to add ``tango.DevState`` to
+``event_enum_mapping`` because it's already supported by default.
+In fact, if you try to add it, you will get an error because
+``tango.DevState`` is not even an ``Enum``. 
 
 Logging
 ~~~~~~~
