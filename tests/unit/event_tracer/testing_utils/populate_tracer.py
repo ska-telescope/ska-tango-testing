@@ -17,7 +17,7 @@ def add_event(
     value: Any,
     seconds_ago: float = 0,
     attr_name: str = "test_attribute",
-) -> None:
+) -> ReceivedEvent:
     """Add an event to the tracer.
 
     :param tracer: The `TangoEventTracer` instance.
@@ -26,6 +26,7 @@ def add_event(
     :param seconds_ago: How many seconds ago the event occurred,
         default is 0.
     :param attr_name: The attribute name, default is "test_attribute".
+    :return: The event that was added.
     """
     test_event = ReceivedEvent(create_eventdata_mock(device, attr_name, value))
 
@@ -36,6 +37,8 @@ def add_event(
         )
 
     tracer._add_event(test_event)  # pylint: disable=protected-access
+
+    return test_event
 
 
 def delayed_add_event(
