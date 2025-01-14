@@ -244,3 +244,27 @@ class TestQueryWithFailCondition:
         ).contains(
             str(fail_event)
         )
+
+    @staticmethod
+    def test_query_describe_specifies_when_no_early_stop_triggered() -> None:
+        """The query description specifies that no early stop was triggered."""
+        storage = EventStorage()
+        wrapped_query = NEventsMatchQuery(
+            predicate=lambda e, _: e.has_device("test/device/1")
+            and e.has_attribute("test_attr")
+            and e.attribute_value == 42,
+            timeout=0.2,
+        )
+        query = QueryWithFailCondition(
+            wrapped_query=wrapped_query,
+            stop_condition=lambda e: False,
+        )
+        query.evaluate(storage)
+
+        description = query.describe()
+
+        assert_that(description).described_as(
+            "Query description must report that no early stop was triggered"
+        ).does_not_contain("triggered an early stop").contains(
+            "failed because of a timeout"
+        )
