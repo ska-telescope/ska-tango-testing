@@ -27,6 +27,23 @@ class TestNEventsMatchQuery:
     """Unit tests for the NEventsMatchQuery class."""
 
     @staticmethod
+    def test_query_creation_fails_if_n_events_is_less_than_1() -> None:
+        """Creating a query with n_events less than 1 raises a ValueError."""
+        with pytest.raises(ValueError) as exc_info:
+            NEventsMatchQuery(
+                predicate=lambda e, _: e.has_device("test/device/1")
+                and e.has_attribute("test_attr")
+                and e.attribute_value == 42,
+                target_n_events=0,
+            )
+        assert_that(str(exc_info.value)).described_as(
+            "The exception message should indicate that the "
+            "target number of events must be greater or equal to 1"
+        ).contains(
+            "The target number of events must be greater or equal to 1."
+        )
+
+    @staticmethod
     def test_query_calls_predicate_and_pass_events() -> None:
         """The query calls the predicate with the correct arguments."""
         storage = EventStorage()

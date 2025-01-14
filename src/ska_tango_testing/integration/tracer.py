@@ -316,9 +316,9 @@ class TangoEventTracer:
             (optional). If not specified or passed 0,
             the method returns immediately.
 
-            A timeout can be None or something that can be casted to a float.
-            If it is something that can be casted to a float, it must be
-            greater than 0 and not infinite.
+            **NOTE**: if the timeout is < 0 or infinite,
+            it will be considered 0. None values are in theory not supported,
+            but they are converted to 0.0 to guarantee retro-compatibility.
 
             **TECHNICAL NOTE**: Timeout may not always be a number but
             something that can be casted to a float. This is useful for
@@ -350,11 +350,6 @@ class TangoEventTracer:
         :raises ValueError: If the timeout or the target number of events
             does not meet the requirements (see above).
         """  # noqa: DAR402
-        # validate the timeout and the target number of events
-        # and raise a ValueError if they are not correct
-        timeout = self._validate_timeout(timeout)
-        target_n_events = self._validate_target_n_events(target_n_events)
-
         # Create a query to get at least N matching
         # events within the timeout
         query = NEventsMatchQuery(
@@ -394,59 +389,3 @@ class TangoEventTracer:
             being evaluated by another thread.
         """  # pylint: disable=line-too-long # noqa: DAR402 E501
         query.evaluate(self._events_storage)
-
-    # -----------------------------
-    # Input validators
-
-    @staticmethod
-    def _validate_timeout(timeout: SupportsFloat) -> float:
-        """Validate the timeout and return it as a float.
-
-        A timeout can be None or something that can be casted to a float. If
-        it is something that can be casted to a float, it must be greater than
-        0 and not infinite. This method performs these checks and returns the
-        timeout as a float.
-
-        :param timeout: The timeout to validate.
-        :return: The timeout as a float.
-        :raises ValueError: If some of the stated conditions are not met.
-        """
-        if timeout is None:
-            return 0.0
-
-        timeout = float(timeout)
-
-        if timeout < 0:
-            raise ValueError(
-                "The timeout must be greater than 0. "
-                f"Instead, you provided {timeout}."
-            )
-
-        if timeout == float("inf"):
-            raise ValueError(
-                "The timeout must not be infinite. "
-                "Instead, you provided float('inf') or something "
-                "that when casted as float turns to become "
-                "float('inf')."
-            )
-
-        return timeout
-
-    @staticmethod
-    def _validate_target_n_events(target_n_events: int) -> int:
-        """Validate the target number of events and return it as an int.
-
-        The target number of events must be greater or equal to 1. This method
-        performs this check and returns the target number of events as an int.
-
-        :param target_n_events: The target number of events to validate.
-        :return: The target number of events as an int.
-        :raises ValueError: If the target number of events is less than 1.
-        """
-        if target_n_events < 1:
-            raise ValueError(
-                "The target number of events must be greater or equal to 1. "
-                f"Instead, you provided {target_n_events}."
-            )
-
-        return target_n_events

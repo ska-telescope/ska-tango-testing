@@ -65,9 +65,15 @@ class NEventsMatchQuery(EventQuery):
             event in the context of the other events. The list of events
             is supposed to be ordered by the time they were received.
         :param target_n_events: The target number of events to match.
-            Defaults to 1.
+            Defaults to 1. It must be greater or equal to 1.
         :param timeout: The timeout for the query in seconds. Defaults to 0.
+        :raises ValueError: If the target number of events is less than 1.
         """
+        if target_n_events < 1:
+            raise ValueError(
+                "The target number of events must be greater or equal to 1."
+            )
+
         super().__init__(timeout)
         self.predicate = predicate
         self.target_n_events = target_n_events

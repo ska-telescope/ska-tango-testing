@@ -139,6 +139,47 @@ class TestEventQuery:
         ).is_false()
         assert_timeout_and_duration_consistency(query, 10, None)
 
+    @staticmethod
+    def test_query_timeout_is_0_when_no_timeout_is_given() -> None:
+        """Test that the query can handle no timeout value."""
+        query = SimpleEventQuery(
+            device_name="test/device/1",
+            attr_name="test_attr",
+            value=42,
+        )
+
+        assert_that(query.initial_timeout()).described_as(
+            "Query should handle no timeout value"
+        ).is_equal_to(0)
+
+    @staticmethod
+    def test_query_negative_timeout_values_are_0() -> None:
+        """Test that the query can handle weird timeout values."""
+        query = SimpleEventQuery(
+            device_name="test/device/1",
+            attr_name="test_attr",
+            value=42,
+            timeout=-1,
+        )
+
+        assert_that(query.initial_timeout()).described_as(
+            "Query should handle negative timeout values"
+        ).is_equal_to(0)
+
+    @staticmethod
+    def test_query_infinite_timeout_values_are_0() -> None:
+        """Test that the query can handle infinite timeout values."""
+        query = SimpleEventQuery(
+            device_name="test/device/1",
+            attr_name="test_attr",
+            value=42,
+            timeout=float("inf"),
+        )
+
+        assert_that(query.initial_timeout()).described_as(
+            "Query should handle infinite timeout values"
+        ).is_equal_to(0)
+
     # ----------------------------------------------------------------
     # Ongoing query status tests
 

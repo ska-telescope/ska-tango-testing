@@ -176,6 +176,9 @@ class EventQuery(ABC):
 
         :param timeout: The timeout for the query in seconds. By default,
             the query will not wait for any timeout.
+
+            NOTE: timeouts < 0 and infinite timeouts are automatically
+            converted to 0 timeouts (no timeout).
         """
         self._evaluation_start: datetime | None = None
         """The evaluation start time. It is set when the evaluation begins."""
@@ -239,7 +242,7 @@ class EventQuery(ABC):
         :return: The initial timeout in seconds.
         """
         with self._lock:
-            return self._initial_timeout_value or float(self._timeout)
+            return self._initial_timeout_value or self._get_timeout_value()
 
     def remaining_timeout(self) -> float:
         """Get the remaining timeout in seconds.
@@ -327,7 +330,7 @@ class EventQuery(ABC):
                     "only be evaluated once."
                 )
             self._evaluation_start = datetime.now()
-            self._initial_timeout_value = float(self._timeout)
+            self._initial_timeout_value = self._get_timeout_value()
 
         # (if multiple processes call evaluate together, only one will
         # go on evaluating, the others will fail the check above)
@@ -513,7 +516,7 @@ class EventQuery(ABC):
         :return: The remaining timeout in seconds.
         """
         if self._initial_timeout_value is None:
-            return float(self._timeout)
+            return self._get_timeout_value()
 
         duration = self._evaluation_duration()
 
@@ -548,7 +551,9 @@ class EventQuery(ABC):
                 f"Initial timeout={self._initial_timeout_value:.3f}s, "
             )
         else:
-            description += f"Initial timeout={float(self._timeout):.3f}s, "
+            description += (
+                f"Initial timeout={self._get_timeout_value():.3f}s, "
+            )
 
         if self._status() != EventQueryStatus.NOT_STARTED:
             description += (
@@ -559,3 +564,14 @@ class EventQuery(ABC):
             )
 
         return description
+
+    def _get_timeout_value(self) -> float:
+        """Calculate a >= 0 finite value from the timeout object.
+
+        :return: The initial timeout value in seconds.
+        """
+        # transform None to 0.0 for retro-compatibility and greater safety
+        if self._timeout is None:
+            return 0.0
+        timeout = max(0.0, float(self._timeout))
+        return timeout if timeout != float("inf") else 0.0
