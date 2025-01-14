@@ -118,6 +118,46 @@ def _early_stop_triggered_failure(query: EventQuery) -> bool:
     return False
 
 
+def _describe_failure(
+    query: EventQuery, tracer: TangoEventTracer, timeout: Any
+) -> str:
+    """Describe a query failure in detail.
+
+    - describe the failure reason (early stop or conditions not met,
+      with and without timeout)
+    - list the events captured by the tracer
+    - provide the query details
+
+    :param query: The query that failed.
+    :param tracer: The tracer instance that captured the events.
+    :param timeout: The timeout used for the query.
+
+    :return: A detailed message describing the failure.
+    """
+    msg = ""
+    if _early_stop_triggered_failure(query):
+        msg += (
+            "FAILURE REASON: An early stop condition was triggered "
+            "and so the query failed "
+        )
+        if isinstance(timeout, ChainedAssertionsTimeout):
+            msg += f" {query.remaining_timeout()} seconds before the timeout"
+        msg += ".\n\n"
+    else:
+        msg += "FAILURE REASON: The query condition was not met"
+        if isinstance(timeout, ChainedAssertionsTimeout):
+            msg += f" within the {timeout.initial_timeout} seconds timeout"
+        msg += ".\n\n"
+
+    events_list = "\n".join([str(event) for event in tracer.events])
+    msg += f"Events captured by TANGO_TRACER:\n{events_list}"
+
+    msg += "\n\nTANGO_TRACER Query details:\n"
+    msg += query.describe()
+
+    return msg
+
+
 # ------------------------------------------------------------------
 # Custom assertions
 
@@ -246,8 +286,6 @@ def has_change_event_occurred(
 
     tracer.evaluate_query(query)
 
-    # TODO: better messaging in case of early stop
-
     # if not enough events are found, raise an error
     if not query.succeeded():
         msg = (
@@ -258,13 +296,9 @@ def has_change_event_occurred(
             msg += f" within {timeout.initial_timeout} seconds"
         else:
             msg += " in already existing events"
-        msg += f", but only {_get_n_events_from_query(query)} found.\n\n"
+        msg += f", but only {_get_n_events_from_query(query)} found.\n"
 
-        events_list = "\n".join([str(event) for event in tracer.events])
-        msg += f"Events captured by TANGO_TRACER:\n{events_list}"
-
-        msg += "\n\nTANGO_TRACER Query details:\n"
-        msg += query.describe()
+        msg += _describe_failure(query, tracer, timeout)
 
         return assertpy_context.error(msg)
 
@@ -378,14 +412,12 @@ def hasnt_change_event_occurred(
             msg += " in already existing events"
         msg += f", but {_get_n_events_from_query(query)} were found."
 
-        event_list = "\n".join([str(event) for event in tracer.events])
-        msg += f"Events captured by TANGO_TRACER:\n{event_list}"
+        msg += _describe_failure(query, tracer, timeout)
 
-        msg += "\n\nTANGO_TRACER Query details:\n"
-        msg += query.describe()
-
-        msg += "NOTE: the query looks for N events, but in this case, "
-        msg += "you are expecting to find none."
+        msg += (
+            "NOTE: the query looks for N={max_n_events} events, "
+            "but in this case you were expecting less!"
+        )
 
         assertpy_context.error(msg)
 
