@@ -180,8 +180,45 @@ class TestEventQuery:
             "Query should handle infinite timeout values"
         ).is_equal_to(0)
 
+    @staticmethod
+    def test_query_before_start_timeout_can_be_changed() -> None:
+        """Test that the query can change the timeout before starting."""
+        query = SimpleEventQuery(
+            device_name="test/device/1",
+            attr_name="test_attr",
+            value=42,
+            timeout=10,
+        )
+        query.set_timeout(5)
+
+        assert_that(query.initial_timeout()).described_as(
+            "Query should handle changing the timeout before starting"
+        ).is_equal_to(5)
+
     # ----------------------------------------------------------------
     # Ongoing query status tests
+
+    @staticmethod
+    def test_query_after_start_timeout_cannot_be_changed() -> None:
+        """Test that the query cannot change the timeout after starting."""
+        storage = EventStorage()
+        query = SimpleEventQuery(
+            device_name="test/device/1",
+            attr_name="test_attr",
+            value=42,
+            timeout=10,
+        )
+        query.evaluate(storage)
+
+        with pytest.raises(RuntimeError) as exc_info:
+            query.set_timeout(5)
+
+        assert_that(query.initial_timeout()).described_as(
+            "Query should not allow changing the timeout after starting"
+        ).is_equal_to(10)
+        assert_that(str(exc_info.value)).described_as(
+            "Query should raise an exception when trying to change the timeout"
+        ).contains("Cannot change the timeout after the evaluation started")
 
     def test_query_ongoing_status_is_in_progress(self) -> None:
         """The query's status is in progress while it is being evaluated."""

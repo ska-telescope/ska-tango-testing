@@ -1,6 +1,6 @@
 """Implementation of specific event queries."""
 
-from typing import Callable
+from typing import Callable, SupportsFloat
 
 from ..event import ReceivedEvent
 from .base import EventQuery
@@ -154,6 +154,9 @@ class QueryWithFailCondition(EventQuery):
 
         # timeout and duration must be already calculated if this
         # method is called
+        # NOTE: this technical code suggests timeout could be a class
+        # TODO: think about it in the long term, we could use more the
+        # chained assertion timeout class
         timeout = self._initial_timeout_value
         duration = self._evaluation_duration()
         assert isinstance(timeout, float)
@@ -162,3 +165,16 @@ class QueryWithFailCondition(EventQuery):
             return "The query failed because of a timeout."
 
         return "The query failed for an unknown reason."
+
+    def _set_timeout(self, timeout: SupportsFloat) -> None:
+        """Change the timeout of the query (only before evaluation).
+
+        This method is used internally to change the timeout of the query
+        before the evaluation begins. Both this and the wrapped query timeout
+        are updated.
+
+        :param timeout: The new timeout for the query in seconds.
+        :raises RuntimeError: If the evaluation already started.
+        """  # noqa: DAR402
+        super()._set_timeout(timeout)
+        self.wrapped_query.set_timeout(timeout)

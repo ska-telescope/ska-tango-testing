@@ -232,6 +232,17 @@ class EventQuery(ABC):
         with self._lock:
             return self._is_completed()
 
+    def set_timeout(self, timeout: SupportsFloat) -> None:
+        """Change the timeout of the query (only before evaluation).
+
+        Before the evaluation begins, you can change this query's timeout.
+
+        :param timeout: The new timeout for the query in seconds.
+        :raises RuntimeError: If the evaluation already started.
+        """  # noqa: DAR402
+        with self._lock:
+            self._set_timeout(timeout)
+
     def initial_timeout(self) -> float:
         """Get the initial timeout in seconds.
 
@@ -295,6 +306,21 @@ class EventQuery(ABC):
     # ---------------------------------------------------------------------
     # Evaluation methods
     # (DO NOT OVERRIDE THESE METHODS)
+
+    def _set_timeout(self, timeout: SupportsFloat) -> None:
+        """Change the timeout of the query (only before evaluation).
+
+        This method is used internally to change the timeout of the query
+        before the evaluation begins.
+
+        :param timeout: The new timeout for the query in seconds.
+        :raises RuntimeError: If the evaluation already started.
+        """
+        if self._evaluation_start:
+            raise RuntimeError(
+                "Cannot change the timeout after the evaluation started."
+            )
+        self._timeout = timeout
 
     def evaluate(self, storage: EventStorage) -> None:
         """Start the evaluation of the query (USED BY THE TRACER).
