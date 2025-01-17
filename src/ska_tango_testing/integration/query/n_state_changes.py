@@ -104,17 +104,17 @@ class NStateChangesQuery(NEventsMatchQuery):
         NOTE: passing ``None`` to any of the criteria will match any value for
         that criterion.
         """
-        super().__init__(self._predicate, target_n_events, timeout)
+        super().__init__(self.as_predicate, target_n_events, timeout)
         self.device_name = device_name
         self.attribute_name = attribute_name
         self.attribute_value = attribute_value
         self.previous_value = previous_value
         self.custom_matcher = custom_matcher
 
-    def _predicate(
+    def as_predicate(
         self, event: ReceivedEvent, events: list[ReceivedEvent]
     ) -> bool:
-        """Check if the event matches the state change criteria.
+        """Define this query as a predicate to evaluate the events.
 
         :param event: The event to check.
         :param events: The list of all events.
