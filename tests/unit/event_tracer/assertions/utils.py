@@ -37,7 +37,7 @@ def expected_error_message_has_event(
     res += "matching the predicate "
 
     if timeout is not None:
-        res += f"within {timeout} seconds"
+        res += f"within {float(timeout)} seconds"
     else:
         res += "in already existing events"
     res += f", but only {detected_n_events} found.)"
@@ -48,7 +48,7 @@ def expected_error_message_has_event(
 def expected_error_message_hasnt_event(
     detected_n_events: int = 1,
     expected_n_events: int = 1,
-    timeout: int | None = None,
+    timeout: float | None = None,
 ) -> str:
     """Create a regular expression for hasnt event error message.
 
@@ -72,7 +72,7 @@ def expected_error_message_hasnt_event(
     res += "matching the predicate "
 
     if timeout is not None:
-        res += f"within {timeout} seconds"
+        res += f"within {float(timeout)} seconds"
     else:
         res += "in already existing events"
     res += f", but {detected_n_events} were found.)"

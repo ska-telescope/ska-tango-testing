@@ -494,6 +494,7 @@ class TestEventQuery:
         """A timeout object can be shared among different queries."""
         storage = EventStorage()
         timeout = ChainedAssertionsTimeout(5)
+        timeout.start()
 
         delayed_store_event(storage, create_test_event(), delay=1)
         delayed_store_event(
@@ -539,6 +540,7 @@ class TestEventQuery:
         """A timeout object can be shared among different queries."""
         storage = EventStorage()
         timeout = ChainedAssertionsTimeout(5)
+        timeout.start()
 
         delayed_store_event(storage, create_test_event(), delay=1)
         delayed_store_event(

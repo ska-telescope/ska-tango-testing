@@ -20,6 +20,7 @@ This module exposes:
 """  # pylint: disable=line-too-long # noqa: E501
 
 from datetime import datetime
+from threading import Lock
 from typing import Any, SupportsFloat
 
 # ------------------------------------------------------------------
@@ -35,6 +36,7 @@ class ChainedAssertionsTimeout(SupportsFloat):
     chained assertions. It permits you to:
 
     - Initialise the timeout once, with a specified value in seconds.
+    - Start the timeout
     - In various moments, get an updated timeout value that is the remaining
       time from the initial timeout.
 
@@ -76,16 +78,56 @@ class ChainedAssertionsTimeout(SupportsFloat):
                 "Expected a change event to occur within"
                 f" {self.timeout.initial_timeout} seconds"
             )
+
+    **Some further notes**:
+
+    - For the evaluation to begin, you have to call the :py:meth:`start`
+      method, which is automatically called in the
+      :py:func:`~ska_tango_testing.integration.assertions.within_timeout`
+      assertion. The method can be called many times, but it will only
+      set the start time once.
+    - You can directly pass a timeout object both to the
+      :py:func:`~ska_tango_testing.integration.assertions.within_timeout`
+      assertion and to the query objects and methods. A casting to a float
+      will automatically return the remaining timeout value. Sharing the same
+      timeout object between multiple blocks of assertions is also possible
+      and will lead to the same timeout value for all the blocks. E.g.,
+
+    .. code-block:: python
+
+        timeout = ChainedAssertionsTimeout(10)
+
+        # this asserton block automatically starts the timeout
+        assert_that(tracer).within_timeout(timeout).has_change_event_occurred(
+            ...
+        )
+
+        # this assertion block will access a decreased timeout value
+        assert_that(tracer).within_timeout(timeout).has_change_event_occurred(
+            ...
+        )
+
+    - The object is protected by an internal lock for ensuring
+      eventual parallel access to the timeout object. This is probably
+      strictly necessary (since those kinds of parallel accesses are edge
+      cases), but we still do it for safety.
     """
 
     def __init__(self, timeout: float) -> None:
         """Initialise a new timeout for chained assertions.
 
-        :param timeout: The initial timeout value in seconds.
+        :param timeout: The initial timeout value in seconds. If the timeout
+            is < 0 or infinite, it will be set to 0.
         """
         super().__init__()
-        self._initial_timeout = timeout
-        self._start_time = datetime.now()
+        self._lock = Lock()
+        self._initial_timeout = (
+            max(0.0, timeout) if timeout != float("inf") else 0.0
+        )
+        self._start_time: datetime | None = None
+
+    # ------------------------------------------------------------------
+    # Public API (thread-safe, it calls the lock)
 
     @property
     def initial_timeout(self) -> float | int:
@@ -93,15 +135,35 @@ class ChainedAssertionsTimeout(SupportsFloat):
 
         :return: The initial timeout value in seconds.
         """
-        return self._initial_timeout
+        with self._lock:
+            return self._initial_timeout
 
     @property
-    def start_time(self) -> datetime:
+    def start_time(self) -> datetime | None:
         """Get the start time of the timeout.
 
         :return: The start time of the timeout.
         """
-        return self._start_time
+        with self._lock:
+            return self._start_time
+
+    def is_started(self) -> bool:
+        """Check if the timeout has been started.
+
+        :return: ``True`` if the timeout has been started, ``False`` otherwise.
+        """
+        with self._lock:
+            return self._is_started()
+
+    def start(self) -> None:
+        """Start the timeout.
+
+        This method sets the start time of the timeout to the current time.
+        It can be called multiple times, but it will only set the start time
+        once.
+        """
+        with self._lock:
+            self._start()
 
     def get_remaining_timeout(self) -> float:
         """Get the remaining timeout value, since the initialization time.
@@ -109,11 +171,8 @@ class ChainedAssertionsTimeout(SupportsFloat):
         :return: The remaining timeout value in seconds. It is at least ``0``
             and at most the initial timeout value. It will decrease over time.
         """
-        return max(
-            0.0,
-            self.initial_timeout
-            - (datetime.now() - self.start_time).total_seconds(),
-        )
+        with self._lock:
+            return self._get_remaining_timeout()
 
     def __float__(self) -> float:
         """Get the remaining timeout value when casting to float.
@@ -127,12 +186,45 @@ class ChainedAssertionsTimeout(SupportsFloat):
         """
         return self.get_remaining_timeout()
 
+    # ------------------------------------------------------------------
+    # Implementations (they assume the lock is called by the public API)
+
+    def _is_started(self) -> bool:
+        """Check if the timeout has been started.
+
+        :return: ``True`` if the timeout has been started, ``False`` otherwise.
+        """
+        return self._start_time is not None
+
+    def _start(self) -> None:
+        """Start the timeout."""
+        if self._start_time is None:
+            self._start_time = datetime.now()
+
+    def _get_remaining_timeout(self) -> float:
+        """Get the remaining timeout (in seconds) since the start time.
+
+        :return: The remaining timeout value in seconds. It is at least ``0``
+            and at most the initial timeout value. It will decrease over time.
+            If the timeout has not been started yet, it will return the initial
+            timeout value.
+        """
+        if not self._is_started():
+            return float(self._initial_timeout)
+
+        assert self._start_time is not None
+        return max(
+            0.0,
+            float(self._initial_timeout)
+            - (datetime.now() - self._start_time).total_seconds(),
+        )
+
 
 # ------------------------------------------------------------------
 # Assertpy extension to set a timeout for chained assertions
 
 
-def within_timeout(assertpy_context: Any, timeout: int | float) -> Any:
+def within_timeout(assertpy_context: Any, timeout: SupportsFloat) -> Any:
     """Add a timeout for the next chain of tracer assertions.
 
     :py:class:`~ska_tango_testing.integration.TangoEventTracer`
@@ -193,13 +285,25 @@ def within_timeout(assertpy_context: Any, timeout: int | float) -> Any:
 
     :param assertpy_context: The `assertpy` context object
         (It is passed automatically)
-    :param timeout: The time in seconds to wait for the event to occur.
+    :param timeout: The time in seconds to wait for the event to occur, or
+        a timeout object that supports float operations. NOTE: you can
+        pass a
+        :py:class:`~ska_tango_testing.integration.assertions.ChainedAssertionsTimeout`
+        object to share the same timeout between multiple blocks of assertions.
 
     :return: The decorated assertion context, with a
         :py:class:`~ska_tango_testing.integration.assertions.ChainedAssertionsTimeout`
         instance stored in the ``event_timeout`` attribute.
     """  # pylint: disable=line-too-long # noqa: E501
-    assertpy_context.event_timeout = ChainedAssertionsTimeout(timeout)
+    # create a new timeout object
+    if not isinstance(timeout, ChainedAssertionsTimeout):
+        timeout = ChainedAssertionsTimeout(float(timeout))
+
+    # ensure the timeout is started
+    timeout.start()
+
+    # store the timeout in the assertpy context
+    assertpy_context.event_timeout = timeout
     return assertpy_context
 
 

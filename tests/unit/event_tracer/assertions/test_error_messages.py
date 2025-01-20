@@ -75,7 +75,7 @@ class TestAssertionsErrorMessages:
             "The error message should contain the timeout information"
         ).contains(
             "FAILURE REASON: The query condition was not met "
-            "within the 1 seconds timeout"
+            "within the 1.0 seconds timeout"
         )
 
     @staticmethod
