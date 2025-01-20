@@ -126,6 +126,23 @@ class ChainedAssertionsTimeout(SupportsFloat):
         )
         self._start_time: datetime | None = None
 
+    @staticmethod
+    def get_timeout_object(
+        timeout: SupportsFloat,
+    ) -> "ChainedAssertionsTimeout":
+        """Get a timeout object from a timeout value.
+
+        This method is a factory method that creates a new timeout object
+        from a timeout value. If the timeout value is already a timeout object,
+        it will return the same object.
+
+        :param timeout: The timeout value in seconds, or a timeout object.
+        :return: A timeout object.
+        """
+        if isinstance(timeout, ChainedAssertionsTimeout):
+            return timeout
+        return ChainedAssertionsTimeout(float(timeout))
+
     # ------------------------------------------------------------------
     # Public API (thread-safe, it calls the lock)
 
@@ -295,9 +312,8 @@ def within_timeout(assertpy_context: Any, timeout: SupportsFloat) -> Any:
         :py:class:`~ska_tango_testing.integration.assertions.ChainedAssertionsTimeout`
         instance stored in the ``event_timeout`` attribute.
     """  # pylint: disable=line-too-long # noqa: E501
-    # create a new timeout object
-    if not isinstance(timeout, ChainedAssertionsTimeout):
-        timeout = ChainedAssertionsTimeout(float(timeout))
+    # create a new timeout object (or re-use the existing one)
+    timeout = ChainedAssertionsTimeout.get_timeout_object(timeout)
 
     # ensure the timeout is started
     timeout.start()

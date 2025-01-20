@@ -24,6 +24,30 @@ class TestChainedAssertionsTimeout:
         assert_that(cat.start_time).is_none()
 
     @staticmethod
+    def test_initialization_factory_method_reuses_passed_object() -> None:
+        """When a timeout object is passed to the factory, it is reused."""
+        timeout_value = 2
+        cat = ChainedAssertionsTimeout(timeout_value)
+
+        cat2 = ChainedAssertionsTimeout.get_timeout_object(cat)
+
+        assert_that(cat2).is_equal_to(cat).is_instance_of(
+            ChainedAssertionsTimeout
+        )
+
+    @staticmethod
+    def test_initialization_factory_method_creates_new_object() -> None:
+        """When a number is passed to the factory, a new object is created."""
+        timeout_value = 2
+        cat = ChainedAssertionsTimeout(timeout_value)
+
+        cat2 = ChainedAssertionsTimeout.get_timeout_object(2)
+
+        assert_that(cat2).is_not_equal_to(cat).is_instance_of(
+            ChainedAssertionsTimeout
+        )
+
+    @staticmethod
     def test_get_remaining_timeout_before_start_is_initial_value() -> None:
         """Before starting the remaining timeout is the initial value."""
         timeout_value = 2
