@@ -213,6 +213,9 @@ class TangoEventTracer:
         the last "change" that happened). Take this into account when you
         write your queries.
 
+        **NOTE**: if you subscribe to the same attribute of the same device
+        multiple times, the subscription will NOT be duplicated.
+
         :param device_name: The name of the Tango target device. Alternatively,
             if you already have a device proxy, you can pass it directly.
         :param attribute_name: The name of the attribute to subscribe to.

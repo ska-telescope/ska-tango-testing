@@ -68,11 +68,12 @@ class TangoSubscriber:
         self.attribute_enum_mapping = EventEnumMapper(event_enum_mapping)
         """Mapping of attribute names to event types (Enum)."""
 
-        # The subscription ids are stored in a dictionary with the device
-        # proxy as key and a list of subscription ids as value.
+        # The subscription ids are stored in 2 levels dictionary:
+        # - the first level is the device proxy
+        # - the second level key is the attribute name (lowercase)
         self._subscription_ids: dict[
-            tango.DeviceProxy, list[int]
-        ] = defaultdict(list)
+            tango.DeviceProxy, dict[str, int]
+        ] = defaultdict(dict)
 
         # A lock is used to protect eventual concurrent access to the
         # subscription ids
@@ -120,17 +121,23 @@ class TangoSubscriber:
             If None, tango.DeviceProxy will be used.
         :raises ValueError: If the device_name is not a string or DeviceProxy
 
-
         **NOTE**: Upon subscription, you will immediately receive an event with
         the current value of the attribute.
 
+        **NOTE**: if you subscribe to the same attribute of the same device
+        multiple times, the subscription will NOT be duplicated.
+
         **TECHNICAL NOTE**: This method is thread-safe. The subscription ID is
         stored in a thread-safe way to allow concurrent subscriptions and
-        unsubscriptions.
+        un-subscriptions.
         """  # noqa: DAR402
         # create the device proxy if needed. Raise an error if the device_name
         # is not a string or DeviceProxy
         device = self._get_or_create_device(device_name, dev_factory)
+
+        # If the subscription already exists, do not duplicate it
+        if self._does_subscription_exist(device, attribute_name):
+            return
 
         # subscribe to the Tango device attribute with the given callback
         subscription_id = device.subscribe_event(
@@ -142,15 +149,13 @@ class TangoSubscriber:
         )
 
         # store the subscription id for the device
-        # TODO: may we store the attribute name as well?
-        with self._subscriptions_lock:
-            self._subscription_ids[device].append(subscription_id)
+        self._store_subscription_id(device, attribute_name, subscription_id)
 
     def unsubscribe_all(self) -> None:
         """Unsubscribe from all active subscriptions."""
         with self._subscriptions_lock:
-            for device, subscription_ids in self._subscription_ids.items():
-                for subscription_id in subscription_ids:
+            for device, attributes in self._subscription_ids.items():
+                for _, subscription_id in attributes.items():
                     try:
                         device.unsubscribe_event(subscription_id)
                     except tango.EventSystemFailed as exception:
@@ -164,8 +169,53 @@ class TangoSubscriber:
             self._subscription_ids.clear()
 
     # ------------------------------------------------------------------------
-    # Private methods
+    # Handlers for subscription ids management (lock protected)
+
+    def _does_subscription_exist(
+        self, device: tango.DeviceProxy, attribute_name: str
+    ) -> bool:
+        """Check if a subscription exists for the given device and attribute.
+
+        :param device: The device proxy to check
+        :param attribute_name: The attribute name to check
+        :return: True if a subscription exists, False otherwise
+        """
+        with self._subscriptions_lock:
+            return attribute_name.lower() in self._subscription_ids[device]
+
+    def _store_subscription_id(
+        self,
+        device: tango.DeviceProxy,
+        attribute_name: str,
+        subscription_id: int,
+    ) -> None:
+        """Store the subscription ID for the given device and attribute.
+
+        :param device: The device proxy
+        :param attribute_name: The attribute name
+        :param subscription_id: The subscription ID
+        """
+        with self._subscriptions_lock:
+            self._subscription_ids[device][
+                attribute_name.lower()
+            ] = subscription_id
+
+    def _unset_subscription_id(
+        self, device: tango.DeviceProxy, attribute_name: str
+    ) -> int:
+        """Unset the subscription ID for the given device and attribute.
+
+        :param device: The device proxy
+        :param attribute_name: The attribute name
+        :return: The subscription ID that was unset
+        """
+        with self._subscriptions_lock:
+            curr_id = self._subscription_ids[device][attribute_name.lower()]
+            del self._subscription_ids[device][attribute_name.lower()]
+            return curr_id
+
     # ------------------------------------------------------------------------
+    # Other private methods
 
     @staticmethod
     def _get_or_create_device(

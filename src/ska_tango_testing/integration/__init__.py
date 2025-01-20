@@ -145,6 +145,8 @@ def log_events(
     class). Typed events attribute values will be logged using the
     corresponding Enum labels instead of the raw values.
 
+    
+
     :param device_attribute_map: A dictionary mapping devices to a list
         of attribute names you are interested in logging. Each device
         could be specified either as a device name (str) or as a

@@ -44,7 +44,9 @@ class TestTangoSubscriber:
         assert_that(
             # pylint: disable=protected-access
             subscriber._subscription_ids[mock_proxy.return_value]
-        ).described_as("Subscription ID should be stored").contains(1234)
+        ).described_as("Subscription ID should be stored").contains(
+            "test_attr"
+        )
         assert_that(
             mock_proxy.return_value.subscribe_event.call_args_list
         ).described_as("subscribe_event should be called").is_length(1)
@@ -166,3 +168,40 @@ class TestTangoSubscriber:
         assert_that(received_event.attribute_value).described_as(
             "ReceivedEvent should have correct value"
         ).is_equal_to(DummyStateEnum.STATE_2)
+
+    # ------------------------------------------------------------------------
+    # Double subscription testing
+
+    @staticmethod
+    def test_double_subscriptions_are_not_repeated() -> None:
+        """Double subscriptions are not repeated."""
+        with patch_context_device_proxy() as mock_proxy:
+            mock_proxy.return_value.subscribe_event.return_value = 1234
+            subscriber = TangoSubscriber()
+            callback = MagicMock()
+
+            subscriber.subscribe_event("test/device/1", "test_attr", callback)
+            subscriber.subscribe_event("test/device/1", "test_attr", callback)
+
+        assert_that(
+            mock_proxy.return_value.subscribe_event.call_args_list
+        ).described_as("subscribe_event should be called only once").is_length(
+            1
+        )
+
+    @staticmethod
+    def test_subscriptions_are_possible_from_different_attributes() -> None:
+        """Double subscriptions are possible from different attributes."""
+        with patch_context_device_proxy() as mock_proxy:
+            mock_proxy.return_value.subscribe_event.return_value = 1234
+            subscriber = TangoSubscriber()
+            callback = MagicMock()
+
+            subscriber.subscribe_event("test/device/1", "test_attr1", callback)
+            subscriber.subscribe_event("test/device/1", "test_attr1", callback)
+            subscriber.subscribe_event("test/device/1", "test_attr2", callback)
+            subscriber.subscribe_event("test/device/1", "test_attr2", callback)
+
+        assert_that(
+            mock_proxy.return_value.subscribe_event.call_args_list
+        ).described_as("subscribe_event should be called twice").is_length(2)
