@@ -122,7 +122,7 @@ class ChainedAssertionsTimeout(SupportsFloat):
         super().__init__()
         self._lock = Lock()
         self._initial_timeout = (
-            max(0.0, timeout) if timeout != float("inf") else 0.0
+            max(0.0, float(timeout)) if timeout != float("inf") else 0.0
         )
         self._start_time: datetime | None = None
 
@@ -147,7 +147,7 @@ class ChainedAssertionsTimeout(SupportsFloat):
     # Public API (thread-safe, it calls the lock)
 
     @property
-    def initial_timeout(self) -> float | int:
+    def initial_timeout(self) -> float:
         """Get the initial timeout value in seconds.
 
         :return: The initial timeout value in seconds.
