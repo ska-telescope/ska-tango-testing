@@ -223,6 +223,8 @@ among multiple assertion chains. For example:
 
 .. code-block:: python
 
+  from ska_tango_testing.integration.assertions import ChainedAssertionsTimeout
+
   timeout = ChainedAssertionsTimeout(10)  # 10-second timeout
 
   assert_that(tracer).described_as(
@@ -253,6 +255,8 @@ Additionally, this object enables more fine-grained control over when the timeou
 begins. For example:
 
 .. code-block:: python
+
+  from ska_tango_testing.integration.assertions import ChainedAssertionsTimeout
 
   timeout = ChainedAssertionsTimeout(10)  # 10-second timeout
   timeout.start()  # Start the timeout manually
