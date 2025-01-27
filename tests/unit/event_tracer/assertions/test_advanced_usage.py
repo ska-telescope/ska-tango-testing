@@ -1,11 +1,14 @@
 """The assertions advanced features work as expected."""
 
-
+import time
 from datetime import datetime
 
 import pytest
 from assertpy import assert_that
 
+from ska_tango_testing.integration.assertions.timeout import (
+    ChainedAssertionsTimeout,
+)
 from ska_tango_testing.integration.tracer import TangoEventTracer
 
 from ..testing_utils.populate_tracer import add_event, delayed_add_event
@@ -30,6 +33,8 @@ class TestAssertionsAdvancedUsage:
       and combine it correctly with the other parameters.
     - The custom assertions are able to stop early if during the evaluation
       of the assertions an early stop sentinel is triggered.
+    - The custom assertions accept timeout as an object, which could be
+      also shared between different assertions.
     """
 
     @staticmethod
@@ -380,3 +385,92 @@ class TestAssertionsAdvancedUsage:
             device_name="device1",
             attribute_value=100,
         )
+
+    # ##########################################################
+    # Tests: timeout object
+
+    @staticmethod
+    def test_assert_that_has_event_accepts_timeout_as_an_object(
+        tracer: TangoEventTracer,
+    ) -> None:
+        """The 'has' assertion accepts a timeout object.
+
+        :param tracer: The `TangoEventTracer` instance.
+        """
+        timeout = ChainedAssertionsTimeout(5)
+        delayed_add_event(tracer, "device1", 100, 0.5)
+
+        start_time = datetime.now()
+        assert_that(tracer).described_as(
+            "The timeout object should be used"
+        ).within_timeout(timeout).has_change_event_occurred(
+            device_name="device1",
+            attribute_value=100,
+        )
+
+        assert_timeout_in_between(start_time, 0.5, 0.6)
+
+    @staticmethod
+    def test_assert_that_timeout_as_an_object_can_be_started_before(
+        tracer: TangoEventTracer,
+    ) -> None:
+        """The timeout object can be started before the assertion.
+
+        :param tracer: The `TangoEventTracer` instance.
+        """
+        timeout = ChainedAssertionsTimeout(0.5)
+        timeout.start()
+
+        time.sleep(0.5)
+        delayed_add_event(tracer, "device1", 100, 0.1)
+
+        start_time = datetime.now()
+        with pytest.raises(AssertionError):
+            assert_that(tracer).described_as(
+                "The timeout object should be used"
+            ).within_timeout(timeout).has_change_event_occurred(
+                device_name="device1",
+                attribute_value=100,
+            )
+
+        assert_timeout_in_between(start_time, 0, 0.1)
+
+    @staticmethod
+    def test_assert_that_timeout_can_be_shared_among_multiple_assertions(
+        tracer: TangoEventTracer,
+    ) -> None:
+        """The timeout object can be shared among multiple assertions.
+
+        :param tracer: The `TangoEventTracer` instance.
+        """
+        timeout = ChainedAssertionsTimeout(0.5)
+        start_time = datetime.now()
+
+        # This event should be captured within the given timeout
+        delayed_add_event(tracer, "device1", 100, 0.3)
+        assert_that(tracer).described_as(
+            "The timeout object should be shared. This assertion should pass"
+        ).within_timeout(timeout).has_change_event_occurred(
+            device_name="device1",
+            attribute_value=100,
+        )
+        assert_timeout_in_between(start_time, 0.3, 0.4)
+        assert_that(timeout.get_remaining_timeout()).described_as(
+            "The timeout object remaining time should be updated"
+        ).is_close_to(0.2, 0.1)
+
+        # This event not, because the timeout is already consumed
+        # by the previous assertion
+        delayed_add_event(tracer, "device2", 120, 0.3)
+        with pytest.raises(AssertionError):
+            assert_that(tracer).described_as(
+                "The timeout object should be shared. "
+                "This assertion should fail"
+            ).within_timeout(timeout).has_change_event_occurred(
+                device_name="device2",
+                attribute_value=120,
+            )
+        assert_timeout_in_between(start_time, 0.5, 0.6)
+        assert_that(timeout.get_remaining_timeout()).described_as(
+            "The timeout should be elapsed"
+        ).is_equal_to(0)
