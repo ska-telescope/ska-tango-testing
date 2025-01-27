@@ -193,3 +193,78 @@ needed. Potential use cases may be:
 
 **NOTE:** Currently, if multiple sentinels are defined, only the last one
 is used. This behaviour may change in future updates.
+
+Timeout as an object (``ChainedAssertionsTimeout`` class)  
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+As we already mentioned in :ref:`Getting Started <getting_started_tracer>`,
+the timeout parameter specified through
+:py:func:`~ska_tango_testing.integration.assertions.within_timeout` is a
+simple way to make the following assertion chain not just evaluate current
+events but also wait for new events to arrive for a certain amount of time.
+What you yet may not know is that you can specify a timeout as an object
+and then share it among multiple assertion chains (as it's already shared
+among multiple assertions in the same chain).
+
+The class
+:py:class:`~ska_tango_testing.integration.assertions.ChainedAssertionsTimeout`
+represents a timeout as an object, which:
+
+- is initialised once with a timeout value (during the object creation),
+- can be passed among multiple assertion chains,
+- when it's used the first time, it starts counting down from the moment
+  it's used,
+- for the following assertions, it provides the remaining time to wait
+  for new events to arrive (which is the initial timeout minus the time
+  passed since the first use).
+
+This is useful when you want to share the same timeout among multiple
+assertion chains. Example:
+
+.. code-block:: python
+
+  timeout = ChainedAssertionsTimeout(10)  # 10 seconds timeout
+
+  assert_that(tracer).described_as(
+    "A certain event must occur within a timeout"
+  ).within_timeout(timeout).has_change_event_occurred(
+      # Assertions here
+  ).has_change_event_occurred(
+      # More assertions
+  ).has_change_event_occurred(
+      # Additional assertions
+  )
+
+  # Let's say the first assertion chain took 6 seconds to complete
+  # --> the remaining time for the following chain is 4 seconds
+
+  # the timeout is shared among multiple assertion chains
+  assert_that(other_tracer).described_as(
+    "Another event must occur within the same timeout"
+  ).within_timeout(timeout).has_change_event_occurred(
+      # Assertions here
+  ).has_change_event_occurred(
+      # More assertions
+  ).has_change_event_occurred(
+      # Additional assertions
+  )
+
+Also, the object can be also used when you want a more fine-grained control
+over when to start the timeout. Example:
+
+.. code-block:: python
+
+  timeout = ChainedAssertionsTimeout(10)  # 10 seconds timeout
+  timeout.start()  # start the timeout
+
+  # (let's assume here we make our actions, which block the SUT for a while)
+  # (e.g., 6 seconds)
+  # ...
+
+  # --> This assertion will have only 4 seconds to wait for new events
+  assert_that(other_tracer).described_as(
+    "Another event must occur within the same timeout"
+  ).within_timeout(timeout).has_change_event_occurred(
+      # Assertions here
+  )
+
