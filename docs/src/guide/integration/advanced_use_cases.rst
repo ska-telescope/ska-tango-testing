@@ -197,74 +197,73 @@ is used. This behaviour may change in future updates.
 Timeout as an object (``ChainedAssertionsTimeout`` class)  
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-As we already mentioned in :ref:`Getting Started <getting_started_tracer>`,
-the timeout parameter specified through
-:py:func:`~ska_tango_testing.integration.assertions.within_timeout` is a
-simple way to make the following assertion chain not just evaluate current
-events but also wait for new events to arrive for a certain amount of time.
-What you yet may not know is that you can specify a timeout as an object
-and then share it among multiple assertion chains (as it's already shared
-among multiple assertions in the same chain).
+As mentioned previously in :ref:`Getting Started <getting_started_tracer>`, 
+the timeout parameter specified via 
+:py:func:`~ska_tango_testing.integration.assertions.within_timeout` 
+provides a straightforward method to ensure that the subsequent assertion chain 
+not only evaluates current events but also waits for new events to arrive 
+within a specified time period. 
 
-The class
-:py:class:`~ska_tango_testing.integration.assertions.ChainedAssertionsTimeout`
+What you may not yet know is that a timeout can also be defined as an object, 
+allowing it to be shared across multiple assertion chains. This approach is similar 
+to how timeouts are shared among multiple assertions within a single chain.
+
+The class 
+:py:class:`~ska_tango_testing.integration.assertions.ChainedAssertionsTimeout` 
 represents a timeout as an object, which:
 
-- is initialised once with a timeout value (during the object creation),
-- can be passed among multiple assertion chains,
-- when it's used the first time, it starts counting down from the moment
-  it's used,
-- for the following assertions, it provides the remaining time to wait
-  for new events to arrive (which is the initial timeout minus the time
-  passed since the first use).
+- is initialised once with a specified timeout value (at the point of object creation),
+- can be passed between multiple assertion chains,
+- starts counting down from the moment it is used for the first time,
+- provides the remaining time for subsequent assertions, which is the initial 
+  timeout minus the elapsed time since its first use.
 
-This is useful when you want to share the same timeout among multiple
-assertion chains. Example:
+This approach is particularly useful when you wish to share the same timeout 
+among multiple assertion chains. For example:
 
 .. code-block:: python
 
-  timeout = ChainedAssertionsTimeout(10)  # 10 seconds timeout
+  timeout = ChainedAssertionsTimeout(10)  # 10-second timeout
 
   assert_that(tracer).described_as(
-    "A certain event must occur within a timeout"
+    "A certain event must occur within the timeout period"
   ).within_timeout(timeout).has_change_event_occurred(
       # Assertions here
   ).has_change_event_occurred(
-      # More assertions
-  ).has_change_event_occurred(
       # Additional assertions
+  ).has_change_event_occurred(
+      # Further assertions
   )
 
-  # Let's say the first assertion chain took 6 seconds to complete
-  # --> the remaining time for the following chain is 4 seconds
+  # Suppose the first assertion chain takes 6 seconds to complete
+  # --> The remaining time for subsequent chains will be 4 seconds
 
-  # the timeout is shared among multiple assertion chains
+  # The timeout is shared across multiple assertion chains
   assert_that(other_tracer).described_as(
-    "Another event must occur within the same timeout"
+    "Another event must occur within the same timeout period"
   ).within_timeout(timeout).has_change_event_occurred(
       # Assertions here
   ).has_change_event_occurred(
-      # More assertions
-  ).has_change_event_occurred(
       # Additional assertions
+  ).has_change_event_occurred(
+      # Further assertions
   )
 
-Also, the object can be also used when you want a more fine-grained control
-over when to start the timeout. Example:
+Additionally, this object enables more fine-grained control over when the timeout 
+begins. For example:
 
 .. code-block:: python
 
-  timeout = ChainedAssertionsTimeout(10)  # 10 seconds timeout
-  timeout.start()  # start the timeout
+  timeout = ChainedAssertionsTimeout(10)  # 10-second timeout
+  timeout.start()  # Start the timeout manually
 
-  # (let's assume here we make our actions, which block the SUT for a while)
-  # (e.g., 6 seconds)
+  # (Assume some actions are performed here, which block the SUT for a while)
+  # (e.g., 6 seconds pass)
   # ...
 
-  # --> This assertion will have only 4 seconds to wait for new events
+  # --> This assertion will now have only 4 seconds to wait for new events
   assert_that(other_tracer).described_as(
-    "Another event must occur within the same timeout"
+    "Another event must occur within the same timeout period"
   ).within_timeout(timeout).has_change_event_occurred(
       # Assertions here
   )
-
