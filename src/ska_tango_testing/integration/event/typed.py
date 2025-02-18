@@ -182,12 +182,32 @@ class EventEnumMapper:
         """Get a ``TypedEvent`` if the attribute is associated with an Enum.
 
         :param event: The event to type.
-        :return: The
-            :py:class:`TypedEvent` instance if the attribute is
-            associated with an Enum, the original event otherwise.
+        :return: The :py:class:`TypedEvent` instance if the attribute is
+            associated with an Enum and the attribute value is effectively
+            mappable to the given enum, the original event otherwise.
         """
         for attr_name, enum_class in self._mapping.items():
             # NOTE: We use the has_attribute method to avoid case sensitivity
-            if event.has_attribute(attr_name):
+            # NOTE 2: We also ensure that the event value can be converted to
+            # the Enum
+            if event.has_attribute(attr_name) and self._enum_support_event(
+                enum_class, event
+            ):
                 return TypedEvent(event.event_data, enum_class)
         return event
+
+    @staticmethod
+    def _enum_support_event(
+        enum_class: type[Enum], event: ReceivedEvent
+    ) -> bool:
+        """Check if the event value can be converted to the given Enum.
+
+        :param enum_class: The Enum class to check against.
+        :param event: The event to check.
+        :return: True if the event value can be converted to the Enum.
+        """
+        try:
+            enum_class(event.attribute_value)
+            return True
+        except ValueError:
+            return False

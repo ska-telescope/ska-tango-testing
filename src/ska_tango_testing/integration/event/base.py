@@ -119,8 +119,18 @@ class ReceivedEvent:
         """The new value of the attribute when the event was sent.
 
         :return: The new value of the attribute. The type of the value
-            depends on the attribute type.
+            depends on the attribute type. If for some reason the value
+            is missing, None is returned.
         """
+        # handle a few tricky cases where the attribute value is missing
+        if (
+            not hasattr(self.event_data, "attr_value")
+            or self.event_data.attr_value is None
+            or not hasattr(self.event_data.attr_value, "value")
+        ):
+            return None
+
+        # extract and return the event attribute value
         return self.event_data.attr_value.value
 
     @property
