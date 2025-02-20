@@ -16,16 +16,18 @@ import tango
 from assertpy import assert_that
 
 from ska_tango_testing.integration import log_events
+from ska_tango_testing.integration.event import ReceivedEvent
 from ska_tango_testing.integration.logger import (
     DEFAULT_LOG_ALL_EVENTS,
     DEFAULT_LOG_MESSAGE_BUILDER,
     TangoEventLogger,
 )
 
-from .testing_utils import create_eventdata_mock
 from .testing_utils.dev_proxy_mock import DeviceProxyMock
 from .testing_utils.dummy_state_enum import DummyStateEnum
+from .testing_utils.eventdata_mock import create_eventdata_mock
 from .testing_utils.patch_context_devproxy import patch_context_device_proxy
+from .testing_utils.received_event_mock import create_test_event
 
 LOGGING_PATH = "ska_tango_testing.integration.logger.logging"
 
@@ -57,10 +59,10 @@ class TestTangoEventLogger:
         :param mock_logging: The mock logging module.
         :param logger: The TangoEventLogger instance.
         """
-        mock_event = create_eventdata_mock("test/device/1", "attribute1", 123)
+        mock_event = create_test_event("test/device/1", "attribute1", 123)
 
         logger._log_event(  # pylint: disable=protected-access
-            event_data=mock_event,
+            mock_event,
             filtering_rule=DEFAULT_LOG_ALL_EVENTS,
             message_builder=DEFAULT_LOG_MESSAGE_BUILDER,
         )
@@ -91,10 +93,10 @@ class TestTangoEventLogger:
         :param mock_logging: The mock logging module.
         :param logger: The TangoEventLogger instance.
         """
-        mock_event = create_eventdata_mock("test/device/1", "attribute1", 123)
+        mock_event = create_test_event("test/device/1", "attribute1", 123)
 
         logger._log_event(  # pylint: disable=protected-access
-            event_data=mock_event,
+            mock_event,
             filtering_rule=lambda e: False,
             message_builder=DEFAULT_LOG_MESSAGE_BUILDER,
         )
@@ -115,10 +117,10 @@ class TestTangoEventLogger:
         :param mock_logging: The mock logging module.
         :param logger: The TangoEventLogger instance.
         """
-        mock_event = create_eventdata_mock("test/device/1", "attribute1", 123)
+        mock_event = create_test_event("test/device/1", "attribute1", 123)
 
         logger._log_event(  # pylint: disable=protected-access
-            event_data=mock_event,
+            mock_event,
             filtering_rule=DEFAULT_LOG_ALL_EVENTS,
             message_builder=lambda e: "Custom message",
         )
@@ -140,15 +142,17 @@ class TestTangoEventLogger:
         :param mock_logging: The mock logging module.
         :param logger: The TangoEventLogger instance.
         """
-        mock_event = create_eventdata_mock(
-            "test/device/1",
-            "attribute1",
-            123,
-            error=True,
+        mock_event = ReceivedEvent(
+            create_eventdata_mock(
+                "test/device/1",
+                "attribute1",
+                123,
+                error=True,
+            )
         )
 
         logger._log_event(  # pylint: disable=protected-access
-            event_data=mock_event,
+            mock_event,
             filtering_rule=DEFAULT_LOG_ALL_EVENTS,
             message_builder=DEFAULT_LOG_MESSAGE_BUILDER,
         )
@@ -275,13 +279,13 @@ class TestTangoEventLogger:
 
         :param mock_logging: The mock logging module.
         """
-        mock_event = create_eventdata_mock(
+        mock_event = create_test_event(
             "test/device/1", "state", DummyStateEnum.STATE_1
         )
         logger = TangoEventLogger({"State": DummyStateEnum})
 
         logger._log_event(  # pylint: disable=protected-access
-            event_data=mock_event,
+            mock_event,
             filtering_rule=DEFAULT_LOG_ALL_EVENTS,
             message_builder=DEFAULT_LOG_MESSAGE_BUILDER,
         )
@@ -317,11 +321,11 @@ class TestTangoEventLogger:
                 event_enum_mapping={"State": DummyStateEnum},
             )
 
-        mock_event = create_eventdata_mock(
+        mock_event = create_test_event(
             "test/device/1", "state", DummyStateEnum.STATE_1
         )
         logger._log_event(  # pylint: disable=protected-access
-            event_data=mock_event,
+            mock_event,
             filtering_rule=DEFAULT_LOG_ALL_EVENTS,
             message_builder=DEFAULT_LOG_MESSAGE_BUILDER,
         )

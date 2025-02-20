@@ -63,11 +63,6 @@ Custom assertions and related utilities for integration tests.
     :members:
     :special-members: __init__
 
-.. automodule:: ska_tango_testing.integration.assertions_utils
-    :members:
-    :special-members: __init__
-
-
 .. _integration_logger_api:
 
 ska_tango_testing.integration.logger
@@ -84,17 +79,16 @@ ska_tango_testing.integration.event
     :members:
     :special-members: __init__
 
-ska_tango_testing.integration.typed_event
---------------------------------------------
+ska_tango_testing.integration.query
+----------------------------------------------------
 
-.. automodule:: ska_tango_testing.integration.typed_event
+.. automodule:: ska_tango_testing.integration.query
     :members:
     :special-members: __init__
 
-ska_tango_testing.integration.predicates
-----------------------------------------------------
+ska_tango_testing.integration.predicates (DEPRECATED)
+------------------------------------------------------
 
 .. automodule:: ska_tango_testing.integration.predicates
     :members:
     :special-members: __init__
-

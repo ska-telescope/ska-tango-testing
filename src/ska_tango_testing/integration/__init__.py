@@ -63,7 +63,7 @@ For more advanced usage of the event tracer, we recommend reading
 the documentation of the :py:class:`TangoEventTracer` class, and then
 give a look at :py:mod:`ska_tango_testing.integration.assertions`,
 :py:mod:`ska_tango_testing.integration.event`, and
-:py:mod:`ska_tango_testing.integration.predicates`.
+:py:mod:`ska_tango_testing.integration.query`.
 
 For more advanced usage of the event logger, we recommend reading
 the documentation of the
@@ -80,6 +80,7 @@ from assertpy import add_extension
 from .assertions import (
     has_change_event_occurred,
     hasnt_change_event_occurred,
+    with_early_stop,
     within_timeout,
 )
 from .logger import TangoEventLogger
@@ -89,6 +90,7 @@ from .tracer import TangoEventTracer
 add_extension(has_change_event_occurred)
 add_extension(hasnt_change_event_occurred)
 add_extension(within_timeout)
+add_extension(with_early_stop)
 
 
 # provide a quick utility function to log events
@@ -139,9 +141,11 @@ def log_events(
     those cases, when you call ``log_events(...)``, you can
     provide a mapping of attribute names to enums through the
     ``event_enum_mapping`` parameter (see the
-    :py:class:`ska_tango_testing.integration.typed_event.EventEnumMapper`
+    :py:class:`ska_tango_testing.integration.event.EventEnumMapper`
     class). Typed events attribute values will be logged using the
     corresponding Enum labels instead of the raw values.
+
+
 
     :param device_attribute_map: A dictionary mapping devices to a list
         of attribute names you are interested in logging. Each device

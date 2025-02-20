@@ -42,16 +42,19 @@ you debugging your tests.
 
 To begin using :py:mod:`ska_tango_testing.integration` we recommend starting
 with the :ref:`getting_started_tracer` guide, to learn about
-:py:class:`~ska_tango_testing.integration.TangoEventTracer` and the already
-available assertions and then, only if needed, to move to the more advanced
-features described in :ref:`custom_queries_and_assertions` and
-in the :ref:`API reference <integration_tracer_api>`.
+:py:class:`~ska_tango_testing.integration.TangoEventTracer` and how it can
+be used to capture events and make assertions. Then, we recommend to read
+:ref:`advanced_use_cases` to learn about the full set of features of the
+tracer and the assertions. If you are looking for more technical use-cases
+and examples, you can refer to the :ref:`custom_queries_and_assertions` guide
+and finally to the :ref:`API reference <integration_tracer_api>`.
 
 .. toctree::
    :maxdepth: 2
    :caption: Integration tests with TangoEventTracer
 
    getting_started
+   advanced_use_cases
    custom_queries_and_assertions
    event_logger
 

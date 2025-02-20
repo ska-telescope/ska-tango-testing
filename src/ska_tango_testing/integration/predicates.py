@@ -1,5 +1,10 @@
 """Predicates to filter `TangoEventTracer` events in queries.
 
+**WARNING**: This module is deprecated and will be removed in future.
+It is replaced by queries objects, which are able to print by
+themselves their details; see
+:py:mod:`~ska_tango_testing.integration.query` module.
+
 A collection of predicates to filter
 :py:class:`~ska_tango_testing.integration.event.ReceivedEvent`
 instances when calling the
@@ -14,9 +19,15 @@ write or use these predicates directly. Instead, you will use the custom
 :py:mod:`ska_tango_testing.integration.assertions`). If
 you wish to write custom predicates we still recommend to check the custom
 code for usage examples.
+
+**WARNING**: This module is deprecated and will be removed in future.
+It is replaced by queries objects, which are able to print by
+themselves their details; see
+:py:mod:`~ska_tango_testing.integration.query`.
 """
 from typing import Any
 
+import deprecation  # type: ignore
 import tango  # pylint: disable=unused-import
 
 from .event import ReceivedEvent
@@ -25,6 +36,13 @@ from .tracer import TangoEventTracer
 ANY_VALUE = None
 
 
+@deprecation.deprecated(
+    deprecated_in="0.8.0",
+    details="This method is deprecated and will likely be removed in future. "
+    "It is replaced by queries objects, which are able to print by "
+    "themselves their details; see "
+    "`ska_tango_testing.integration.query`.",
+)
 def event_matches_parameters(
     target_event: ReceivedEvent,
     device_name: "str | tango.DeviceProxy | None" = ANY_VALUE,
@@ -35,6 +53,11 @@ def event_matches_parameters(
 
     If a criterion is not given (``ANY_VALUE``), the predicate will always
     return True (only the given and not ``None`` criteria will be checked).
+
+    **WARNING**: This method is deprecated and will be removed in future.
+    It is replaced by queries objects, which are able to print by
+    themselves their details; see
+    :py:mod:`~ska_tango_testing.integration.query`.
 
     :param target_event: The event to check.
     :param device_name: The device name to match. If not provided, it will
@@ -72,6 +95,13 @@ def event_matches_parameters(
     return True
 
 
+@deprecation.deprecated(
+    deprecated_in="0.8.0",
+    details="This method is deprecated and will likely be removed in future. "
+    "It is replaced by queries objects, which are able to print by "
+    "themselves their details; see "
+    "`ska_tango_testing.integration.query`.",
+)
 def event_has_previous_value(
     target_event: ReceivedEvent, tracer: TangoEventTracer, previous_value: Any
 ) -> bool:
@@ -81,6 +111,11 @@ def event_has_previous_value(
     before the current one. It is useful to check if an event was triggered
     by a specific value change. If the event has no previous value, it will
     return False.
+
+    **WARNING**: This method is deprecated and will be removed in future.
+    It is replaced by queries objects, which are able to print by
+    themselves their details; see
+    :py:mod:`~ska_tango_testing.integration.query`.
 
     :param target_event: The event to check.
     :param tracer: The event tracer containing the events.

@@ -1,19 +1,19 @@
-"""Extension of the event system to permit to "type" the event with Enums.
+"""Extension of the event system to allow typing the event with Enums.
 
-Many Tango devices attributes in the SKA project are state machines, and
+Many Tango device attributes in the SKA project are state machines, and
 their states are represented as Enums. This module extends the event system
-to permit to "type" the event with Enums, so when the event is received, the
+to allow typing the event with Enums, so when the event is received, the
 state is automatically converted to the corresponding Enum. This is useful
 so when you print the event as a string, you can see the state as a human
 readable label, instead of an integer number.
 
-Concretely, this is achieved defining two new classes:
+Concretely, this is achieved by defining two new classes:
 
-- :py:class:`ska_tango_testing.integration.typed_event.TypedEvent`,
+- :py:class:`ska_tango_testing.integration.event.TypedEvent`,
   which is a subclass of
   :py:class:`ska_tango_testing.integration.event.ReceivedEvent`, and
-- :py:class:`ska_tango_testing.integration.typed_event.EventEnumMapper`,
-  which is a class that permits the association of attribute names with
+- :py:class:`ska_tango_testing.integration.event.EventEnumMapper`,
+  which is a class that allows the association of attribute names with
   Enums.
 """
 
@@ -21,7 +21,7 @@ from enum import Enum
 
 import tango
 
-from .event import ReceivedEvent
+from .base import ReceivedEvent
 
 
 def _fail_if_type_not_enum(enum_class: type) -> None:
@@ -83,11 +83,11 @@ class TypedEvent(ReceivedEvent):
 
     @property
     def attribute_value(self) -> Enum:
-        """The attribute value, eventually casted to the given enum.
+        """The attribute value, eventually cast to the given enum.
 
         NOTE: remember that if you want to have it printed with the Enum
         label instead of the integer value, you need to cast it to a string,
-        like done here:
+        as shown here:
 
         .. code-block:: python
 
@@ -112,7 +112,7 @@ class TypedEvent(ReceivedEvent):
 class EventEnumMapper:
     """A class to map attribute names to Enums.
 
-    This class permits to associate attribute names with Enums. This is
+    This class allows the association of attribute names with Enums. This is
     useful for state machine attributes, so when the event is received, the
     state is automatically converted to the corresponding Enum. This is
     useful so when you print the event as a string, you can see the state
@@ -182,12 +182,32 @@ class EventEnumMapper:
         """Get a ``TypedEvent`` if the attribute is associated with an Enum.
 
         :param event: The event to type.
-        :return: The
-            :py:class:`TypedEvent` instance if the attribute is
-            associated with an Enum, the original event otherwise.
+        :return: The :py:class:`TypedEvent` instance if the attribute is
+            associated with an Enum and the attribute value is effectively
+            mappable to the given enum, the original event otherwise.
         """
         for attr_name, enum_class in self._mapping.items():
             # NOTE: We use the has_attribute method to avoid case sensitivity
-            if event.has_attribute(attr_name):
+            # NOTE 2: We also ensure that the event value can be converted to
+            # the Enum
+            if event.has_attribute(attr_name) and self._enum_support_event(
+                enum_class, event
+            ):
                 return TypedEvent(event.event_data, enum_class)
         return event
+
+    @staticmethod
+    def _enum_support_event(
+        enum_class: type[Enum], event: ReceivedEvent
+    ) -> bool:
+        """Check if the event value can be converted to the given Enum.
+
+        :param enum_class: The Enum class to check against.
+        :param event: The event to check.
+        :return: True if the event value can be converted to the Enum.
+        """
+        try:
+            enum_class(event.attribute_value)
+            return True
+        except ValueError:
+            return False

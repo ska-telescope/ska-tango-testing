@@ -12,7 +12,6 @@ those events correctly. For that, see `test_tracer_subscribe_event.py`.
 # import logging
 from datetime import datetime
 from typing import Any, SupportsFloat
-from unittest.mock import patch
 
 import pytest
 import tango
@@ -23,8 +22,6 @@ from ska_tango_testing.integration.event import ReceivedEvent
 from ska_tango_testing.integration.tracer import TangoEventTracer
 
 from .testing_utils import create_eventdata_mock
-from .testing_utils.dev_proxy_mock import DeviceProxyMock
-from .testing_utils.dummy_state_enum import DummyStateEnum
 from .testing_utils.patch_context_devproxy import patch_context_device_proxy
 from .testing_utils.populate_tracer import add_event, delayed_add_event
 
@@ -78,29 +75,12 @@ class TestTangoEventTracer:
             "test_device", "test_attribute", 123
         )
 
-        tracer._event_callback(test_event)  # pylint: disable=protected-access
+        # pylint: disable=protected-access
+        tracer._add_event(ReceivedEvent(test_event))
 
         self._check_tracer_one_event(
-            tracer, "test_device", "test_attribute", 123  # , 100
+            tracer, "test_device", "test_attribute", 123
         )
-
-    @staticmethod
-    def test_event_callback_when_error_ignore_event(
-        tracer: TangoEventTracer,
-    ) -> None:
-        """Test that the event callback ignores events with errors.
-
-        :param tracer: The `TangoEventTracer` instance.
-        """
-        test_event = create_eventdata_mock(
-            "test_device", "test_attribute", 123, error=True
-        )
-
-        tracer._event_callback(test_event)  # pylint: disable=protected-access
-
-        assert_that(tracer.events).described_as(
-            "Event callback should ignore events with errors"
-        ).is_empty()
 
     # ########################################
     # Test cases: subscribe method
@@ -124,7 +104,9 @@ class TestTangoEventTracer:
             mock_proxy.assert_called_with("test_device")
 
     @staticmethod
-    def test_subscribe_event(tracer: TangoEventTracer) -> None:
+    def test_a_subscription_to_a_change_event_happens(
+        tracer: TangoEventTracer,
+    ) -> None:
         """Subscribe to a device and attribute.
 
         :param tracer: The `TangoEventTracer` instance.
@@ -135,64 +117,20 @@ class TestTangoEventTracer:
             tracer.subscribe_event(device_name, attribute_name)
 
             mock_proxy.assert_called_with(device_name)
-            mock_proxy.return_value.subscribe_event.assert_called_with(
-                attribute_name,
-                tango.EventType.CHANGE_EVENT,
-                tracer._event_callback,  # pylint: disable=protected-access
-            )
-
-    @staticmethod
-    def test_subscribe_event_passing_instance(
-        tracer: TangoEventTracer,
-    ) -> None:
-        """Subscribe to a device and attribute passing a device instance.
-
-        :param tracer: The `TangoEventTracer` instance.
-        """
-        device_name, attribute_name = "test_device", "test_attribute"
-
-        with patch("tango.DeviceProxy", new_callable=DeviceProxyMock):
-            device_proxy = tango.DeviceProxy(device_name)
-            tracer.subscribe_event(device_proxy, attribute_name)
-
-            device_proxy.subscribe_event.assert_called_with(
-                attribute_name,
-                tango.EventType.CHANGE_EVENT,
-                tracer._event_callback,  # pylint: disable=protected-access
-            )
-
-    @staticmethod
-    def test_subscribe_event_passing_dev_factory(
-        tracer: TangoEventTracer,
-    ) -> None:
-        """Subscribe to a device and attribute passing a device factory.
-
-        :param tracer: The `TangoEventTracer` instance.
-        """
-        device_name, attribute_name = "test_device", "test_attribute"
-
-        def device_factory(device_name: str) -> tango.DeviceProxy:
-            """Create a device proxy.
-
-            :param device_name: The device name.
-
-            :return: A device proxy.
-            """
-            return tango.DeviceProxy(device_name)
-
-        with patch(
-            "tango.DeviceProxy", new_callable=DeviceProxyMock
-        ) as mock_proxy:
-            tracer.subscribe_event(
-                device_name, attribute_name, dev_factory=device_factory
-            )
-
-            mock_proxy.assert_called_with(device_name)
-            mock_proxy.return_value.subscribe_event.assert_called_with(
-                attribute_name,
-                tango.EventType.CHANGE_EVENT,
-                tracer._event_callback,  # pylint: disable=protected-access
-            )
+            calls = mock_proxy.return_value.subscribe_event.call_args_list
+            assert_that(calls).described_as(
+                "Expected exactly one call to subscribe_event"
+            ).is_length(1)
+            assert_that(calls[0].args).described_as(
+                "Expected the first call to subscribe_event to have "
+                "the correct arguments"
+            ).is_length(3)
+            assert_that(calls[0].args[0]).described_as(
+                "Expected the first argument to be the attribute name"
+            ).is_equal_to(attribute_name)
+            assert_that(calls[0].args[1]).described_as(
+                "Expected the second argument to be the event type"
+            ).is_equal_to(tango.EventType.CHANGE_EVENT)
 
     @staticmethod
     def test_clear_events(tracer: TangoEventTracer) -> None:
@@ -223,9 +161,7 @@ class TestTangoEventTracer:
         :param tracer: The `TangoEventTracer` instance.
         """
         add_event(tracer, "device1", 100, 5)  # Adds an event 5 seconds ago
-        result = tracer.query_events(
-            lambda e: e.has_device("device1"), timeout=None
-        )
+        result = tracer.query_events(lambda e: e.has_device("device1"))
         assert_that(result).described_as(
             "Expected to find a matching event for 'device1', "
             "but none was found."
@@ -242,9 +178,7 @@ class TestTangoEventTracer:
         add_event(tracer, "device1", 100, 5)
 
         start_time = datetime.now()
-        result = tracer.query_events(
-            lambda e: e.has_device("device2"), timeout=None
-        )
+        result = tracer.query_events(lambda e: e.has_device("device2"))
 
         assert_that(result).described_as(
             "Found an unexpected event for 'device2' when none should exist."
@@ -448,32 +382,58 @@ class TestTangoEventTracer:
             "but none was found."
         ).is_length(1)
 
-    # ########################################
-    # Test cases: typed events
-    # (some special events are typed with an Enum)
-
     @staticmethod
-    def test_add_typed_event() -> None:
-        """A typed event is correctly created and added to the tracer."""
-        tracer = TangoEventTracer({"state": DummyStateEnum})
-        test_event = create_eventdata_mock(
-            "test_device", "state", DummyStateEnum.STATE_2
+    def test_recursive_query_call_does_not_cause_deadlock(
+        tracer: TangoEventTracer,
+    ) -> None:
+        """A recursive query call does not cause a deadlock.
+
+        :param tracer: The `TangoEventTracer` instance.
+        """
+        add_event(tracer, "device1", 100, 0)
+        add_event(tracer, "device2", 100, 0)
+
+        def match_even_only_if_another_event_from_diff_device_exists(
+            event: ReceivedEvent,
+        ) -> bool:
+            # This could cause issues
+            other_event = tracer.query_events(
+                lambda e: e.device_name != event.device_name
+                and e.attribute_name == event.attribute_name
+                and e.attribute_value == event.attribute_value
+            )
+            return len(other_event) > 0
+
+        result = tracer.query_events(
+            match_even_only_if_another_event_from_diff_device_exists
         )
 
-        tracer._event_callback(test_event)  # pylint: disable=protected-access
+        assert_that(result).described_as(
+            "Expected to find 2 events, but found "
+            f"{'more' if len(result) > 2 else 'less'} ({len(result)})."
+        ).is_length(2)
 
-        assert_that(tracer.events).described_as(
-            "Event callback should add an event"
-        ).is_length(1)
-        assert_that(tracer.events[0]).described_as(
-            "First event should be a TypedEvent instance"
-        ).is_instance_of(ReceivedEvent)
-        assert_that(tracer.events[0].attribute_value).described_as(
-            "The attribute value should be a DummyStateEnum instance"
-        ).is_instance_of(DummyStateEnum)
-        assert_that(tracer.events[0].attribute_value).described_as(
-            "The attribute value should be DummyStateEnum.STATE2"
-        ).is_equal_to(DummyStateEnum.STATE_2)
-        assert_that(str(tracer.events[0].attribute_value)).described_as(
-            "The attribute value as string should be 'STATE2'"
-        ).is_equal_to("DummyStateEnum.STATE_2")
+    @staticmethod
+    def test_recursive_events_retrieval_does_not_cause_deadlock(
+        tracer: TangoEventTracer,
+    ) -> None:
+        """A recursive events retrieval does not cause a deadlock.
+
+        :param tracer: The `TangoEventTracer` instance.
+        """
+        add_event(tracer, "device1", 100, 0)
+        add_event(tracer, "device2", 100, 0)
+
+        def match_event_only_if_2_or_more_events_exist(
+            _: ReceivedEvent,
+        ) -> bool:
+            return len(tracer.events) >= 2
+
+        result = tracer.query_events(
+            match_event_only_if_2_or_more_events_exist
+        )
+
+        assert_that(result).described_as(
+            "Expected to find 2 events, but found "
+            f"{'more' if len(result) > 2 else 'less'} ({len(result)})."
+        ).is_length(2)
