@@ -128,15 +128,15 @@ wait for events to arrive and conditions to be satisfied.
 Interaction through queries
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Internally, the tracer represents the interrogations it receives as
+Internally, the tracer represents the queries it receives as
 :py:class:`~ska_tango_testing.integration.query.EventQuery` objects. You
 can do the same by creating your own queries and evaluating them using the
 :py:meth:`~ska_tango_testing.integration.TangoEventTracer.evaluate_query`
 method.
 
 :py:class:`~ska_tango_testing.integration.query.EventQuery` represents an
-interrogation over events received by the tracer or that will be received
-in the future. Every time you make an interrogation to the tracer (e.g.,
+query over events received by the tracer or that will be received
+in the future. Every time you make an query to the tracer (e.g.,
 when you call the
 :py:class:`~ska_tango_testing.integration.TangoEventTracer.query_events`
 method or a custom assertion), a query
@@ -175,7 +175,7 @@ Here is an example of creating and evaluating a query:
     # Check if the query succeeded
     assert_that(query.succeeded()).described_as(
         # Use the query description to provide more information about
-        # the interrogation and the reason for the failure
+        # the query and the reason for the failure
         f"The following query is expected to succeed:\n{query.describe()}"
 
         # Provide a list of events in the tracer at the time of evaluation
