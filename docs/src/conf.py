@@ -23,7 +23,7 @@ copyright = "2022, CSIRO"
 author = "Drew Devereux <drew.devereux@csiro.au>"
 
 # The full version, including alpha/beta/rc tags
-release = "0.7.3"
+release = "0.8.0"
 
 
 # -- General configuration ---------------------------------------------------
