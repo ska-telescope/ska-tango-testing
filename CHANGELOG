@@ -1,5 +1,15 @@
 # Version History
 
+## 0.8.0
+
+* [SST-1022] Refactor TangoEventTracer internal mechanics, break it
+into smaller classes, introduce a query object
+* [SST-1022] In TangoEventTracer custom assertions, add support for
+an early stop mechanism do detect error events and stop early an assertion
+evaluation if possible
+* [SST-1018] In TangoEventTracer custom assertions, add support for
+shared timeout objects
+
 ## 0.7.3
 
 * [WOM-502] Relax version constaints for pytango to allow installing
