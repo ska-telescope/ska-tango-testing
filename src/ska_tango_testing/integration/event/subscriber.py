@@ -133,7 +133,7 @@ class TangoSubscriber:
         """  # noqa: DAR402
         # create the device proxy if needed. Raise an error if the device_name
         # is not a string or DeviceProxy
-        device = self._get_or_create_device(device_name, dev_factory)
+        device = self._get_device_from_name_or_object(device_name, dev_factory)
 
         # If the subscription already exists, do not duplicate it
         if self._does_subscription_exist(device, attribute_name):
@@ -181,7 +181,30 @@ class TangoSubscriber:
         :return: True if a subscription exists, False otherwise
         """
         with self._subscriptions_lock:
-            return attribute_name.lower() in self._subscription_ids[device]
+            # Check if the device is in the subscription ids
+            for (
+                subscribed_device,
+                subscribed_attributes,
+            ) in self._subscription_ids.items():
+                if self._are_same_device_proxies(device, subscribed_device):
+
+                    # Check if the attribute name is in the subscription ids
+                    return attribute_name.lower() in subscribed_attributes
+
+            # No device found with the same name -> subscription does not exist
+            return False
+
+    @staticmethod
+    def _are_same_device_proxies(
+        device1: tango.DeviceProxy, device2: tango.DeviceProxy
+    ) -> bool:
+        """Check if two device proxies are for the same device.
+
+        :param device1: The first device proxy
+        :param device2: The second device proxy
+        :return: True if they are the same, False otherwise
+        """
+        return device1.dev_name() == device2.dev_name()
 
     def _store_subscription_id(
         self,
@@ -218,11 +241,11 @@ class TangoSubscriber:
     # Other private methods
 
     @staticmethod
-    def _get_or_create_device(
+    def _get_device_from_name_or_object(
         device_name: "str | tango.DeviceProxy",
         dev_factory: Callable[[str], tango.DeviceProxy] | None = None,
     ) -> tango.DeviceProxy:
-        """Get an existing device proxy or create a new one.
+        """Get a device proxy object from a device name or a DeviceProxy.
 
         :param device_name: The name of the device or a DeviceProxy instance
         :param dev_factory: Optional factory function to create device proxies

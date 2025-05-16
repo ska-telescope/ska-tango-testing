@@ -178,6 +178,7 @@ class TestTangoSubscriber:
         """Double subscriptions are not repeated."""
         with patch_context_device_proxy() as mock_proxy:
             mock_proxy.return_value.subscribe_event.return_value = 1234
+            mock_proxy.dev_name.return_value = "test/device/1"
             subscriber = TangoSubscriber()
             callback = MagicMock()
 
@@ -217,6 +218,7 @@ class TestTangoSubscriber:
         with patch_context_device_proxy() as mock_proxy:
             subscribe_event = MagicMock(side_effect=[1234, 1234])
             mock_proxy.return_value.subscribe_event = subscribe_event
+            mock_proxy.return_value.dev_name.return_value = "test/device/1"
             device_proxy = create_dev_proxy_mock("test/device/1")
             device_proxy.subscribe_event = subscribe_event
             subscriber = TangoSubscriber()
