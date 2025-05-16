@@ -16,6 +16,7 @@ from ska_tango_testing.integration.event.subscriber import TangoSubscriber
 from ska_tango_testing.integration.event.typed import TypedEvent
 
 from ..testing_utils import DeviceProxyMock, create_eventdata_mock
+from ..testing_utils.dev_proxy_mock import create_dev_proxy_mock
 from ..testing_utils.dummy_state_enum import DummyStateEnum
 from ..testing_utils.patch_context_devproxy import patch_context_device_proxy
 
@@ -188,6 +189,46 @@ class TestTangoSubscriber:
         ).described_as("subscribe_event should be called only once").is_length(
             1
         )
+
+    @staticmethod
+    def test_double_subscr_with_device_proxy_are_not_repeated() -> None:
+        """Subscriptions with proxies to the same device are not repeated."""
+        subscriber = TangoSubscriber()
+        # create two device proxies to the same device
+        # (-> the subscription should be the same)
+        device_proxy_a = create_dev_proxy_mock("test/device/1")
+        device_proxy_b = create_dev_proxy_mock("test/device/1")
+        subscribe_event = MagicMock(side_effect=[1234, 1234])
+        device_proxy_a.subscribe_event = subscribe_event
+        device_proxy_b.subscribe_event = subscribe_event
+        callback = MagicMock()
+
+        # subscribe to the same attribute with two different proxies
+        subscriber.subscribe_event(device_proxy_a, "test_attr", callback)
+        subscriber.subscribe_event(device_proxy_b, "test_attr", callback)
+
+        assert_that(subscribe_event.call_args_list).described_as(
+            "subscribe_event should be called only once"
+        ).is_length(1)
+
+    @staticmethod
+    def test_double_subscr_with_name_and_device_are_not_repeated() -> None:
+        """Subscriptions with name and device proxy are not repeated."""
+        with patch_context_device_proxy() as mock_proxy:
+            subscribe_event = MagicMock(side_effect=[1234, 1234])
+            mock_proxy.return_value.subscribe_event = subscribe_event
+            device_proxy = create_dev_proxy_mock("test/device/1")
+            device_proxy.subscribe_event = subscribe_event
+            subscriber = TangoSubscriber()
+            callback = MagicMock()
+
+            # subscribe to the same attribute with a name and a proxy
+            subscriber.subscribe_event("test/device/1", "test_attr", callback)
+            subscriber.subscribe_event(device_proxy, "test_attr", callback)
+
+        assert_that(subscribe_event.call_args_list).described_as(
+            "subscribe_event should be called only once"
+        ).is_length(1)
 
     @staticmethod
     def test_subscriptions_are_possible_from_different_attributes() -> None:
