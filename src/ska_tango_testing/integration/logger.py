@@ -8,7 +8,6 @@ import tango
 
 from .event import ReceivedEvent
 from .event.subscriber import TangoSubscriber
-from .event.typed import EventEnumMapper
 
 
 # pylint: disable=duplicate-code
@@ -152,11 +151,6 @@ class TangoEventLogger:
         # (thread-safe) Tango devices subscriber
         self._subscriber = TangoSubscriber(event_enum_mapping)
 
-        # mapping of attribute names to enums (to handle typed events)
-        self.attribute_enum_mapping: EventEnumMapper = EventEnumMapper(
-            event_enum_mapping
-        )
-
     def __del__(self) -> None:
         """Unsubscribe from all events when the logger is deleted."""
         self.unsubscribe_all()
@@ -280,3 +274,20 @@ class TangoEventLogger:
     def unsubscribe_all(self) -> None:
         """Unsubscribe from all events."""
         self._subscriber.unsubscribe_all()
+
+    def map_attribute_to_enum(
+        self, attribute_name: str, enum_type: type[Enum]
+    ) -> None:
+        """Map an attribute name to an enum type.
+
+        This method allows you to map an attribute name to an enum type.
+        This is useful when you want to log the attribute value using the
+        enum label instead of the raw value. Using this method you will add
+        more attributes to the default mapping of the logger.
+
+        :param attribute_name: The name of the attribute.
+        :param enum_type: The enum type to map the attribute to.
+        """
+        self._subscriber.attribute_enum_mapping.map_attribute_to_enum(
+            attribute_name, enum_type
+        )

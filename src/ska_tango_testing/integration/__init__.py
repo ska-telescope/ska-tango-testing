@@ -93,6 +93,13 @@ add_extension(within_timeout)
 add_extension(with_early_stop)
 
 
+default_logger = TangoEventLogger()
+"""Default logger instance to use for logging events.
+
+It is used when calling :py:func:`log_events`.
+"""
+
+
 # provide a quick utility function to log events
 # (instead of a full logger)
 def log_events(
@@ -145,7 +152,10 @@ def log_events(
     class). Typed events attribute values will be logged using the
     corresponding Enum labels instead of the raw values.
 
-
+    **NOTE**: the default logger is a singleton, so if you call
+    ``log_events(...)`` multiple times, it will use the same logger. As a
+    consequence, this means multiple subscriptions to the same event will
+    be ignored, unless you unsubscribe first.
 
     :param device_attribute_map: A dictionary mapping devices to a list
         of attribute names you are interested in logging. Each device
@@ -160,19 +170,24 @@ def log_events(
     :return: The `TangoEventLogger` instance that is used to log
         the given events.
     """
-    logger = TangoEventLogger(event_enum_mapping=event_enum_mapping)
+    # overwrite the new fields in the event enum mapping in the default logger
+    if event_enum_mapping is not None:
+        for event_name, enum_type in event_enum_mapping.items():
+            default_logger.map_attribute_to_enum(event_name, enum_type)
 
+    # use the default logger to log the given events from the devices
     for device, attr_list in device_attribute_map.items():
         for attr in attr_list:
-            logger.log_events_from_device(
+            default_logger.log_events_from_device(
                 device, attr, dev_factory=dev_factory
             )
 
-    return logger
+    return default_logger
 
 
 # expose just a minimal set of classes and functions
 __all__ = [
     "TangoEventTracer",
     "log_events",
+    "default_logger",
 ]

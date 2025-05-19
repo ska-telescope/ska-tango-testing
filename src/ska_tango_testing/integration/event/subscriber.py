@@ -187,7 +187,6 @@ class TangoSubscriber:
                 subscribed_attributes,
             ) in self._subscription_ids.items():
                 if self._are_same_device_proxies(device, subscribed_device):
-
                     # Check if the attribute name is in the subscription ids
                     return attribute_name.lower() in subscribed_attributes
 

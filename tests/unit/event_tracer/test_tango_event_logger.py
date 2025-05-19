@@ -15,8 +15,9 @@ import pytest
 import tango
 from assertpy import assert_that
 
-from ska_tango_testing.integration import log_events
+from ska_tango_testing.integration import default_logger, log_events
 from ska_tango_testing.integration.event import ReceivedEvent
+from ska_tango_testing.integration.event.typed import EventEnumMapper
 from ska_tango_testing.integration.logger import (
     DEFAULT_LOG_ALL_EVENTS,
     DEFAULT_LOG_MESSAGE_BUILDER,
@@ -47,6 +48,15 @@ class TestTangoEventLogger:
         :return: The :py:class:`TangoEventLogger`
         """
         return TangoEventLogger()
+
+    @pytest.fixture(autouse=True)
+    @staticmethod
+    def reset_default_logger() -> None:
+        """Reset the default logger's state before each test."""
+        default_logger.unsubscribe_all()
+        # pylint: disable=protected-access
+        default_logger._subscriber.attribute_enum_mapping = EventEnumMapper()
+        # pylint: enable=protected-access
 
     @staticmethod
     @patch(LOGGING_PATH)
@@ -345,3 +355,82 @@ class TestTangoEventLogger:
             " the right message to the logger "
             "(the human readable value should be used)."
         ).contains("DummyStateEnum.STATE_1")
+
+    # ##########################################
+    # Test: singleton logger behavior
+
+    @staticmethod
+    def test_log_events_returns_singleton_logger() -> None:
+        """log_events always returns the same logger instance (singleton)."""
+        with patch_context_device_proxy():
+            logger1 = log_events({"dev1": ["attr1"]})
+            logger2 = log_events({"dev2": ["attr2"]})
+
+        assert_that(logger1).described_as(
+            "The log_events function should return the same logger instance."
+        ).is_equal_to(default_logger).is_equal_to(logger2)
+
+    @staticmethod
+    @patch(LOGGING_PATH)
+    def test_log_events_enum_mapping_persists(mock_logging: MagicMock) -> None:
+        """Enum mapping persists across log_events calls (singleton logger).
+
+        :param mock_logging: The mock logging module.
+        """
+        # call log_events once with a mapping
+        mock_event = create_test_event(
+            "test/device/1", "foo", DummyStateEnum.STATE_1
+        )
+        with patch_context_device_proxy():
+            logger = log_events({}, event_enum_mapping={"foo": DummyStateEnum})
+        logger._log_event(  # pylint: disable=protected-access
+            mock_event,
+            filtering_rule=DEFAULT_LOG_ALL_EVENTS,
+            message_builder=DEFAULT_LOG_MESSAGE_BUILDER,
+        )
+        assert_that(mock_logging.info.call_args[0][0]).described_as(
+            "The log_event method should write"
+            " the right message to the logger "
+            "(the human readable value should be used)."
+        ).contains("DummyStateEnum.STATE_1")
+
+        # call log_events again with a different mapping
+        with patch_context_device_proxy():
+            logger = log_events({}, event_enum_mapping={"bar": DummyStateEnum})
+        logger._log_event(  # pylint: disable=protected-access
+            mock_event,
+            filtering_rule=DEFAULT_LOG_ALL_EVENTS,
+            message_builder=DEFAULT_LOG_MESSAGE_BUILDER,
+        )
+        assert_that(mock_logging.info.call_args[0][0]).described_as(
+            "The log_event method should remember the previous mapping."
+        ).contains("DummyStateEnum.STATE_1")
+
+        logger._log_event(  # pylint: disable=protected-access
+            create_test_event("test/device/1", "bar", DummyStateEnum.STATE_2),
+            filtering_rule=DEFAULT_LOG_ALL_EVENTS,
+            message_builder=DEFAULT_LOG_MESSAGE_BUILDER,
+        )
+        assert_that(mock_logging.info.call_args[0][0]).described_as(
+            "The log_event method should use also the new mapping."
+        ).contains("DummyStateEnum.STATE_2")
+
+    @staticmethod
+    def test_log_events_duplicate_subscription() -> None:
+        """Subscribe twice to the same event should not create duplicates."""
+        device = "dev1"
+        attr = "attr1"
+        with patch_context_device_proxy() as mock_proxy:
+            mock_proxy.subscribe_event = MagicMock(
+                side_effect=lambda *args, **kwargs: 42
+            )
+            log_events({device: [attr]})
+            log_events({device: [attr]})
+
+        assert_that(
+            mock_proxy.return_value.subscribe_event.call_count
+        ).described_as(
+            "The subscription should not be duplicated."
+        ).is_equal_to(
+            1
+        )
