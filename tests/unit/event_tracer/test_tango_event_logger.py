@@ -9,6 +9,7 @@ capability of subscribing to events from a Tango device and capturing
 those events correctly. For that, see `test_logger_subscribe_event.py`.
 """
 
+from typing import Any
 from unittest.mock import ANY, MagicMock, patch
 
 import pytest
@@ -59,6 +60,43 @@ class TestTangoEventLogger:
         # pylint: enable=protected-access
 
     @staticmethod
+    def logger_received_event(
+        logger: TangoEventLogger,
+        device_name: str,
+        attribute_name: str,
+        attribute_value: Any,
+    ) -> None:
+        """Simulate receiving an event and return the event.
+
+        :param logger: The TangoEventLogger instance that will receive
+            the event.
+        :param device_name: The name of the device that sent the event.
+        :param attribute_name: The name of the attribute that sent the event.
+        :param attribute_value: The value of the attribute that sent the event.
+        """
+        event_data = create_eventdata_mock(
+            device_name, attribute_name, attribute_value
+        )
+
+        # pylint: disable=protected-access
+        def logger_callback(
+            event: ReceivedEvent,
+        ) -> None:
+            """Call the logger callback with an event to log.
+
+            :param event: The event to log (already a ReceivedEvent, and
+                eventually already typed).
+            """
+            logger._log_event(
+                event,
+                filtering_rule=DEFAULT_LOG_ALL_EVENTS,
+                message_builder=DEFAULT_LOG_MESSAGE_BUILDER,
+            )
+
+        logger._subscriber._on_receive_tango_event(event_data, logger_callback)
+        # pylint: enable=protected-access
+
+    @staticmethod
     @patch(LOGGING_PATH)
     def test_log_event_writes_the_right_message_on_logging_info(
         mock_logging: MagicMock,
@@ -69,12 +107,11 @@ class TestTangoEventLogger:
         :param mock_logging: The mock logging module.
         :param logger: The TangoEventLogger instance.
         """
-        mock_event = create_test_event("test/device/1", "attribute1", 123)
-
-        logger._log_event(  # pylint: disable=protected-access
-            mock_event,
-            filtering_rule=DEFAULT_LOG_ALL_EVENTS,
-            message_builder=DEFAULT_LOG_MESSAGE_BUILDER,
+        TestTangoEventLogger.logger_received_event(
+            logger,
+            "test/device/1",
+            "attribute1",
+            123,
         )
 
         # Assert that content of the last message
@@ -289,17 +326,13 @@ class TestTangoEventLogger:
 
         :param mock_logging: The mock logging module.
         """
-        mock_event = create_test_event(
-            "test/device/1", "state", DummyStateEnum.STATE_1
-        )
         logger = TangoEventLogger({"State": DummyStateEnum})
-
-        logger._log_event(  # pylint: disable=protected-access
-            mock_event,
-            filtering_rule=DEFAULT_LOG_ALL_EVENTS,
-            message_builder=DEFAULT_LOG_MESSAGE_BUILDER,
+        TestTangoEventLogger.logger_received_event(
+            logger,
+            "test/device/1",
+            "state",
+            DummyStateEnum.STATE_1.value,
         )
-
         # Assert that content of the last message
         # printed includes device name, attribute name and current value
         assert_that(mock_logging.info.call_args[0][0]).described_as(
@@ -310,6 +343,31 @@ class TestTangoEventLogger:
             "The log_event method should write"
             " the right message to the logger."
         ).contains("state")
+        assert_that(mock_logging.info.call_args[0][0]).described_as(
+            "The log_event method should write"
+            " the right message to the logger "
+            "(the human readable value should be used)."
+        ).contains("DummyStateEnum.STATE_1")
+
+    @staticmethod
+    @patch(LOGGING_PATH)
+    def test_log_typed_events_setting_the_mapping_after(
+        mock_logging: MagicMock,
+    ) -> None:
+        """The typing mapping can be set after the logger is created.
+
+        :param mock_logging: The mock logging module.
+        """
+        logger = TangoEventLogger()
+        logger.map_attribute_to_enum("STATE", DummyStateEnum)
+        TestTangoEventLogger.logger_received_event(
+            logger,
+            "test/device/1",
+            "state",
+            DummyStateEnum.STATE_1.value,
+        )
+        # Assert that content of the last message
+        # printed includes device name, attribute name and current value
         assert_that(mock_logging.info.call_args[0][0]).described_as(
             "The log_event method should write"
             " the right message to the logger "
@@ -330,16 +388,12 @@ class TestTangoEventLogger:
                 {"test/device/1": ["State"]},
                 event_enum_mapping={"State": DummyStateEnum},
             )
-
-        mock_event = create_test_event(
-            "test/device/1", "state", DummyStateEnum.STATE_1
+        TestTangoEventLogger.logger_received_event(
+            logger,
+            "test/device/1",
+            "state",
+            DummyStateEnum.STATE_1.value,
         )
-        logger._log_event(  # pylint: disable=protected-access
-            mock_event,
-            filtering_rule=DEFAULT_LOG_ALL_EVENTS,
-            message_builder=DEFAULT_LOG_MESSAGE_BUILDER,
-        )
-
         # Assert that content of the last message
         # printed includes device name, attribute name and current value
         assert_that(mock_logging.info.call_args[0][0]).described_as(
@@ -378,16 +432,17 @@ class TestTangoEventLogger:
         :param mock_logging: The mock logging module.
         """
         # call log_events once with a mapping
-        mock_event = create_test_event(
-            "test/device/1", "foo", DummyStateEnum.STATE_1
-        )
+
         with patch_context_device_proxy():
             logger = log_events({}, event_enum_mapping={"foo": DummyStateEnum})
-        logger._log_event(  # pylint: disable=protected-access
-            mock_event,
-            filtering_rule=DEFAULT_LOG_ALL_EVENTS,
-            message_builder=DEFAULT_LOG_MESSAGE_BUILDER,
+
+        TestTangoEventLogger.logger_received_event(
+            logger,
+            "test/device/1",
+            "foo",
+            DummyStateEnum.STATE_1.value,
         )
+
         assert_that(mock_logging.info.call_args[0][0]).described_as(
             "The log_event method should write"
             " the right message to the logger "
@@ -397,23 +452,27 @@ class TestTangoEventLogger:
         # call log_events again with a different mapping
         with patch_context_device_proxy():
             logger = log_events({}, event_enum_mapping={"bar": DummyStateEnum})
-        logger._log_event(  # pylint: disable=protected-access
-            mock_event,
-            filtering_rule=DEFAULT_LOG_ALL_EVENTS,
-            message_builder=DEFAULT_LOG_MESSAGE_BUILDER,
-        )
-        assert_that(mock_logging.info.call_args[0][0]).described_as(
-            "The log_event method should remember the previous mapping."
-        ).contains("DummyStateEnum.STATE_1")
 
-        logger._log_event(  # pylint: disable=protected-access
-            create_test_event("test/device/1", "bar", DummyStateEnum.STATE_2),
-            filtering_rule=DEFAULT_LOG_ALL_EVENTS,
-            message_builder=DEFAULT_LOG_MESSAGE_BUILDER,
+        TestTangoEventLogger.logger_received_event(
+            logger,
+            "test/device/1",
+            "bar",
+            DummyStateEnum.STATE_2.value,
         )
         assert_that(mock_logging.info.call_args[0][0]).described_as(
-            "The log_event method should use also the new mapping."
+            "The new mapping should be applied to the event."
         ).contains("DummyStateEnum.STATE_2")
+
+        # Also the old mapping should be applied
+        TestTangoEventLogger.logger_received_event(
+            logger,
+            "test/device/1",
+            "foo",
+            DummyStateEnum.STATE_3.value,
+        )
+        assert_that(mock_logging.info.call_args[0][0]).described_as(
+            "The logger should remember the old mapping."
+        ).contains("DummyStateEnum.STATE_3")
 
     @staticmethod
     def test_log_events_duplicate_subscription() -> None:
