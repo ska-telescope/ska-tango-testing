@@ -3,9 +3,10 @@
 import threading
 import time
 from datetime import datetime, timedelta
+from enum import Enum
 from typing import Any
 
-from ska_tango_testing.integration.event import ReceivedEvent
+from ska_tango_testing.integration.event import ReceivedEvent, TypedEvent
 from ska_tango_testing.integration.tracer import TangoEventTracer
 
 from .eventdata_mock import create_eventdata_mock
@@ -35,6 +36,36 @@ def add_event(
         test_event.reception_time = datetime.now() - timedelta(
             seconds=seconds_ago
         )
+
+    tracer._add_event(test_event)  # pylint: disable=protected-access
+
+    return test_event
+
+
+def add_typed_event(
+    tracer: TangoEventTracer,
+    device: str,
+    value: Any,
+    attr_name: str = "test_attribute",
+    event_type: type[Enum] | None = None,
+) -> ReceivedEvent:
+    """Add a typed event to the tracer.
+
+    :param tracer: The `TangoEventTracer` instance.
+    :param device: The device name.
+    :param value: The current value.
+    :param attr_name: The attribute name, default is "test_attribute".
+    :param event_type: The type of the attribute, default is None.
+        If None, the event is not typed.
+    :return: The event that was added.
+    """
+    # eventually type the event
+    event_data = create_eventdata_mock(device, attr_name, value)
+    test_event = (
+        ReceivedEvent(event_data)
+        if event_type is None
+        else TypedEvent(event_data, event_type)
+    )
 
     tracer._add_event(test_event)  # pylint: disable=protected-access
 

@@ -5,7 +5,12 @@ from assertpy import assert_that
 
 from ska_tango_testing.integration.tracer import TangoEventTracer
 
-from ..testing_utils.populate_tracer import add_event, delayed_add_event
+from ..testing_utils.dummy_state_enum import DummyStateEnum
+from ..testing_utils.populate_tracer import (
+    add_event,
+    add_typed_event,
+    delayed_add_event,
+)
 
 
 @pytest.mark.integration_tracer
@@ -104,4 +109,60 @@ class TestAssertionsErrorMessages:
             "to estimated remaining time"
         ).contains(
             " seconds before the timeout"
+        )
+
+    # --------------------------------------------------------------------
+    # Typed events
+
+    @staticmethod
+    def test_error_message_display_past_event_correct_typed_value(
+        tracer: TangoEventTracer,
+    ) -> None:
+        """Verify error message displays past event with correct typed value.
+
+        :param tracer: The `TangoEventTracer` instance.
+        """
+        add_typed_event(
+            tracer,
+            "device1",
+            DummyStateEnum.STATE_0.value,
+            event_type=DummyStateEnum,
+        )
+
+        with pytest.raises(AssertionError) as exc_info:
+            assert_that(tracer).has_change_event_occurred(
+                device_name="device1",
+                attribute_value=DummyStateEnum.STATE_1,
+            )
+        assert_that(str(exc_info.value)).described_as(
+            "The error message should display the past event with the correct "
+            "typed value"
+        ).contains("Events captured by TANGO_TRACER").contains(
+            "attribute_value=DummyStateEnum.STATE_0"
+        )
+
+    @staticmethod
+    def test_error_message_display_typed_query_attribute_value(
+        tracer: TangoEventTracer,
+    ) -> None:
+        """Verify error message displays typed query attribute value.
+
+        :param tracer: The `TangoEventTracer` instance.
+        """
+        add_typed_event(
+            tracer,
+            "device1",
+            DummyStateEnum.STATE_2.value,
+            event_type=DummyStateEnum,
+        )
+
+        with pytest.raises(AssertionError) as exc_info:
+            assert_that(tracer).has_change_event_occurred(
+                device_name="device1",
+                attribute_value=DummyStateEnum.STATE_3,
+            )
+        assert_that(str(exc_info.value)).described_as(
+            "The error message should display the typed query attribute value"
+        ).contains("TANGO_TRACER Query details").contains(
+            "attribute_value=DummyStateEnum.STATE_3"
         )
