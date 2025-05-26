@@ -192,6 +192,24 @@ class TestTangoSubscriber:
         )
 
     @staticmethod
+    def test_double_subscriptions_check_is_case_insensitive() -> None:
+        """Double subscriptions are case insensitive."""
+        with patch_context_device_proxy() as mock_proxy:
+            mock_proxy.return_value.subscribe_event.return_value = 1234
+            mock_proxy.dev_name.return_value = "test/device/1"
+            subscriber = TangoSubscriber()
+            callback = MagicMock()
+
+            subscriber.subscribe_event("test/device/1", "test_attr", callback)
+            subscriber.subscribe_event("TEST/DEVICE/1", "TEST_ATTR", callback)
+
+        assert_that(
+            mock_proxy.return_value.subscribe_event.call_args_list
+        ).described_as("subscribe_event should be called only once").is_length(
+            1
+        )
+
+    @staticmethod
     def test_double_subscr_with_device_proxy_are_not_repeated() -> None:
         """Subscriptions with proxies to the same device are not repeated."""
         subscriber = TangoSubscriber()

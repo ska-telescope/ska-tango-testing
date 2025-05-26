@@ -188,6 +188,11 @@ class TangoSubscriber:
             ) in self._subscription_ids.items():
                 if self._are_same_device_proxies(device, subscribed_device):
                     # Check if the attribute name is in the subscription ids
+                    logging.info(
+                        f"Checking subscription for device:"
+                        f" {device.dev_name()}, "
+                        f"attribute: {attribute_name}"
+                    )
                     return attribute_name.lower() in subscribed_attributes
 
             # No device found with the same name -> subscription does not exist
