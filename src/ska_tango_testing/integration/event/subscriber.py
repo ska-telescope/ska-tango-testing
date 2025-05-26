@@ -182,6 +182,11 @@ class TangoSubscriber:
         """
         with self._subscriptions_lock:
             # Check if the device is in the subscription ids
+            logging.info(
+                "Checking if subscription exists for device "
+                f"{device.dev_name()}, attribute: {attribute_name}"
+            )
+
             for (
                 subscribed_device,
                 subscribed_attributes,
@@ -189,9 +194,8 @@ class TangoSubscriber:
                 if self._are_same_device_proxies(device, subscribed_device):
                     # Check if the attribute name is in the subscription ids
                     logging.info(
-                        f"Checking subscription for device:"
-                        f" {device.dev_name()}, "
-                        f"attribute: {attribute_name}"
+                        f"Device {device.dev_name()} found in subscriptions."
+                        f" Checking attribute: {attribute_name}"
                     )
                     return attribute_name.lower() in subscribed_attributes
 
