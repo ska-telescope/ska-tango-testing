@@ -13,6 +13,7 @@ from ska_tango_testing.integration.tracer import TangoEventTracer
 
 from ..testing_utils.populate_tracer import add_event, delayed_add_event
 from .utils import (
+    assert_elapsed_time,
     assert_timeout_in_between,
     expected_error_message_has_event,
     expected_error_message_hasnt_event,
@@ -99,6 +100,107 @@ class TestAssertionsAdvancedUsage:
                 attribute_value=200,
                 previous_value=120,
             )
+
+    @staticmethod
+    def test_assert_that_has_event_w_previous_value_in_past_current_in_future(
+        tracer: TangoEventTracer,
+    ) -> None:
+        """The `has` assertion handles a previous value in the past.
+
+        The current value is in the future, so it should succeed.
+
+        :param tracer: The `TangoEventTracer` instance.
+        """
+        add_event(tracer, "device1", 120, 15)
+        add_event(tracer, "device1", 100, 10)
+        add_event(tracer, "device1", 120, 5)
+        add_event(tracer, "device1", 2000, 4, attr_name="other_attr")
+        add_event(tracer, "device2", 2000, 3)
+        delayed_add_event(tracer, "device1", 200, 0.5)
+
+        start_time = datetime.now()
+        assert_that(tracer).described_as(
+            "Previous value in the past, current in the future"
+        ).within_timeout(1).has_change_event_occurred(
+            device_name="device1",
+            attribute_value=200,
+            previous_value=120,
+        )
+
+        assert_elapsed_time(start_time, 0.5)
+
+    @staticmethod
+    def test_assert_that_has_event_w_both_previous_and_current_in_future(
+        tracer: TangoEventTracer,
+    ) -> None:
+        """The `has` assertion handles both previous and current future values.
+
+        Both the previous and current values are in the future, and they should
+        be evaluated correctly.
+
+
+        :param tracer: The `TangoEventTracer` instance.
+        """
+        add_event(tracer, "device1", 120, 15)
+        add_event(tracer, "device1", 100, 10)
+        add_event(tracer, "device1", 2000, 4, attr_name="other_attr")
+        delayed_add_event(tracer, "device1", 120, 0.4)
+        delayed_add_event(tracer, "device1", 2000, 0.5)
+
+        start_time = datetime.now()
+        assert_that(tracer).described_as(
+            "Both previous and current values are in the future"
+        ).within_timeout(1).has_change_event_occurred(
+            device_name="device1",
+            attribute_value=2000,
+            previous_value=120,
+        )
+
+        assert_elapsed_time(start_time, 0.5)
+
+    @staticmethod
+    def test_assert_that_has_is_not_tricked_by_many_events(
+        tracer: TangoEventTracer,
+    ) -> None:
+        """The `has` assertion is not tricked by many events.
+
+        The previous value is the one that is evaluated, even if there are
+        many events in between.
+
+        :param tracer: The `TangoEventTracer` instance.
+        """
+        # generate a sequence of many events
+        for i in range(80, 0, 4):
+            add_event(tracer, "device1", 3, i, attr_name="attrname")
+            add_event(tracer, "device1", 1, i - 1, attr_name="attrname2")
+            add_event(tracer, "device1", 2, i - 2, attr_name="attrname")
+            add_event(tracer, "device1", 1, i - 3, attr_name="attrname2")
+
+        with pytest.raises(
+            AssertionError, match=expected_error_message_has_event()
+        ):
+            assert_that(tracer).described_as(
+                "The has assertion is not tricked by many events"
+            ).has_change_event_occurred(
+                device_name="device1",
+                attribute_value=3,
+                previous_value=1,
+                attribute_name="attrname",
+            )
+
+        add_event(tracer, "device1", 3, 4, attr_name="attrname")
+        add_event(tracer, "device1", 100, 3, attr_name="attrname2")
+        add_event(tracer, "device2", 100, 3, attr_name="attrname2")
+        add_event(tracer, "device1", 0, 2, attr_name="attrname")
+
+        assert_that(tracer).described_as(
+            "The has assertion is not tricked by many events"
+        ).has_change_event_occurred(
+            device_name="device1",
+            attribute_value=0,
+            previous_value=3,
+            attribute_name="attrname",
+        )
 
     # ##########################################################
     # Tests: previous value does not exist
