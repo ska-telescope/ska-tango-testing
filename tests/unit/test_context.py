@@ -1,7 +1,7 @@
 """This module tests the ska_tango_testing version."""
 
-import unittest
 from typing import Optional
+from unittest import mock as unittest_mock
 
 import pytest
 import tango.server
@@ -108,7 +108,7 @@ class TestThreadedTestTangoContextManager:
             "foo/bar/1", TwinDevice, Value=1, Twin="foo/bar/2"
         )
 
-        mock = unittest.mock.Mock()
+        mock = unittest_mock.Mock()
         mock.value = 2
 
         context_manager.add_mock_device("foo/bar/2", mock)
@@ -117,7 +117,7 @@ class TestThreadedTestTangoContextManager:
             device_1 = context.get_device("foo/bar/1")
             device_2 = context.get_device("foo/bar/2")
 
-            type(mock).twin_value = unittest.mock.PropertyMock(
+            type(mock).twin_value = unittest_mock.PropertyMock(
                 side_effect=lambda: device_1.value
             )
 
@@ -132,7 +132,7 @@ class TestThreadedTestTangoContextManager:
         """Test a context manager with only a mock."""
         context_manager = ThreadedTestTangoContextManager()
 
-        mock = unittest.mock.Mock()
+        mock = unittest_mock.Mock()
         mock.value = 2
 
         context_manager.add_mock_device("foo/bar/2", mock)
