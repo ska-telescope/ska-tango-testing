@@ -232,7 +232,9 @@ class TangoSubscriber:
         # create the device proxy if needed (using the provided factory
         # or the default one)
         if isinstance(device_name, str):
-            dev_factory = dev_factory or ska_tango_testing.context.DeviceProxy  # type: ignore
+            dev_factory = (
+                dev_factory or ska_tango_testing.context.DeviceProxy
+            )  # type: ignore
             return dev_factory(device_name)
 
         # If the device_name is already a DeviceProxy, return it
