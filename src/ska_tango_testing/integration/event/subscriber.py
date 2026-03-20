@@ -233,7 +233,7 @@ class TangoSubscriber:
         # or the default one)
         if isinstance(device_name, str):
             dev_factory = (
-                dev_factory or ska_tango_testing.context.DeviceProxy
+                dev_factory or ska_tango_testing.context.DeviceProxy  # type: ignore
             )  # type: ignore
             return dev_factory(device_name)
 
